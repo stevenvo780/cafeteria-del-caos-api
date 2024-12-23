@@ -72,6 +72,14 @@ export class DiscordController {
           return this.discordService.handleInfraction(
             eventPayload.data.options,
           );
+        case 'añadir-puntos':
+          return this.discordService.handleAddPoints(eventPayload.data.options);
+        case 'quitar-puntos':
+          return this.discordService.handleRemovePoints(
+            eventPayload.data.options,
+          );
+        case 'establecer-puntos':
+          return this.discordService.handleSetPoints(eventPayload.data.options);
         default:
           return {
             type: InteractionResponseType.ChannelMessageWithSource,

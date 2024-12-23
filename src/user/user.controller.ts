@@ -53,7 +53,6 @@ export class UserController {
   })
   @Get()
   findAll(@Query() findUsersDto: FindUsersDto) {
-    console.log(findUsersDto);
     return this.userService.findAll(findUsersDto);
   }
 

@@ -120,4 +120,79 @@ export class DiscordService {
       },
     };
   }
+
+  async handleAddPoints(options: any[]): Promise<any> {
+    const userOption = options.find((option) => option.name === 'usuario');
+    const points = options.find((option) => option.name === 'puntos').value;
+
+    const discordUserData = {
+      id: userOption.value,
+      username: userOption.user.username,
+      nickname: userOption.member?.nickname,
+      roles: userOption.member?.roles || [],
+      discordData: userOption.user,
+    };
+
+    const discordUser = await this.userDiscordService.findOrCreate(
+      discordUserData,
+    );
+    await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
+
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: `Se han añadido ${points} puntos de penalización al usuario ${discordUser.username}.`,
+      },
+    };
+  }
+
+  async handleRemovePoints(options: any[]): Promise<any> {
+    const userOption = options.find((option) => option.name === 'usuario');
+    const points = options.find((option) => option.name === 'puntos').value;
+
+    const discordUserData = {
+      id: userOption.value,
+      username: userOption.user.username,
+      nickname: userOption.member?.nickname,
+      roles: userOption.member?.roles || [],
+      discordData: userOption.user,
+    };
+
+    const discordUser = await this.userDiscordService.findOrCreate(
+      discordUserData,
+    );
+    await this.userDiscordService.addPenaltyPoints(discordUser.id, -points);
+
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: `Se han quitado ${points} puntos de penalización al usuario ${discordUser.username}.`,
+      },
+    };
+  }
+
+  async handleSetPoints(options: any[]): Promise<any> {
+    const userOption = options.find((option) => option.name === 'usuario');
+    const points = options.find((option) => option.name === 'puntos').value;
+
+    const discordUserData = {
+      id: userOption.value,
+      username: userOption.user.username,
+      nickname: userOption.member?.nickname,
+      roles: userOption.member?.roles || [],
+      discordData: userOption.user,
+    };
+
+    const discordUser = await this.userDiscordService.findOrCreate(
+      discordUserData,
+    );
+    await this.userDiscordService.updatePoints(discordUser.id, points);
+
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: `Se han establecido ${points} puntos de penalización al usuario ${discordUser.username}.`,
+      },
+    };
+  }
 }
