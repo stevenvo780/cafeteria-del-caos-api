@@ -23,29 +23,29 @@ export enum Repetition {
 export class Events extends SharedProp {
   @PrimaryGeneratedColumn()
   @ApiProperty({
-    description: 'Identificador único del evento',
+    description: 'Unique identifier for the event',
     example: 1,
   })
   id: number;
 
   @Column()
   @ApiProperty({
-    description: 'Título del evento',
-    example: 'Tertulia literaria',
+    description: 'Title of the event',
+    example: 'Cafeteria del Caos Meetup',
   })
   title: string;
 
   @Column('json')
   @ApiProperty({
-    description: 'Descripción del evento en formato JSON',
+    description: 'Event description in JSON format',
     type: 'object',
-    example: { content: 'Descripción detallada del evento...' },
+    example: { content: 'Detailed description of the event...' },
   })
   description: string;
 
   @Column()
   @ApiProperty({
-    description: 'Fecha de inicio del evento',
+    description: 'Start date of the event',
     type: 'string',
     format: 'date-time',
     example: '2024-08-21T15:30:00Z',
@@ -54,7 +54,7 @@ export class Events extends SharedProp {
 
   @Column()
   @ApiProperty({
-    description: 'Fecha de finalización del evento',
+    description: 'End date of the event',
     type: 'string',
     format: 'date-time',
     example: '2024-08-21T18:30:00Z',
@@ -63,7 +63,7 @@ export class Events extends SharedProp {
 
   @Column({ type: 'enum', enum: Repetition, default: Repetition.NONE })
   @ApiProperty({
-    description: 'Cadena que describe la repetición del evento (si aplica)',
+    description: 'String describing the event repetition (if applicable)',
     enum: Repetition,
     required: false,
     example: 'weekly',
@@ -74,7 +74,7 @@ export class Events extends SharedProp {
   @JoinColumn()
   @Index()
   @ApiProperty({
-    description: 'Autor del evento, representado por un usuario',
+    description: 'Event author, represented by a user',
     type: () => User,
   })
   author: User;

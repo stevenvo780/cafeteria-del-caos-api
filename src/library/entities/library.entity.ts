@@ -21,28 +21,28 @@ export enum LibraryVisibility {
 export class Library extends SharedProp {
   @PrimaryGeneratedColumn()
   @ApiProperty({
-    description: 'Identificador único de la biblioteca',
+    description: 'Unique identifier for the library',
     example: 1,
   })
   id: number;
 
   @Column()
   @ApiProperty({
-    description: 'Título de la biblioteca',
-    example: 'Biblioteca de Tertulias Literarias',
+    description: 'Title of the library',
+    example: 'Cafeteria del Caos Library',
   })
   title: string;
 
   @Column('text')
   @ApiProperty({
-    description: 'Descripción de la biblioteca',
-    example: 'Una colección de recursos literarios y artículos académicos...',
+    description: 'Description of the library',
+    example: 'A collection of literary resources and academic articles...',
   })
   description: string;
 
   @Column()
   @ApiProperty({
-    description: 'Fecha de referencia asociada a la biblioteca',
+    description: 'Reference date associated with the library',
     type: 'string',
     format: 'date',
     example: '2024-08-21',
@@ -55,7 +55,7 @@ export class Library extends SharedProp {
     default: LibraryVisibility.GENERAL,
   })
   @ApiProperty({
-    description: 'Visibilidad de la biblioteca',
+    description: 'Library visibility',
     enum: LibraryVisibility,
     example: LibraryVisibility.GENERAL,
   })
@@ -65,7 +65,7 @@ export class Library extends SharedProp {
   @JoinColumn()
   @Index()
   @ApiProperty({
-    description: 'Autor de la biblioteca, representado por un usuario',
+    description: 'Author of the library, represented by a user',
     type: () => User,
   })
   author: User;
@@ -73,7 +73,7 @@ export class Library extends SharedProp {
   @ManyToOne(() => Library, (library) => library.children)
   @JoinColumn()
   @ApiProperty({
-    description: 'Biblioteca padre de la cual esta biblioteca es hija',
+    description: 'Parent library of which this library is a child',
     type: () => Library,
     nullable: true,
   })
@@ -81,7 +81,7 @@ export class Library extends SharedProp {
 
   @OneToMany(() => Library, (library) => library.parent)
   @ApiProperty({
-    description: 'Lista de bibliotecas hijas asociadas a esta biblioteca',
+    description: 'List of child libraries associated with this library',
     type: [Library],
   })
   children: Library[];

@@ -1,126 +1,132 @@
-# Tertulia Literaria API
+Aquí tienes el archivo completamente traducido y adaptado en inglés:
 
-La **API de Tertulia Literaria** está construida utilizando [NestJS](https://nestjs.com/) y está diseñada para servir a la comunidad de Tertulia Literaria en Discord. Proporciona varios endpoints para gestionar contenido relacionado con la literatura y facilitar el intercambio de conocimiento.
+```markdown
+# Cafeteria del Caos API
 
-## Descripción del Proyecto
+The **Cafeteria del Caos API** is built using [NestJS](https://nestjs.com/) and designed to serve the Cafeteria del Caos community on Discord. It provides various endpoints to manage community-related content and facilitate knowledge sharing.
 
-Esta API ofrece funcionalidades para la gestión de eventos, publicaciones y otros contenidos relacionados con la literatura y el conocimiento dentro de la comunidad de Tertulia Literaria. Se ha implementado con una arquitectura modular utilizando NestJS, con soporte para bases de datos relacionales mediante TypeORM y PostgreSQL. También incluye documentación generada automáticamente con Swagger y pruebas automatizadas con Jest.
+## Project Description
 
-### Tecnologías Utilizadas
+This API offers features for managing events, publications, and other content related to the Cafeteria del Caos community. It is implemented with a modular architecture using NestJS, supports relational databases via TypeORM and PostgreSQL, and includes automatically generated documentation with Swagger and automated testing with Jest.
 
-- **NestJS**: Un framework para construir aplicaciones del lado del servidor de manera eficiente.
-- **TypeORM**: ORM que facilita la interacción con bases de datos.
-- **PostgreSQL**: Base de datos relacional.
-- **Swagger**: Generación automática de documentación de la API.
-- **Jest**: Marco de pruebas para Node.js.
+### Technologies Used
 
-## Documentación de la API
+- **NestJS**: A framework for building efficient server-side applications.
+- **TypeORM**: ORM that simplifies interaction with databases.
+- **PostgreSQL**: Relational database.
+- **Swagger**: Automatically generates API documentation.
+- **Jest**: Testing framework for Node.js.
 
-La documentación completa de la API está disponible en el siguiente enlace:
+## API Documentation
 
-[https://tertulialiteraria-api-zlkelu7v2a-uc.a.run.app/api](https://tertulialiteraria-api-zlkelu7v2a-uc.a.run.app/api)
+The complete API documentation is available at the following link:
 
-## Primeros Pasos
+[https://cafeteriadelcaos-api-zlkelu7v2a-uc.a.run.app/api](https://cafeteriadelcaos-api-zlkelu7v2a-uc.a.run.app/api)
 
-### Requisitos Previos
+## Getting Started
+
+### Prerequisites
 
 - Node.js >= 14.x
-- npm >= 6.x o yarn >= 1.x
+- npm >= 6.x or yarn >= 1.x
 - PostgreSQL
 
-### Instalación
+### Installation
 
-1. Clona el repositorio:
+1. Clone the repository:
 
     ```bash
-    git clone https://github.com/stevenvo780/tertulialiteraria-api.git
-    cd tertulia-literaria-api
+    git clone https://github.com/stevenvo780/cafeteriadelcaos-api.git
+    cd cafeteria-del-caos-api
     ```
 
-2. Instala las dependencias:
+2. Install dependencies:
 
     ```bash
     npm install
     ```
 
-    o
+    or
 
     ```bash
     yarn install
     ```
 
-3. Configura las variables de entorno creando un archivo `.env` en el directorio raíz del proyecto. Asegúrate de incluir la configuración de tu base de datos PostgreSQL y otras variables necesarias:
+3. Configure environment variables by creating a `.env` file in the project root directory. Be sure to include your PostgreSQL database configuration and other necessary variables:
 
     ```bash
-    DATABASE_URL=postgres://user:password@localhost:5432/tertulialiteraria
+    DATABASE_URL=postgres://user:password@localhost:5432/cafeteriadelcaos
     ```
 
-### Ejecutando la Aplicación
+### Running the Application
 
-Puedes ejecutar la aplicación en diferentes modos según tu necesidad:
+You can run the application in different modes depending on your needs:
 
 ```bash
-# Modo de desarrollo
+# Development mode
 npm run start
 
-# Modo watch (con recarga automática)
+# Watch mode (with auto-reloading)
 npm run start:dev
 
-# Modo de producción
+# Production mode
 npm run start:prod
 ```
 
-### Usando Docker (Opcional)
+### Using Docker (Optional)
 
-Si prefieres usar Docker, asegúrate de tener Docker instalado y sigue estos pasos:
+If you prefer using Docker, ensure Docker is installed and follow these steps:
 
-1. Construye la imagen de Docker:
-
-    ```bash
-    docker build -t tertulia-literaria-api .
-    ```
-
-2. Ejecuta el contenedor:
+1. Build the Docker image:
 
     ```bash
-    docker run -p 3000:3000 tertulia-literaria-api
+    docker build -t cafeteria-del-caos-api .
     ```
 
-3. Abre [http://localhost:3000](http://localhost:3000) en tu navegador para ver la aplicación corriendo en Docker.
+2. Run the container:
 
-## Pruebas
+    ```bash
+    docker run -p 3000:3000 cafeteria-del-caos-api
+    ```
 
-La API incluye pruebas automatizadas. Puedes ejecutarlas utilizando los siguientes comandos:
+3. Open [http://localhost:3000](http://localhost:3000) in your browser to view the application running in Docker.
+
+## Testing
+
+The API includes automated tests. You can run them using the following commands:
 
 ```bash
-# Pruebas unitarias
+# Unit tests
 npm run test
 
-# Pruebas end-to-end (e2e)
+# End-to-end (e2e) tests
 npm run test:e2e
 
-# Cobertura de pruebas
+# Test coverage
 npm run test:cov
 ```
 
-## Contribuciones
+## Contributions
 
-Este proyecto es de código abierto y está abierto a contribuciones de la comunidad. Si estás interesado en contribuir, por favor sigue los siguientes pasos:
+This project is open-source and welcomes community contributions. If you're interested in contributing, please follow these steps:
 
-1. Haz un fork del repositorio
-2. Crea una nueva rama (`git checkout -b feature/nueva-funcionalidad`)
-3. Realiza tus cambios (`git commit -m 'Añadir nueva funcionalidad'`)
-4. Haz push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crea un nuevo Pull Request
+1. Fork the repository.
+2. Create a new branch (`git checkout -b feature/new-feature`).
+3. Make your changes (`git commit -m 'Add new feature'`).
+4. Push the branch (`git push origin feature/new-feature`).
+5. Create a new Pull Request.
 
-## Soporte
+## Support
 
-Si encuentras útil la API de Tertulia Literaria, considera apoyar el proyecto contribuyendo con código, reportando issues o difundiendo el proyecto.
+If you find the Cafeteria del Caos API useful, consider supporting the project by contributing code, reporting issues, or sharing the project.
 
-## Documentación API
+## API Documentation
 
-https://tertulialiteraria-api-zlkelu7v2a-uc.a.run.app/api
+https://cafeteriadelcaos-api-zlkelu7v2a-uc.a.run.app/api
 
-## Licencia
+## License
 
-Este proyecto está licenciado bajo la licencia MIT. Consulta el archivo [LICENSE](LICENSE) para más detalles.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
+```
+
+Let me know if you need additional adjustments or further refinements!

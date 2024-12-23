@@ -64,7 +64,7 @@ export async function createDiscordEvent(
       entityType: 3,
       privacyLevel: GuildScheduledEventPrivacyLevel.GuildOnly,
       entityMetadata: {
-        location: 'Tertulia Literaria',
+        location: 'Cafeteria del Caos',
       },
     });
 

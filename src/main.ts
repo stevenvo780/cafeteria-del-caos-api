@@ -13,9 +13,9 @@ async function bootstrap() {
   const appProvider = app.get(AppProvider);
   appProvider.setApp(app);
   const config = new DocumentBuilder()
-    .setTitle('TERTULIA LITERARIA API')
+    .setTitle('CAFETERIA DEL CAOS API')
     .setDescription(
-      'Esta es la documentacion de TERTULIA LITERARIA sientete libre de aportar a nuestro proyecto',
+      'This is the documentation for CAFETERIA DEL CAOS. Feel free to contribute to our project.',
     )
     .setVersion('1.0')
     .addBearerAuth(
