@@ -5,6 +5,7 @@ import { Library, LibraryVisibility } from './entities/library.entity';
 import { User, UserRole } from '../user/entities/user.entity';
 import { CreateLibraryDto } from './dto/create-library.dto';
 import { UpdateLibraryDto } from './dto/update-library.dto';
+import { LibraryReferenceDto } from './dto/library-reference.dto';
 
 @Injectable()
 export class LibraryService {
@@ -221,5 +222,16 @@ export class LibraryService {
     }
 
     return this.libraryRepository.save(newNote);
+  }
+
+  async getAllReferences(): Promise<LibraryReferenceDto[]> {
+    const references = await this.libraryRepository
+      .createQueryBuilder('library')
+      .select(['library.id', 'library.title'])
+      .getMany();
+    return references.map((ref) => ({
+      id: ref.id,
+      title: ref.title,
+    }));
   }
 }

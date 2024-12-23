@@ -13,6 +13,7 @@ import {
 import { LibraryService } from './library.service';
 import { CreateLibraryDto } from './dto/create-library.dto';
 import { UpdateLibraryDto } from './dto/update-library.dto';
+import { LibraryReferenceDto } from './dto/library-reference.dto';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { OptionalFirebaseAuthGuard } from '../auth/optional-firebase-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -134,5 +135,13 @@ export class LibraryController {
     @Query('query') query?: string,
   ): Promise<Library[]> {
     return this.libraryService.search(query, req.user);
+  }
+
+  @ApiOperation({ summary: 'Get all library references' })
+  @Get('view/references')
+  @UseGuards(OptionalFirebaseAuthGuard)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.EDITOR)
+  async getAllReferences(): Promise<LibraryReferenceDto[]> {
+    return this.libraryService.getAllReferences();
   }
 }
