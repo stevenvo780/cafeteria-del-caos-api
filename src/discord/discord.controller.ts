@@ -10,12 +10,17 @@ import {
 } from '@nestjs/common';
 import { DiscordService } from './discord.service';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
-import { InteractionType, InteractionResponseType } from 'discord.js';
+import {
+  APIInteraction,
+  InteractionType,
+  InteractionResponseType,
+  APIChatInputApplicationCommandInteractionData,
+} from 'discord.js';
 
 @ApiTags('discord')
 @Controller('discord')
 export class DiscordController {
-  constructor(private readonly discordService: DiscordService) { }
+  constructor(private readonly discordService: DiscordService) {}
 
   @ApiOperation({
     summary: 'Obtener el total de miembros de un servidor de Discord',
@@ -48,7 +53,7 @@ export class DiscordController {
       'Endpoint para manejar interacciones de Discord (comandos, botones, etc)',
   })
   async handleDiscordInteractions(
-    @Body() interactionPayload: any,
+    @Body() interactionPayload: APIInteraction,
     @Headers('x-signature-ed25519') signature: string,
     @Headers('x-signature-timestamp') timestamp: string,
   ): Promise<any> {
@@ -73,61 +78,73 @@ export class DiscordController {
 
     console.log('Discord interaction:', interactionPayload);
 
-    if (interactionPayload.type === InteractionType.Ping) {
-      return { type: InteractionResponseType.Pong };
-    }
+    switch (interactionPayload.type) {
+      case InteractionType.Ping:
+        return { type: InteractionResponseType.Pong };
 
-    if (interactionPayload.type === InteractionType.MessageComponent) {
-      return await this.discordService.handleMessage(interactionPayload);
-    }
+      case InteractionType.MessageComponent:
+        return await this.discordService.handleMessage(interactionPayload);
 
-    if (interactionPayload.type === InteractionType.ApplicationCommand) {
-      if (!interactionPayload.data?.name) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Error: Comando inválido o faltante.',
-          },
-        };
-      }
+      case InteractionType.ApplicationCommand: {
+        const commandData =
+          interactionPayload.data as APIChatInputApplicationCommandInteractionData;
 
-      switch (interactionPayload.data.name) {
-        case 'crear-nota':
-          return await this.discordService.handleCreateNote(
-            interactionPayload.data.options || [],
-          );
-        case 'infraccion':
-          return await this.discordService.handleInfraction(
-            interactionPayload.data.options || [],
-          );
-        case 'añadir-puntos':
-          return await this.discordService.handleAddPoints(
-            interactionPayload.data.options || [],
-          );
-        case 'quitar-puntos':
-          return await this.discordService.handleRemovePoints(
-            interactionPayload.data.options || [],
-          );
-        case 'establecer-puntos':
-          return await this.discordService.handleSetPoints(
-            interactionPayload.data.options || [],
-          );
-        default:
+        if (!commandData?.name) {
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: `Comando "${interactionPayload.data.name}" no reconocido.`,
+              content: 'Error: Comando inválido o faltante.',
             },
           };
-      }
-    }
+        }
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: 'Tipo de interacción no soportado.',
-      },
-    };
+        const options = commandData.options || [];
+
+        switch (commandData.name) {
+          case 'crear-nota':
+            return await this.discordService.handleCreateNote(options);
+          case 'infraccion':
+            return await this.discordService.handleInfraction(options);
+          case 'añadir-puntos':
+            return await this.discordService.handleAddPoints(options);
+          case 'quitar-puntos':
+            return await this.discordService.handleRemovePoints(options);
+          case 'establecer-puntos':
+            return await this.discordService.handleSetPoints(options);
+          default:
+            return {
+              type: InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                content: `Comando "${commandData.name}" no reconocido.`,
+              },
+            };
+        }
+      }
+
+      case InteractionType.ApplicationCommandAutocomplete:
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Autocompletado no implementado.',
+          },
+        };
+
+      case InteractionType.ModalSubmit:
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Modales no implementados.',
+          },
+        };
+
+      default:
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Tipo de interacción no soportado.',
+          },
+        };
+    }
   }
 
   @Post('webhook')

@@ -1,15 +1,21 @@
 import { Injectable, HttpException } from '@nestjs/common';
+import { CommandOption, DiscordUserData } from './types/discord.types';
+import {
+  APIInteractionResponse,
+  InteractionResponseType,
+  APIMessageComponentInteraction,
+  APIGuildMember,
+} from 'discord.js';
 import {
   getGuildMemberCount,
   getOnlineMemberCount,
 } from '../utils/discord-utils';
 import { LibraryService } from '../library/library.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
-import { InteractionResponseType } from 'discord.js';
 import * as nacl from 'tweetnacl';
 import { ConfigService } from '../config/config.service';
 
-const INFRACTION_POINTS = {
+const INFRACTION_POINTS: Record<string, number> = {
   BLACK: 10,
   RED: 5,
   ORANGE: 3,
@@ -57,12 +63,14 @@ export class DiscordService {
     }
   }
 
-  async handleCreateNote(options: any[]): Promise<any> {
+  async handleCreateNote(
+    options: CommandOption[],
+  ): Promise<APIInteractionResponse> {
     try {
-      const titulo = options.find((option) => option.name === 'titulo')?.value;
-      const contenido = options.find(
-        (option) => option.name === 'contenido',
-      )?.value;
+      const titulo = options.find((opt) => opt.name === 'titulo')
+        ?.value as string;
+      const contenido = options.find((opt) => opt.name === 'contenido')
+        ?.value as string;
 
       if (!titulo || !contenido) {
         return {
@@ -101,12 +109,14 @@ export class DiscordService {
     }
   }
 
-  async handleInfraction(options: any[]): Promise<any> {
+  async handleInfraction(
+    options: CommandOption[],
+  ): Promise<APIInteractionResponse> {
     try {
-      const userOption = options.find((option) => option.name === 'usuario');
-      const tipo = options.find((option) => option.name === 'tipo')?.value;
+      const userOption = options.find((opt) => opt.name === 'usuario');
+      const tipo = options.find((opt) => opt.name === 'tipo')?.value as string;
 
-      if (!userOption || !tipo || !INFRACTION_POINTS[tipo]) {
+      if (!userOption?.user || !tipo || !(tipo in INFRACTION_POINTS)) {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
@@ -116,26 +126,14 @@ export class DiscordService {
         };
       }
 
-      const discordUserData = {
-        id: userOption.value,
+      const discordUserData: DiscordUserData = {
+        id: userOption.value as string,
         username: userOption.user.username,
-        nickname: userOption.member?.nickname,
-        roles: userOption.member?.roles || [],
+        nickname: (userOption.member as APIGuildMember)?.nick,
+        roles: (userOption.member as APIGuildMember)?.roles || [],
         discordData: {
           ...userOption.user,
-          member: {
-            ...userOption.member,
-            joinedAt: userOption.member?.joined_at,
-            permissions: userOption.member?.permissions,
-            communicationDisabledUntil:
-              userOption.member?.communication_disabled_until,
-          },
-          avatar: userOption.user.avatar,
-          discriminator: userOption.user.discriminator,
-          bot: userOption.user.bot,
-          system: userOption.user.system,
-          flags: userOption.user.flags,
-          globalName: userOption.user.global_name,
+          member: userOption.member,
         },
       };
 
@@ -163,25 +161,29 @@ export class DiscordService {
     }
   }
 
-  async handleAddPoints(options: any[]): Promise<any> {
+  async handleAddPoints(
+    options: CommandOption[],
+  ): Promise<APIInteractionResponse> {
     try {
-      const userOption = options.find((option) => option.name === 'usuario');
-      const points = options.find((option) => option.name === 'puntos')?.value;
+      const userOption = options.find((opt) => opt.name === 'usuario');
+      const pointsValue = options.find((opt) => opt.name === 'puntos')?.value;
+      const points =
+        typeof pointsValue === 'string'
+          ? parseInt(pointsValue, 10)
+          : Number(pointsValue);
 
-      if (!userOption || points === undefined) {
+      if (!userOption?.user || isNaN(points)) {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Error: Usuario y puntos son requeridos.',
-          },
+          data: { content: 'Error: Usuario y puntos válidos son requeridos.' },
         };
       }
 
-      const discordUserData = {
-        id: userOption.value,
+      const discordUserData: DiscordUserData = {
+        id: userOption.value as string,
         username: userOption.user.username,
-        nickname: userOption.member?.nickname,
-        roles: userOption.member?.roles || [],
+        nickname: (userOption.member as APIGuildMember)?.nick,
+        roles: (userOption.member as APIGuildMember)?.roles || [],
         discordData: userOption.user,
       };
       console.log('discordUserData', discordUserData);
@@ -209,25 +211,29 @@ export class DiscordService {
     }
   }
 
-  async handleRemovePoints(options: any[]): Promise<any> {
+  async handleRemovePoints(
+    options: CommandOption[],
+  ): Promise<APIInteractionResponse> {
     try {
-      const userOption = options.find((option) => option.name === 'usuario');
-      const points = options.find((option) => option.name === 'puntos').value;
+      const userOption = options.find((opt) => opt.name === 'usuario');
+      const pointsValue = options.find((opt) => opt.name === 'puntos')?.value;
+      const points =
+        typeof pointsValue === 'string'
+          ? parseInt(pointsValue, 10)
+          : Number(pointsValue);
 
-      if (!userOption || points === undefined) {
+      if (!userOption?.user || isNaN(points)) {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Error: Usuario y puntos son requeridos.',
-          },
+          data: { content: 'Error: Usuario y puntos válidos son requeridos.' },
         };
       }
 
-      const discordUserData = {
-        id: userOption.value,
+      const discordUserData: DiscordUserData = {
+        id: userOption.value as string,
         username: userOption.user.username,
-        nickname: userOption.member?.nickname,
-        roles: userOption.member?.roles || [],
+        nickname: (userOption.member as APIGuildMember)?.nick,
+        roles: (userOption.member as APIGuildMember)?.roles || [],
         discordData: userOption.user,
       };
 
@@ -252,25 +258,29 @@ export class DiscordService {
     }
   }
 
-  async handleSetPoints(options: any[]): Promise<any> {
+  async handleSetPoints(
+    options: CommandOption[],
+  ): Promise<APIInteractionResponse> {
     try {
-      const userOption = options.find((option) => option.name === 'usuario');
-      const points = options.find((option) => option.name === 'puntos').value;
+      const userOption = options.find((opt) => opt.name === 'usuario');
+      const pointsValue = options.find((opt) => opt.name === 'puntos')?.value;
+      const points =
+        typeof pointsValue === 'string'
+          ? parseInt(pointsValue, 10)
+          : Number(pointsValue);
 
-      if (!userOption || points === undefined) {
+      if (!userOption?.user || isNaN(points)) {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Error: Usuario y puntos son requeridos.',
-          },
+          data: { content: 'Error: Usuario y puntos válidos son requeridos.' },
         };
       }
 
-      const discordUserData = {
-        id: userOption.value,
+      const discordUserData: DiscordUserData = {
+        id: userOption.value as string,
         username: userOption.user.username,
-        nickname: userOption.member?.nickname,
-        roles: userOption.member?.roles || [],
+        nickname: (userOption.member as APIGuildMember)?.nick,
+        roles: (userOption.member as APIGuildMember)?.roles || [],
         discordData: userOption.user,
       };
 
@@ -295,23 +305,26 @@ export class DiscordService {
     }
   }
 
-  async handleMessage(message: any): Promise<any> {
+  async handleMessage(
+    interaction: APIMessageComponentInteraction,
+  ): Promise<APIInteractionResponse> {
     try {
+      const channelId = interaction.channel_id;
       const isWatchedChannel = await this.configService.isWatchedChannel(
-        message.channel_id,
+        channelId,
       );
 
-      if (!isWatchedChannel) {
+      if (!isWatchedChannel || !interaction.message) {
         return null;
       }
 
-      const author = message.author;
-      const channel = message.channel;
-      const content = message.content;
+      const userData = interaction.member?.user || interaction.user;
+      const channelData = interaction.channel;
+      const messageData = interaction.message;
 
       const userNoteData = {
-        title: `Notas de ${author.username}`,
-        description: `Colección de notas de ${author.username}`,
+        title: `Notas de ${userData.username}`,
+        description: `Colección de notas de ${userData.username}`,
         referenceDate: new Date(),
       };
 
@@ -321,8 +334,8 @@ export class DiscordService {
       );
 
       const channelNoteData = {
-        title: channel.name,
-        description: `Notas del canal ${channel.name}`,
+        title: channelData.name,
+        description: `Notas del canal ${channelData.name}`,
         referenceDate: new Date(),
         parentNoteId: userNote.id,
       };
@@ -333,8 +346,8 @@ export class DiscordService {
       );
 
       const messageNoteData = {
-        title: content.substring(0, 50) + '...',
-        description: content,
+        title: messageData.content.substring(0, 50) + '...',
+        description: messageData.content,
         referenceDate: new Date(),
         parentNoteId: channelNote.id,
       };
@@ -344,7 +357,7 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `Nota creada exitosamente para el mensaje de ${author.username}`,
+          content: `Nota creada exitosamente para el mensaje de ${userData.username}`,
         },
       };
     } catch (error) {
