@@ -19,7 +19,7 @@ import { ConfigAppModule } from './config/config.module';
 import { TemplateModule } from './template/template.module';
 import { LikeModule } from './like/like.module';
 import { DiscordModule } from './discord/discord.module';
-import { registerDiscordCommands } from './utils/register-commands.ts';
+import { registerDiscordCommands } from './utils/register-commands';
 import { UserDiscordModule } from './user-discord/user-discord.module';
 
 @Module({
