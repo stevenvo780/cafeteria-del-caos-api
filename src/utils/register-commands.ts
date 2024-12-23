@@ -77,6 +77,82 @@ export async function registerDiscordCommands() {
         },
       ],
     },
+    {
+      name: 'dar-monedas',
+      description: 'Da monedas a un usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'El usuario que recibirá las monedas',
+          required: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad de monedas a dar',
+          required: true,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      name: 'quitar-monedas',
+      description: 'Quita monedas a un usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'El usuario al que quitar monedas',
+          required: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad de monedas a quitar',
+          required: true,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      name: 'establecer-monedas',
+      description: 'Establece una cantidad específica de monedas a un usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'El usuario al que establecer las monedas',
+          required: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad de monedas a establecer',
+          required: true,
+          min_value: 0,
+        },
+      ],
+    },
+    {
+      name: 'transferir-monedas',
+      description: 'Transfiere monedas a otro usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'El usuario que recibirá las monedas',
+          required: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad de monedas a transferir',
+          required: true,
+          min_value: 1,
+        },
+      ],
+    },
   ];
 
   const token = process.env.DISCORD_BOT_TOKEN;

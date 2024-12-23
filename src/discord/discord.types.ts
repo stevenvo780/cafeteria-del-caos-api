@@ -36,4 +36,12 @@ export interface InteractPoints {
   roles: string[];
 }
 
+export interface InteractCoins {
+  userId: string;
+  targetId?: string;
+  coins: number;
+  username: string;
+  roles: string[];
+}
+
 export type MessageComponentInteraction = APIMessageComponentInteraction;

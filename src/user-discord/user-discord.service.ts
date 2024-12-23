@@ -4,7 +4,7 @@ import { Repository, UpdateResult } from 'typeorm';
 import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto'; // Añadido SortOrder
 import { APIInteractionResponse, InteractionResponseType } from 'discord.js';
-import { InteractPoints } from '../discord/discord.types';
+import { InteractPoints, InteractCoins } from '../discord/discord.types';
 
 @Injectable()
 export class UserDiscordService {
@@ -190,5 +190,118 @@ export class UserDiscordService {
 
   async handleSetPoints(data: InteractPoints): Promise<APIInteractionResponse> {
     return this.handlePointsOperation(data, 'set');
+  }
+
+  async updateCoins(id: string, coins: number): Promise<UpdateResult> {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuario de Discord con ID ${id} no encontrado`,
+      );
+    }
+    return this.userDiscordRepository.update(id, { coins });
+  }
+
+  async addCoins(id: string, amount: number): Promise<UpdateResult> {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuario de Discord con ID ${id} no encontrado`,
+      );
+    }
+    const newCoins = user.coins + amount;
+    return this.userDiscordRepository.update(id, { coins: newCoins });
+  }
+
+  async transferCoins(
+    fromId: string,
+    toId: string,
+    amount: number,
+  ): Promise<APIInteractionResponse> {
+    const fromUser = await this.findOne(fromId);
+    const toUser = await this.findOne(toId);
+
+    if (!fromUser || !toUser) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error: Usuario no encontrado.',
+        },
+      };
+    }
+
+    if (fromUser.coins < amount) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content:
+            'Error: No tienes suficientes monedas para realizar esta transferencia.',
+        },
+      };
+    }
+
+    await this.userDiscordRepository.update(fromId, {
+      coins: fromUser.coins - amount,
+    });
+    await this.userDiscordRepository.update(toId, {
+      coins: toUser.coins + amount,
+    });
+
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: `Transferencia exitosa: ${amount} monedas de ${fromUser.username} a ${toUser.username}`,
+      },
+    };
+  }
+
+  async handleCoinsOperation(
+    data: InteractCoins,
+    operation: 'add' | 'remove' | 'set' | 'transfer',
+  ): Promise<APIInteractionResponse> {
+    try {
+      const { userId, targetId, coins, username, roles } = data;
+      const discordUser = await this.findOrCreate({
+        id: userId,
+        username,
+        roles,
+      });
+
+      let message: string;
+
+      switch (operation) {
+        case 'add':
+          await this.addCoins(discordUser.id, coins);
+          message = `Se han añadido ${coins} monedas al usuario ${discordUser.username}`;
+          break;
+        case 'remove':
+          await this.addCoins(discordUser.id, -coins);
+          message = `Se han quitado ${coins} monedas al usuario ${discordUser.username}`;
+          break;
+        case 'set':
+          await this.updateCoins(discordUser.id, coins);
+          message = `Se ha establecido el balance a ${coins} monedas para el usuario ${discordUser.username}`;
+          break;
+        case 'transfer':
+          if (!targetId) throw new Error('targetId required for transfer');
+          return await this.transferCoins(userId, targetId, coins);
+      }
+
+      const updatedUser = await this.findOne(discordUser.id);
+      message += `. Balance actual: ${updatedUser?.coins} monedas.`;
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: { content: message },
+      };
+    } catch (error) {
+      console.error(`Error en operación de monedas ${operation}:`, error);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Error al ${operation} monedas. Por favor, intenta nuevamente.`,
+        },
+      };
+    }
   }
 }

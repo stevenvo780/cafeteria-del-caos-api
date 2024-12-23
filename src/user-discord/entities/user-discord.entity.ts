@@ -62,6 +62,13 @@ export class UserDiscord extends SharedProp {
   })
   penaltyPoints: number;
 
+  @Column({ default: 0 })
+  @ApiProperty({
+    description: 'Cantidad de monedas del usuario',
+    example: 100,
+  })
+  coins: number;
+
   @Column('jsonb', { nullable: true })
   @ApiProperty({
     description: 'Datos adicionales del usuario de Discord',
