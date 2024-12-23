@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import * as compression from 'compression';
+import compression from 'compression';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
 
