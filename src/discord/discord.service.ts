@@ -18,6 +18,8 @@ const INFRACTION_POINTS = {
 @Injectable()
 export class DiscordService {
   private readonly guildId = process.env.DISCORD_GUILD_ID;
+  private readonly watchedChannels =
+    process.env.DISCORD_WATCHED_CHANNELS?.split(',') || [];
 
   constructor(
     private readonly libraryService: LibraryService,
@@ -285,6 +287,65 @@ export class DiscordService {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           content: 'Error al establecer puntos. Por favor, intenta nuevamente.',
+        },
+      };
+    }
+  }
+
+  async handleMessage(message: any): Promise<any> {
+    try {
+      if (!this.watchedChannels.includes(message.channel_id)) {
+        return null;
+      }
+
+      const author = message.author;
+      const channel = message.channel;
+      const content = message.content;
+
+      const userNoteData = {
+        title: `Notas de ${author.username}`,
+        description: `Colección de notas de ${author.username}`,
+        referenceDate: new Date(),
+      };
+
+      const userNote = await this.libraryService.findOrCreateByTitle(
+        userNoteData.title,
+        null,
+      );
+
+      const channelNoteData = {
+        title: channel.name,
+        description: `Notas del canal ${channel.name}`,
+        referenceDate: new Date(),
+        parentNoteId: userNote.id,
+      };
+
+      const channelNote = await this.libraryService.findOrCreateByTitle(
+        channelNoteData.title,
+        userNote.id,
+      );
+
+      const messageNoteData = {
+        title: content.substring(0, 50) + '...',
+        description: content,
+        referenceDate: new Date(),
+        parentNoteId: channelNote.id,
+      };
+
+      await this.libraryService.create(messageNoteData, null);
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Nota creada exitosamente para el mensaje de ${author.username}`,
+        },
+      };
+    } catch (error) {
+      console.error('Error procesando mensaje:', error);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error al procesar el mensaje.',
         },
       };
     }

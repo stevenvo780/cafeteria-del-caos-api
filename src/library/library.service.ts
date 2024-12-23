@@ -197,4 +197,29 @@ export class LibraryService {
 
     return searchQuery.getMany();
   }
+
+  async findOrCreateByTitle(
+    title: string,
+    parentId?: number,
+  ): Promise<Library> {
+    const existingNote = await this.libraryRepository.findOne({
+      where: { title, parent: { id: parentId } },
+    });
+
+    if (existingNote) {
+      return existingNote;
+    }
+
+    const newNote = new Library();
+    newNote.title = title;
+    newNote.description = '';
+    newNote.referenceDate = new Date();
+
+    if (parentId) {
+      const parent = await this.findOne(parentId);
+      newNote.parent = parent;
+    }
+
+    return this.libraryRepository.save(newNote);
+  }
 }

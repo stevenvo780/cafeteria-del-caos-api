@@ -72,6 +72,10 @@ export class DiscordController {
         return { type: InteractionResponseType.Pong };
       }
 
+      if (eventPayload.type === InteractionType.MessageComponent) {
+        return await this.discordService.handleMessage(eventPayload);
+      }
+
       if (eventPayload.type === InteractionType.ApplicationCommand) {
         if (!eventPayload.data?.name) {
           return {
