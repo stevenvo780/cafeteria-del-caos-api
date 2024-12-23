@@ -8,10 +8,10 @@ import { UserDiscordModule } from '../user-discord/user-discord.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
-    forwardRef(() => UserDiscordModule), // Usar forwardRef para la dependencia circular
+    forwardRef(() => UserDiscordModule),
   ],
   controllers: [UserController],
   providers: [UserService],
-  exports: [UserService, TypeOrmModule], // Exportar TypeOrmModule para que FirebaseAuthGuard pueda usar el repositorio
+  exports: [UserService, TypeOrmModule],
 })
 export class UserModule {}

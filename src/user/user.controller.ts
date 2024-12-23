@@ -24,7 +24,6 @@ import { User } from './entities/user.entity';
 import { RequestWithUser } from '../auth/types';
 import { UpdateResult } from 'typeorm';
 import { FindUsersDto } from './dto/find-users.dto';
-import { UpdatePointsDto } from './dto/update-points.dto';
 
 @ApiTags('user')
 @ApiBearerAuth()
@@ -54,6 +53,7 @@ export class UserController {
   })
   @Get()
   findAll(@Query() findUsersDto: FindUsersDto) {
+    console.log(findUsersDto);
     return this.userService.findAll(findUsersDto);
   }
 

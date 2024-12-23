@@ -83,15 +83,32 @@ export class DiscordService {
     const userOption = options.find((option) => option.name === 'usuario');
     const tipo = options.find((option) => option.name === 'tipo').value;
 
-    // Crear o actualizar usuario de Discord con sus roles
-    const discordUser = await this.userDiscordService.findOrCreate({
+    const discordUserData = {
       id: userOption.value,
       username: userOption.user.username,
       nickname: userOption.member?.nickname,
       roles: userOption.member?.roles || [],
-      // Incluir cualquier otro dato relevante de Discord
-      ...userOption.user,
-    });
+      discordData: {
+        ...userOption.user,
+        member: {
+          ...userOption.member,
+          joinedAt: userOption.member?.joined_at,
+          permissions: userOption.member?.permissions,
+          communicationDisabledUntil:
+            userOption.member?.communication_disabled_until,
+        },
+        avatar: userOption.user.avatar,
+        discriminator: userOption.user.discriminator,
+        bot: userOption.user.bot,
+        system: userOption.user.system,
+        flags: userOption.user.flags,
+        globalName: userOption.user.global_name,
+      },
+    };
+
+    const discordUser = await this.userDiscordService.findOrCreate(
+      discordUserData,
+    );
 
     const points = INFRACTION_POINTS[tipo];
     await this.userDiscordService.addPenaltyPoints(discordUser.id, points);

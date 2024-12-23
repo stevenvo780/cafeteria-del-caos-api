@@ -29,6 +29,8 @@ export class UserService {
       search,
       minPoints,
       maxPoints,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
     } = findUsersDto;
 
     const queryBuilder = this.userRepository.createQueryBuilder('user');
@@ -50,8 +52,9 @@ export class UserService {
       queryBuilder.andWhere('user.penaltyPoints <= :maxPoints', { maxPoints });
     }
 
+    // Corregimos el orderBy para usar correctamente el alias de la tabla
     const [users, total] = await queryBuilder
-      .orderBy('user.penaltyPoints', 'DESC')
+      .orderBy(`user.${sortBy}`, sortOrder as 'ASC' | 'DESC')
       .skip(offset)
       .take(limit)
       .getManyAndCount();
