@@ -22,20 +22,12 @@ import { DiscordModule } from './discord/discord.module';
 import { registerDiscordCommands } from './utils/register-commands';
 import { UserDiscordModule } from './user-discord/user-discord.module';
 import { destroyDiscordClient } from './utils/discord-utils';
+import { typeOrmConfig } from './config/typeorm.config';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      port: Number(process.env.DB_PORT) || 5432,
-      username: process.env.DB_USERNAME || 'postgres',
-      password: process.env.DB_PASSWORD || 'postgres',
-      database: process.env.DB_NAME || 'postgres',
-      entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.DB_SYNCHRONIZE === 'true',
-    }),
+    TypeOrmModule.forRoot(typeOrmConfig),
     AuthModule,
     EventsModule,
     UserModule,

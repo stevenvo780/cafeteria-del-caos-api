@@ -1,11 +1,14 @@
 {
   "extends": "./tsconfig.json",
+  "exclude": ["node_modules", "test", "dist", "**/*spec.ts"],
   "compilerOptions": {
     "sourceMap": false,
     "removeComments": true,
     "declaration": false,
     "noEmitHelpers": true,
-    "downlevelIteration": true
-  },
-  "exclude": ["node_modules", "test", "dist", "**/*.spec.ts"]
+    "downlevelIteration": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "importHelpers": true
+  }
 }

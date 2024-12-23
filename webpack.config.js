@@ -10,14 +10,15 @@ module.exports = {
   output: {
     path: path.join(__dirname, 'dist'),
     filename: 'main.js',
+    libraryTarget: 'commonjs2'
+  },
+  optimization: {
+    minimize: false
   },
   resolve: {
     extensions: ['.ts', '.js'],
     plugins: [new TsconfigPathsPlugin()],
-    modules: [path.resolve(__dirname), 'node_modules'],
-  },
-  optimization: {
-    minimize: false,
+    modules: ['node_modules', path.resolve(__dirname, 'src')]
   },
   module: {
     rules: [
@@ -28,12 +29,13 @@ module.exports = {
             loader: 'ts-loader',
             options: {
               configFile: 'tsconfig.build.json',
-            },
-          },
+              transpileOnly: false
+            }
+          }
         ],
-        exclude: /node_modules/,
-      },
-    ],
+        exclude: /node_modules/
+      }
+    ]
   },
   plugins: [
     new webpack.IgnorePlugin({
@@ -43,7 +45,7 @@ module.exports = {
           '@nestjs/platform-express',
           'cache-manager',
           'class-validator',
-          'class-transformer',
+          'class-transformer'
         ];
         if (!lazyImports.includes(resource)) {
           return false;
@@ -54,7 +56,7 @@ module.exports = {
           return true;
         }
         return false;
-      },
-    }),
-  ],
+      }
+    })
+  ]
 };
