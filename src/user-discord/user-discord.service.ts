@@ -3,6 +3,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto'; // Añadido SortOrder
+import { APIInteractionResponse, InteractionResponseType } from 'discord.js';
+import { InteractPoints } from '../discord/discord.types';
 
 @Injectable()
 export class UserDiscordService {
@@ -18,13 +20,11 @@ export class UserDiscordService {
       user = this.userDiscordRepository.create({
         id: discordData.id,
         username: discordData.username,
-        nickname: discordData.nickname,
         roles: discordData.roles || [],
         discordData: discordData,
       });
       await this.userDiscordRepository.save(user);
     } else {
-      // Actualizar roles si han cambiado
       if (
         discordData.roles &&
         JSON.stringify(user.roles) !== JSON.stringify(discordData.roles)
@@ -32,7 +32,6 @@ export class UserDiscordService {
         await this.userDiscordRepository.update(user.id, {
           roles: discordData.roles,
           username: discordData.username,
-          nickname: discordData.nickname,
         });
       }
     }
@@ -127,5 +126,69 @@ export class UserDiscordService {
       );
     }
     return this.userDiscordRepository.update(id, { penaltyPoints: points });
+  }
+
+  async handlePointsOperation(
+    data: InteractPoints,
+    operation: 'add' | 'remove' | 'set',
+  ): Promise<APIInteractionResponse> {
+    try {
+      const { userId, points, username, roles } = data;
+      const discordUser = await this.findOrCreate({
+        id: userId,
+        username,
+        roles,
+      });
+
+      let newPoints: number;
+      let actionText: string;
+
+      switch (operation) {
+        case 'add':
+          await this.addPenaltyPoints(discordUser.id, points);
+          newPoints = discordUser.penaltyPoints + points;
+          actionText = 'añadido';
+          break;
+        case 'remove':
+          await this.addPenaltyPoints(discordUser.id, -points);
+          newPoints = discordUser.penaltyPoints - points;
+          actionText = 'quitado';
+          break;
+        case 'set':
+          await this.updatePoints(discordUser.id, points);
+          newPoints = points;
+          actionText = 'establecido';
+          break;
+      }
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Se han ${actionText} ${points} puntos de penalización al usuario ${discordUser.username}. Total actual: ${newPoints} puntos.`,
+        },
+      };
+    } catch (error) {
+      console.error(`Error en operación de puntos ${operation}:`, error);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Error al ${operation} puntos. Por favor, intenta nuevamente.`,
+        },
+      };
+    }
+  }
+
+  async handleAddPoints(data: InteractPoints): Promise<APIInteractionResponse> {
+    return this.handlePointsOperation(data, 'add');
+  }
+
+  async handleRemovePoints(
+    data: InteractPoints,
+  ): Promise<APIInteractionResponse> {
+    return this.handlePointsOperation(data, 'remove');
+  }
+
+  async handleSetPoints(data: InteractPoints): Promise<APIInteractionResponse> {
+    return this.handlePointsOperation(data, 'set');
   }
 }

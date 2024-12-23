@@ -97,50 +97,42 @@ export class DiscordController {
         const commandData =
           interactionPayload.data as APIChatInputApplicationCommandInteractionData;
 
-        console.log('Command name:', commandData.name);
-        console.log('Options:', JSON.stringify(commandData.options, null, 2));
-        console.log(
-          'Resolved data:',
-          JSON.stringify(commandData.resolved, null, 2),
-        );
-
         if (!commandData?.name) {
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: 'Error: Comando inválido o faltante.',
-            },
+            data: { content: 'Error: Comando inválido o faltante.' },
           };
         }
 
-        const options = commandData.options || [];
+        if (
+          ['añadir-puntos', 'quitar-puntos', 'establecer-puntos'].includes(
+            commandData.name,
+          )
+        ) {
+          const validation = this.validatePointsCommand(commandData);
+          if ('error' in validation) {
+            return validation.error;
+          }
+
+          switch (commandData.name) {
+            case 'añadir-puntos':
+              return await this.discordService.handleAddPoints(validation);
+            case 'quitar-puntos':
+              return await this.discordService.handleRemovePoints(validation);
+            case 'establecer-puntos':
+              return await this.discordService.handleSetPoints(validation);
+          }
+        }
 
         switch (commandData.name) {
           case 'crear-nota':
-            return await this.discordService.handleCreateNote(options);
-          case 'añadir-puntos':
-          case 'quitar-puntos':
-          case 'establecer-puntos': {
-            const validation = this.validatePointsCommand(commandData);
-            if ('error' in validation) {
-              return validation.error;
-            }
-
-            switch (commandData.name) {
-              case 'añadir-puntos':
-                return await this.discordService.handleAddPoints(validation);
-              case 'quitar-puntos':
-                return await this.discordService.handleRemovePoints(validation);
-              case 'establecer-puntos':
-                return await this.discordService.handleSetPoints(validation);
-            }
-          }
+            return await this.discordService.handleCreateNote(
+              commandData.options || [],
+            );
           default:
             return {
               type: InteractionResponseType.ChannelMessageWithSource,
-              data: {
-                content: `Comando "${commandData.name}" no reconocido.`,
-              },
+              data: { content: `Comando "${commandData.name}" no reconocido.` },
             };
         }
       }

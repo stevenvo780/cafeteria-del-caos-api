@@ -39,13 +39,6 @@ export class UserDiscord extends SharedProp {
   })
   username: string;
 
-  @Column({ nullable: true })
-  @ApiProperty({
-    description: 'Apodo en el servidor',
-    example: 'Nickname',
-  })
-  nickname: string;
-
   @Column('jsonb', { default: [] })
   @ApiProperty({
     description: 'Roles del usuario en Discord',

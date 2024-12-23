@@ -105,80 +105,18 @@ export class DiscordService {
     }
   }
 
-  private async handlePointsOperation(
-    data: InteractPoints,
-    operation: 'add' | 'remove' | 'set',
-  ): Promise<APIInteractionResponse> {
-    try {
-      const { userId, points, username, roles } = data;
-
-      const discordUserData: DiscordUserData = {
-        id: userId,
-        username,
-        roles: roles,
-      };
-
-      console.log('discordUserData', discordUserData);
-      const discordUser = await this.userDiscordService.findOrCreate(
-        discordUserData,
-      );
-
-      let newPoints: number;
-      let actionText: string;
-
-      switch (operation) {
-        case 'add':
-          await this.userDiscordService.addPenaltyPoints(
-            discordUser.id,
-            points,
-          );
-          newPoints = discordUser.penaltyPoints + points;
-          actionText = 'añadido';
-          break;
-        case 'remove':
-          await this.userDiscordService.addPenaltyPoints(
-            discordUser.id,
-            -points,
-          );
-          newPoints = discordUser.penaltyPoints - points;
-          actionText = 'quitado';
-          break;
-        case 'set':
-          await this.userDiscordService.updatePoints(discordUser.id, points);
-          newPoints = points;
-          actionText = 'establecido';
-          break;
-      }
-
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Se han ${actionText} ${points} puntos de penalización al usuario ${discordUser.username}. Total actual: ${newPoints} puntos.`,
-        },
-      };
-    } catch (error) {
-      console.error(`Error ${operation} puntos:`, error);
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Error al ${operation} puntos. Por favor, intenta nuevamente.`,
-        },
-      };
-    }
-  }
-
   async handleAddPoints(data: InteractPoints): Promise<APIInteractionResponse> {
-    return this.handlePointsOperation(data, 'add');
+    return this.userDiscordService.handleAddPoints(data);
   }
 
   async handleRemovePoints(
     data: InteractPoints,
   ): Promise<APIInteractionResponse> {
-    return this.handlePointsOperation(data, 'remove');
+    return this.userDiscordService.handleRemovePoints(data);
   }
 
   async handleSetPoints(data: InteractPoints): Promise<APIInteractionResponse> {
-    return this.handlePointsOperation(data, 'set');
+    return this.userDiscordService.handleSetPoints(data);
   }
 
   async handleMessage(
