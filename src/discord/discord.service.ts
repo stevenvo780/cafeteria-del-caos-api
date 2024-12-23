@@ -184,7 +184,7 @@ export class DiscordService {
         roles: userOption.member?.roles || [],
         discordData: userOption.user,
       };
-
+      console.log('discordUserData', discordUserData);
       const discordUser = await this.userDiscordService.findOrCreate(
         discordUserData,
       );
@@ -199,6 +199,7 @@ export class DiscordService {
         },
       };
     } catch (error) {
+      console.error('Error añadiendo puntos:', error);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {

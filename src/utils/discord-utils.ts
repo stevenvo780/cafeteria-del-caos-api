@@ -80,7 +80,7 @@ export async function createDiscordEvent(
 
     console.log('Event created in Discord successfully.');
   } catch (error) {
-    await destroyDiscordClient(); // Limpia en caso de error
+    await destroyDiscordClient();
     if (error instanceof Error) {
       console.error('Error creating event in Discord:', error);
       throw new Error(`Failed to create Discord event: ${error.message}`);
