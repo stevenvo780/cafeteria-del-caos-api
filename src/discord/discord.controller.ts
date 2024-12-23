@@ -100,6 +100,8 @@ export class DiscordController {
 
         const options = commandData.options || [];
 
+        console.log('Command data:', commandData);
+
         switch (commandData.name) {
           case 'crear-nota':
             return await this.discordService.handleCreateNote(options);
