@@ -15,6 +15,10 @@ import {
   InteractionType,
   InteractionResponseType,
   APIChatInputApplicationCommandInteractionData,
+  APIApplicationCommandInteractionDataUserOption,
+  APIApplicationCommandInteractionDataNumberOption,
+  APIInteractionDataResolvedGuildMember,
+  APIUser,
 } from 'discord.js';
 
 @ApiTags('discord')
@@ -76,7 +80,10 @@ export class DiscordController {
       throw new UnauthorizedException('Invalid request signature');
     }
 
-    console.log('Discord interaction:', interactionPayload);
+    console.log(
+      'Discord interaction type:',
+      InteractionType[interactionPayload.type],
+    );
 
     switch (interactionPayload.type) {
       case InteractionType.Ping:
@@ -88,6 +95,13 @@ export class DiscordController {
       case InteractionType.ApplicationCommand: {
         const commandData =
           interactionPayload.data as APIChatInputApplicationCommandInteractionData;
+
+        console.log('Command name:', commandData.name);
+        console.log('Options:', JSON.stringify(commandData.options, null, 2));
+        console.log(
+          'Resolved data:',
+          JSON.stringify(commandData.resolved, null, 2),
+        );
 
         if (!commandData?.name) {
           return {
@@ -108,11 +122,34 @@ export class DiscordController {
           case 'infraccion':
             return await this.discordService.handleInfraction(options);
           case 'añadir-puntos':
-            return await this.discordService.handleAddPoints(options);
           case 'quitar-puntos':
-            return await this.discordService.handleRemovePoints(options);
-          case 'establecer-puntos':
-            return await this.discordService.handleSetPoints(options);
+          case 'establecer-puntos': {
+            const validation = this.validatePointsCommand(commandData);
+
+            if ('error' in validation) {
+              return validation.error;
+            }
+
+            const { userOption, pointsOption } = validation;
+
+            switch (commandData.name) {
+              case 'añadir-puntos':
+                return await this.discordService.handleAddPoints([
+                  userOption,
+                  pointsOption,
+                ]);
+              case 'quitar-puntos':
+                return await this.discordService.handleRemovePoints([
+                  userOption,
+                  pointsOption,
+                ]);
+              case 'establecer-puntos':
+                return await this.discordService.handleSetPoints([
+                  userOption,
+                  pointsOption,
+                ]);
+            }
+          }
           default:
             return {
               type: InteractionResponseType.ChannelMessageWithSource,
@@ -176,5 +213,57 @@ export class DiscordController {
     console.log('Discord webhook event:', eventPayload);
 
     return { message: 'Webhook received' };
+  }
+
+  private validatePointsCommand(
+    commandData: APIChatInputApplicationCommandInteractionData,
+  ) {
+    const userOption = commandData.options?.find(
+      (opt) => opt.name === 'usuario',
+    ) as APIApplicationCommandInteractionDataUserOption;
+
+    const pointsOption = commandData.options?.find(
+      (opt) => opt.name === 'puntos',
+    ) as APIApplicationCommandInteractionDataNumberOption;
+
+    if (!userOption || !pointsOption) {
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error: Faltan parámetros requeridos (usuario o puntos).',
+          },
+        },
+      };
+    }
+
+    const userId = userOption.value;
+    const points = pointsOption.value;
+
+    const resolvedUser = commandData.resolved?.users?.[userId] as APIUser;
+    const resolvedMember = commandData.resolved?.members?.[
+      userId
+    ] as APIInteractionDataResolvedGuildMember;
+
+    if (!resolvedUser || !resolvedMember) {
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content:
+              'Error: No se pudo resolver el usuario o miembro especificado.',
+          },
+        },
+      };
+    }
+
+    console.log('Processing points command:', {
+      userId,
+      points,
+      username: resolvedUser.username,
+      roles: resolvedMember.roles || [],
+    });
+
+    return { userOption, pointsOption, resolvedUser, resolvedMember };
   }
 }
