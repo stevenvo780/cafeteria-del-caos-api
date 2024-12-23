@@ -5,7 +5,6 @@ import { Events, Repetition } from './entities/events.entity';
 import { User } from '../user/entities/user.entity';
 import { CreateEventsDto } from './dto/create-events.dto';
 import { UpdateEventsDto } from './dto/update-events.dto';
-import { createDiscordEvent } from '../utils/discord-utils';
 
 @Injectable()
 export class EventsService {
@@ -19,11 +18,7 @@ export class EventsService {
     Object.assign(baseEvent, createEventsDto);
     baseEvent.author = user;
 
-    const savedEvent = await this.eventsRepository.save(baseEvent);
-
-    await createDiscordEvent(process.env.DISCORD_GUILD_ID, createEventsDto);
-
-    return savedEvent;
+    return await this.eventsRepository.save(baseEvent);
   }
 
   findAll(): Promise<Events[]> {
