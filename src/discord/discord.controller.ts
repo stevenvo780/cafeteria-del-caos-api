@@ -48,46 +48,85 @@ export class DiscordController {
     @Headers('x-signature-ed25519') signature: string,
     @Headers('x-signature-timestamp') timestamp: string,
   ): Promise<any> {
-    if (
-      !this.discordService.verifyDiscordRequest(
-        signature,
-        timestamp,
-        eventPayload,
-      )
-    ) {
-      throw new UnauthorizedException('Invalid request signature');
-    }
+    try {
+      if (!signature || !timestamp) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error: Cabeceras de autenticación faltantes.',
+          },
+        };
+      }
 
-    if (eventPayload.type === InteractionType.Ping) {
-      return { type: InteractionResponseType.Pong };
-    }
+      if (
+        !this.discordService.verifyDiscordRequest(
+          signature,
+          timestamp,
+          eventPayload,
+        )
+      ) {
+        throw new UnauthorizedException('Invalid request signature');
+      }
 
-    if (eventPayload.type === InteractionType.ApplicationCommand) {
-      switch (eventPayload.data.name) {
-        case 'crear-nota':
-          return this.discordService.handleCreateNote(
-            eventPayload.data.options,
-          );
-        case 'infraccion':
-          return this.discordService.handleInfraction(
-            eventPayload.data.options,
-          );
-        case 'añadir-puntos':
-          return this.discordService.handleAddPoints(eventPayload.data.options);
-        case 'quitar-puntos':
-          return this.discordService.handleRemovePoints(
-            eventPayload.data.options,
-          );
-        case 'establecer-puntos':
-          return this.discordService.handleSetPoints(eventPayload.data.options);
-        default:
+      if (eventPayload.type === InteractionType.Ping) {
+        return { type: InteractionResponseType.Pong };
+      }
+
+      if (eventPayload.type === InteractionType.ApplicationCommand) {
+        if (!eventPayload.data?.name) {
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: 'Comando no reconocido',
+              content: 'Error: Comando inválido o faltante.',
             },
           };
+        }
+
+        switch (eventPayload.data.name) {
+          case 'crear-nota':
+            return await this.discordService.handleCreateNote(
+              eventPayload.data.options || [],
+            );
+          case 'infraccion':
+            return await this.discordService.handleInfraction(
+              eventPayload.data.options || [],
+            );
+          case 'añadir-puntos':
+            return await this.discordService.handleAddPoints(
+              eventPayload.data.options || [],
+            );
+          case 'quitar-puntos':
+            return await this.discordService.handleRemovePoints(
+              eventPayload.data.options || [],
+            );
+          case 'establecer-puntos':
+            return await this.discordService.handleSetPoints(
+              eventPayload.data.options || [],
+            );
+          default:
+            return {
+              type: InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                content: `Comando "${eventPayload.data.name}" no reconocido.`,
+              },
+            };
+        }
       }
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Tipo de interacción no soportado.',
+        },
+      };
+    } catch (error) {
+      console.error('Error en webhook de Discord:', error);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error interno del servidor. Por favor, intenta nuevamente.',
+        },
+      };
     }
   }
 }

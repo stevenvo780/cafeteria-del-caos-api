@@ -54,145 +54,239 @@ export class DiscordService {
   }
 
   async handleCreateNote(options: any[]): Promise<any> {
-    const titulo = options.find((option) => option.name === 'titulo').value;
-    const contenido = options.find(
-      (option) => option.name === 'contenido',
-    ).value;
+    try {
+      const titulo = options.find((option) => option.name === 'titulo')?.value;
+      const contenido = options.find(
+        (option) => option.name === 'contenido',
+      )?.value;
 
-    const data = {
-      title: titulo,
-      description: contenido,
-      referenceDate: new Date(),
-    };
+      if (!titulo || !contenido) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error: Título y contenido son requeridos.',
+          },
+        };
+      }
 
-    const note = await this.libraryService.create(data, null);
-    const truncatedContent =
-      contenido.length > 1000
-        ? contenido.substring(0, 1000) + '...'
-        : contenido;
+      const data = {
+        title: titulo,
+        description: contenido,
+        referenceDate: new Date(),
+      };
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: `URL: ${process.env.FRONT_URL}/library/${note.id}\n\nContenido:\n${truncatedContent}`,
-      },
-    };
+      const note = await this.libraryService.create(data, null);
+      const truncatedContent =
+        contenido.length > 1000
+          ? contenido.substring(0, 1000) + '...'
+          : contenido;
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Nota creada exitosamente!\nURL: ${process.env.FRONT_URL}/library/${note.id}\n\nContenido:\n${truncatedContent}`,
+        },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error al crear la nota. Por favor, intenta nuevamente.',
+        },
+      };
+    }
   }
 
   async handleInfraction(options: any[]): Promise<any> {
-    const userOption = options.find((option) => option.name === 'usuario');
-    const tipo = options.find((option) => option.name === 'tipo').value;
+    try {
+      const userOption = options.find((option) => option.name === 'usuario');
+      const tipo = options.find((option) => option.name === 'tipo')?.value;
 
-    const discordUserData = {
-      id: userOption.value,
-      username: userOption.user.username,
-      nickname: userOption.member?.nickname,
-      roles: userOption.member?.roles || [],
-      discordData: {
-        ...userOption.user,
-        member: {
-          ...userOption.member,
-          joinedAt: userOption.member?.joined_at,
-          permissions: userOption.member?.permissions,
-          communicationDisabledUntil:
-            userOption.member?.communication_disabled_until,
+      if (!userOption || !tipo || !INFRACTION_POINTS[tipo]) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content:
+              'Error: Usuario y tipo de infracción válido son requeridos.',
+          },
+        };
+      }
+
+      const discordUserData = {
+        id: userOption.value,
+        username: userOption.user.username,
+        nickname: userOption.member?.nickname,
+        roles: userOption.member?.roles || [],
+        discordData: {
+          ...userOption.user,
+          member: {
+            ...userOption.member,
+            joinedAt: userOption.member?.joined_at,
+            permissions: userOption.member?.permissions,
+            communicationDisabledUntil:
+              userOption.member?.communication_disabled_until,
+          },
+          avatar: userOption.user.avatar,
+          discriminator: userOption.user.discriminator,
+          bot: userOption.user.bot,
+          system: userOption.user.system,
+          flags: userOption.user.flags,
+          globalName: userOption.user.global_name,
         },
-        avatar: userOption.user.avatar,
-        discriminator: userOption.user.discriminator,
-        bot: userOption.user.bot,
-        system: userOption.user.system,
-        flags: userOption.user.flags,
-        globalName: userOption.user.global_name,
-      },
-    };
+      };
 
-    const discordUser = await this.userDiscordService.findOrCreate(
-      discordUserData,
-    );
+      const discordUser = await this.userDiscordService.findOrCreate(
+        discordUserData,
+      );
 
-    const points = INFRACTION_POINTS[tipo];
-    await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
+      const points = INFRACTION_POINTS[tipo];
+      await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: `Se han añadido ${points} puntos de penalización al usuario ${discordUser.username}.`,
-      },
-    };
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Se han añadido ${points} puntos de penalización al usuario ${discordUser.username} por infracción de tipo ${tipo}.`,
+        },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content:
+            'Error al procesar la infracción. Por favor, intenta nuevamente.',
+        },
+      };
+    }
   }
 
   async handleAddPoints(options: any[]): Promise<any> {
-    const userOption = options.find((option) => option.name === 'usuario');
-    const points = options.find((option) => option.name === 'puntos').value;
+    try {
+      const userOption = options.find((option) => option.name === 'usuario');
+      const points = options.find((option) => option.name === 'puntos')?.value;
 
-    const discordUserData = {
-      id: userOption.value,
-      username: userOption.user.username,
-      nickname: userOption.member?.nickname,
-      roles: userOption.member?.roles || [],
-      discordData: userOption.user,
-    };
+      if (!userOption || points === undefined) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error: Usuario y puntos son requeridos.',
+          },
+        };
+      }
 
-    const discordUser = await this.userDiscordService.findOrCreate(
-      discordUserData,
-    );
-    await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
+      const discordUserData = {
+        id: userOption.value,
+        username: userOption.user.username,
+        nickname: userOption.member?.nickname,
+        roles: userOption.member?.roles || [],
+        discordData: userOption.user,
+      };
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: `Se han añadido ${points} puntos de penalización al usuario ${discordUser.username}.`,
-      },
-    };
+      const discordUser = await this.userDiscordService.findOrCreate(
+        discordUserData,
+      );
+      await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Se han añadido ${points} puntos de penalización al usuario ${
+            discordUser.username
+          }. Total actual: ${discordUser.penaltyPoints + points} puntos.`,
+        },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error al añadir puntos. Por favor, intenta nuevamente.',
+        },
+      };
+    }
   }
 
   async handleRemovePoints(options: any[]): Promise<any> {
-    const userOption = options.find((option) => option.name === 'usuario');
-    const points = options.find((option) => option.name === 'puntos').value;
+    try {
+      const userOption = options.find((option) => option.name === 'usuario');
+      const points = options.find((option) => option.name === 'puntos').value;
 
-    const discordUserData = {
-      id: userOption.value,
-      username: userOption.user.username,
-      nickname: userOption.member?.nickname,
-      roles: userOption.member?.roles || [],
-      discordData: userOption.user,
-    };
+      if (!userOption || points === undefined) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error: Usuario y puntos son requeridos.',
+          },
+        };
+      }
 
-    const discordUser = await this.userDiscordService.findOrCreate(
-      discordUserData,
-    );
-    await this.userDiscordService.addPenaltyPoints(discordUser.id, -points);
+      const discordUserData = {
+        id: userOption.value,
+        username: userOption.user.username,
+        nickname: userOption.member?.nickname,
+        roles: userOption.member?.roles || [],
+        discordData: userOption.user,
+      };
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: `Se han quitado ${points} puntos de penalización al usuario ${discordUser.username}.`,
-      },
-    };
+      const discordUser = await this.userDiscordService.findOrCreate(
+        discordUserData,
+      );
+      await this.userDiscordService.addPenaltyPoints(discordUser.id, -points);
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Se han quitado ${points} puntos de penalización al usuario ${discordUser.username}.`,
+        },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error al quitar puntos. Por favor, intenta nuevamente.',
+        },
+      };
+    }
   }
 
   async handleSetPoints(options: any[]): Promise<any> {
-    const userOption = options.find((option) => option.name === 'usuario');
-    const points = options.find((option) => option.name === 'puntos').value;
+    try {
+      const userOption = options.find((option) => option.name === 'usuario');
+      const points = options.find((option) => option.name === 'puntos').value;
 
-    const discordUserData = {
-      id: userOption.value,
-      username: userOption.user.username,
-      nickname: userOption.member?.nickname,
-      roles: userOption.member?.roles || [],
-      discordData: userOption.user,
-    };
+      if (!userOption || points === undefined) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error: Usuario y puntos son requeridos.',
+          },
+        };
+      }
 
-    const discordUser = await this.userDiscordService.findOrCreate(
-      discordUserData,
-    );
-    await this.userDiscordService.updatePoints(discordUser.id, points);
+      const discordUserData = {
+        id: userOption.value,
+        username: userOption.user.username,
+        nickname: userOption.member?.nickname,
+        roles: userOption.member?.roles || [],
+        discordData: userOption.user,
+      };
 
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: `Se han establecido ${points} puntos de penalización al usuario ${discordUser.username}.`,
-      },
-    };
+      const discordUser = await this.userDiscordService.findOrCreate(
+        discordUserData,
+      );
+      await this.userDiscordService.updatePoints(discordUser.id, points);
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `Se han establecido ${points} puntos de penalización al usuario ${discordUser.username}.`,
+        },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error al establecer puntos. Por favor, intenta nuevamente.',
+        },
+      };
+    }
   }
 }
