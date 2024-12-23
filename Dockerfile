@@ -11,16 +11,17 @@ COPY package*.json ./
 COPY tsconfig*.json nest-cli.json ./
 
 # Instalar dependencias con cache optimizado
-RUN npm ci --only=production
+RUN npm ci
 
 # Copiar el código fuente
 COPY . .
 
 # Construir la aplicación con optimización
 RUN npm run build:prod
+RUN npm prune --production
 
 # Production stage
-FROM gcr.io/distroless/nodejs:18
+FROM node:18-alpine
 
 WORKDIR /app
 
@@ -42,4 +43,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
 EXPOSE ${PORT}
 
 # Comando de inicio
-CMD ["node", "dist/main"]
+CMD ["node", "dist/main.js"]
