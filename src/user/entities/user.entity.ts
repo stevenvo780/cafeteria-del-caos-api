@@ -9,6 +9,13 @@ export enum UserRole {
   USER = 'user',
 }
 
+export enum InfractionType {
+  BLACK = 'BLACK',
+  RED = 'RED',
+  ORANGE = 'ORANGE',
+  YELLOW = 'YELLOW',
+}
+
 @Entity()
 export class User extends SharedProp {
   @PrimaryColumn()
@@ -40,4 +47,11 @@ export class User extends SharedProp {
     example: UserRole.USER,
   })
   role: UserRole;
+
+  @Column({ default: 0 })
+  @ApiProperty({
+    description: 'Puntos de penalización del usuario',
+    example: 0,
+  })
+  penaltyPoints: number;
 }

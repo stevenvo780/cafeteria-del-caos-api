@@ -29,4 +29,12 @@ export class UserService {
   updateRole(id: string, role: User['role']): Promise<UpdateResult> {
     return this.userRepository.update(id, { role });
   }
+
+  async addPenaltyPoints(id: string, points: number): Promise<UpdateResult> {
+    const user = await this.findOne(id);
+    if (!user) throw new Error('Usuario no encontrado');
+
+    const newPoints = user.penaltyPoints + points;
+    return this.userRepository.update(id, { penaltyPoints: newPoints });
+  }
 }

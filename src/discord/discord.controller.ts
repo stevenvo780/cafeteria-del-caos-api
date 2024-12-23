@@ -6,20 +6,16 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { DiscordService } from './discord.service';
-import { LibraryService } from '../library/library.service';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { InteractionType, InteractionResponseType } from 'discord.js';
-import * as nacl from 'tweetnacl';
 
 @ApiTags('discord')
 @Controller('discord')
 export class DiscordController {
-  constructor(
-    private readonly discordService: DiscordService,
-    private readonly libraryService: LibraryService,
-  ) {}
+  constructor(private readonly discordService: DiscordService) {}
 
   @ApiOperation({
     summary: 'Obtener el total de miembros de un servidor de Discord',
@@ -52,57 +48,37 @@ export class DiscordController {
     @Headers('x-signature-ed25519') signature: string,
     @Headers('x-signature-timestamp') timestamp: string,
   ): Promise<any> {
-    const publicKey = process.env.DISCORD_PUBLIC_KEY;
-    const isVerified = nacl.sign.detached.verify(
-      Buffer.from(timestamp + JSON.stringify(eventPayload)),
-      Buffer.from(signature, 'hex'),
-      Buffer.from(publicKey, 'hex'),
-    );
-
-    if (!isVerified) {
-      throw new Error('Invalid request signature');
+    if (
+      !this.discordService.verifyDiscordRequest(
+        signature,
+        timestamp,
+        eventPayload,
+      )
+    ) {
+      throw new UnauthorizedException('Invalid request signature');
     }
-    console.log('Event Payload:', eventPayload.type);
-    if (eventPayload.type === (InteractionType.Ping as number)) {
+
+    if (eventPayload.type === InteractionType.Ping) {
       return { type: InteractionResponseType.Pong };
     }
 
     if (eventPayload.type === InteractionType.ApplicationCommand) {
-      console.log('eventPayload:', eventPayload.data);
-      if (eventPayload.data.name === 'crear-nota') {
-        const titulo = eventPayload.data.options.find(
-          (option: any) => option.name === 'titulo',
-        ).value;
-        const contenido = eventPayload.data.options.find(
-          (option: any) => option.name === 'contenido',
-        ).value;
-
-        const data = {
-          title: titulo,
-          description: contenido,
-          referenceDate: new Date(),
-        };
-
-        const note = await this.libraryService.create(data, null);
-        const truncatedContent =
-          contenido.length > 1000
-            ? contenido.substring(0, 1000) + '...'
-            : contenido;
-        console.log('Note:', note);
-
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: `URL: ${process.env.FRONT_URL}/library/${note.id}\n\nContenido:\n${truncatedContent}`,
-          },
-        };
-      } else {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Comando no reconocido',
-          },
-        };
+      switch (eventPayload.data.name) {
+        case 'crear-nota':
+          return this.discordService.handleCreateNote(
+            eventPayload.data.options,
+          );
+        case 'infraccion':
+          return this.discordService.handleInfraction(
+            eventPayload.data.options,
+          );
+        default:
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: 'Comando no reconocido',
+            },
+          };
       }
     }
   }
