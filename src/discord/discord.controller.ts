@@ -41,97 +41,119 @@ export class DiscordController {
     return this.discordService.getOnlineMemberCount();
   }
 
+  @Post('interactions')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      'Endpoint para manejar interacciones de Discord (comandos, botones, etc)',
+  })
+  async handleDiscordInteractions(
+    @Body() interactionPayload: any,
+    @Headers('x-signature-ed25519') signature: string,
+    @Headers('x-signature-timestamp') timestamp: string,
+  ): Promise<any> {
+    if (!signature || !timestamp) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: 'Error: Cabeceras de autenticación faltantes.',
+        },
+      };
+    }
+
+    if (
+      !this.discordService.verifyDiscordRequest(
+        signature,
+        timestamp,
+        interactionPayload,
+      )
+    ) {
+      throw new UnauthorizedException('Invalid request signature');
+    }
+
+    if (interactionPayload.type === InteractionType.Ping) {
+      return { type: InteractionResponseType.Pong };
+    }
+
+    if (interactionPayload.type === InteractionType.MessageComponent) {
+      return await this.discordService.handleMessage(interactionPayload);
+    }
+
+    if (interactionPayload.type === InteractionType.ApplicationCommand) {
+      if (!interactionPayload.data?.name) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error: Comando inválido o faltante.',
+          },
+        };
+      }
+
+      switch (interactionPayload.data.name) {
+        case 'crear-nota':
+          return await this.discordService.handleCreateNote(
+            interactionPayload.data.options || [],
+          );
+        case 'infraccion':
+          return await this.discordService.handleInfraction(
+            interactionPayload.data.options || [],
+          );
+        case 'añadir-puntos':
+          return await this.discordService.handleAddPoints(
+            interactionPayload.data.options || [],
+          );
+        case 'quitar-puntos':
+          return await this.discordService.handleRemovePoints(
+            interactionPayload.data.options || [],
+          );
+        case 'establecer-puntos':
+          return await this.discordService.handleSetPoints(
+            interactionPayload.data.options || [],
+          );
+        default:
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: `Comando "${interactionPayload.data.name}" no reconocido.`,
+            },
+          };
+      }
+    }
+
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: {
+        content: 'Tipo de interacción no soportado.',
+      },
+    };
+  }
+
   @Post('webhook')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Endpoint para manejar webhooks de Discord (eventos del servidor)',
+  })
   async handleDiscordWebhook(
     @Body() eventPayload: any,
     @Headers('x-signature-ed25519') signature: string,
     @Headers('x-signature-timestamp') timestamp: string,
   ): Promise<any> {
-    console.log('Discord webhook:', eventPayload);
-    try {
-      if (!signature || !timestamp) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Error: Cabeceras de autenticación faltantes.',
-          },
-        };
-      }
-
-      if (
-        !this.discordService.verifyDiscordRequest(
-          signature,
-          timestamp,
-          eventPayload,
-        )
-      ) {
-        throw new UnauthorizedException('Invalid request signature');
-      }
-
-      if (eventPayload.type === InteractionType.Ping) {
-        return { type: InteractionResponseType.Pong };
-      }
-
-      if (eventPayload.type === InteractionType.MessageComponent) {
-        return await this.discordService.handleMessage(eventPayload);
-      }
-
-      if (eventPayload.type === InteractionType.ApplicationCommand) {
-        if (!eventPayload.data?.name) {
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: 'Error: Comando inválido o faltante.',
-            },
-          };
-        }
-
-        switch (eventPayload.data.name) {
-          case 'crear-nota':
-            return await this.discordService.handleCreateNote(
-              eventPayload.data.options || [],
-            );
-          case 'infraccion':
-            return await this.discordService.handleInfraction(
-              eventPayload.data.options || [],
-            );
-          case 'añadir-puntos':
-            return await this.discordService.handleAddPoints(
-              eventPayload.data.options || [],
-            );
-          case 'quitar-puntos':
-            return await this.discordService.handleRemovePoints(
-              eventPayload.data.options || [],
-            );
-          case 'establecer-puntos':
-            return await this.discordService.handleSetPoints(
-              eventPayload.data.options || [],
-            );
-          default:
-            return {
-              type: InteractionResponseType.ChannelMessageWithSource,
-              data: {
-                content: `Comando "${eventPayload.data.name}" no reconocido.`,
-              },
-            };
-        }
-      }
-
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: 'Tipo de interacción no soportado.',
-        },
-      };
-    } catch (error) {
-      console.error('Error en webhook de Discord:', error);
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: 'Error interno del servidor. Por favor, intenta nuevamente.',
-        },
-      };
+    if (!signature || !timestamp) {
+      throw new UnauthorizedException('Missing authentication headers');
     }
+
+    if (
+      !this.discordService.verifyDiscordRequest(
+        signature,
+        timestamp,
+        eventPayload,
+      )
+    ) {
+      throw new UnauthorizedException('Invalid request signature');
+    }
+
+    console.log('Discord webhook event:', eventPayload);
+
+    return { message: 'Webhook received' };
   }
 }
