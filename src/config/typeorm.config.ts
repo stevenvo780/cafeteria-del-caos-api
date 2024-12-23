@@ -7,7 +7,6 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'cafeteria_del_caos',
-  // Sin "entities" ni "migrations" aquí
   autoLoadEntities: true,
   synchronize: process.env.DB_SYNCHRONIZE === 'true',
 };
