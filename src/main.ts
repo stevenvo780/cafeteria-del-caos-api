@@ -1,33 +1,42 @@
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { AppProvider } from './app.provider';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import * as compression from 'compression';
+import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
 
 async function bootstrap() {
   dotenv.config();
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: true,
+    cors: true,
+  });
 
-  app.enableCors();
+  app.use(compression());
 
-  const appProvider = app.get(AppProvider);
-  appProvider.setApp(app);
   const config = new DocumentBuilder()
-    .setTitle('CAFETERIA DEL CAOS API')
-    .setDescription(
-      'This is the documentation for CAFETERIA DEL CAOS. Feel free to contribute to our project.',
-    )
+    .setTitle('Cafeteria del Caos API')
+    .setDescription('API documentation for Cafeteria del Caos')
     .setVersion('1.0')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
       'access-token',
     )
     .build();
-
   const document = SwaggerModule.createDocument(app, config);
-
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(8080);
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .get('/health', (req, res) => {
+      res.status(200).send('OK');
+    });
+
+  const configService = app.get(ConfigService);
+  const port = configService.get('PORT', 8080);
+  await app.listen(port, '0.0.0.0', () => {
+    console.log(`Application is running on port ${port}`);
+  });
 }
 bootstrap();

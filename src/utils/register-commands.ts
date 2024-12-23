@@ -79,12 +79,20 @@ export async function registerDiscordCommands() {
     },
   ];
 
-  const rest = new REST({ version: '10' }).setToken(
-    process.env.DISCORD_BOT_TOKEN,
-  );
+  const token = process.env.DISCORD_BOT_TOKEN;
+  if (!token) {
+    throw new Error('DISCORD_BOT_TOKEN is not defined');
+  }
+
+  const rest = new REST({ version: '10' }).setToken(token);
+
+  const clientId = process.env.DISCORD_CLIENT_ID;
+  if (!clientId) {
+    throw new Error('DISCORD_CLIENT_ID is not defined');
+  }
 
   try {
-    await rest.put(Routes.applicationCommands(process.env.DISCORD_CLIENT_ID), {
+    await rest.put(Routes.applicationCommands(clientId), {
       body: commands,
     });
 

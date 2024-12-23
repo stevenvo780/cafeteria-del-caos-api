@@ -4,40 +4,50 @@ import {
   GuildScheduledEventPrivacyLevel,
 } from 'discord.js';
 import axios from 'axios';
-import * as TurndownService from 'turndown';
+import TurndownService from 'turndown';
 import { CreateEventsDto } from 'src/events/dto/create-events.dto';
 
 const turndownService = new TurndownService();
-
 let discordClient: Client | null = null;
+
+async function initializeClient(): Promise<Client> {
+  const client = new Client({
+    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildScheduledEvents],
+    rest: {
+      timeout: 15000,
+      retries: 3,
+    },
+  });
+
+  await client.login(process.env.DISCORD_BOT_TOKEN);
+  return client;
+}
 
 async function getDiscordClient(): Promise<Client> {
   if (!discordClient) {
-    discordClient = new Client({
-      intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildScheduledEvents,
-      ],
-    });
-
-    try {
-      await discordClient.login(process.env.DISCORD_BOT_TOKEN);
-      console.log('Discord client initialized.');
-    } catch (error) {
-      console.error('Error initializing Discord client:', error);
-      throw error;
-    }
+    discordClient = await initializeClient();
   }
   return discordClient;
+}
+
+export async function destroyDiscordClient(): Promise<void> {
+  if (discordClient) {
+    await discordClient.destroy();
+    discordClient = null;
+  }
 }
 
 export async function createDiscordEvent(
   guildId: string,
   createEventDto: CreateEventsDto,
 ): Promise<void> {
-  const client = await getDiscordClient();
-
   try {
+    const client = await getDiscordClient();
+
+    if (!guildId?.match(/^\d+$/)) {
+      throw new Error('Invalid guild ID format');
+    }
+
     const now = new Date();
     const startDate = new Date(createEventDto.startDate);
     const endDate = new Date(createEventDto.endDate);
@@ -70,18 +80,27 @@ export async function createDiscordEvent(
 
     console.log('Event created in Discord successfully.');
   } catch (error) {
-    console.error('Error creating event in Discord:', error);
-    throw error;
+    await destroyDiscordClient(); // Limpia en caso de error
+    if (error instanceof Error) {
+      console.error('Error creating event in Discord:', error);
+      throw new Error(`Failed to create Discord event: ${error.message}`);
+    } else {
+      console.error('Unknown error creating event in Discord:', error);
+      throw new Error(
+        'Failed to create Discord event due to an unknown error.',
+      );
+    }
   }
 }
 
+// Las demás funciones solo obtienen el cliente cuando es necesario
 export async function getGuildMemberCount(guildId: string): Promise<number> {
-  const client = await getDiscordClient();
-
   try {
+    const client = await getDiscordClient();
     const guild = await client.guilds.fetch(guildId);
     return guild.memberCount;
   } catch (error) {
+    await destroyDiscordClient();
     console.error('Error fetching guild member count:', error);
     throw error;
   }

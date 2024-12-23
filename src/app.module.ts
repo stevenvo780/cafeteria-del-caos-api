@@ -3,6 +3,7 @@ import {
   NestModule,
   MiddlewareConsumer,
   OnModuleInit,
+  OnModuleDestroy,
 } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -20,6 +21,7 @@ import { LikeModule } from './like/like.module';
 import { DiscordModule } from './discord/discord.module';
 import { registerDiscordCommands } from './utils/register-commands';
 import { UserDiscordModule } from './user-discord/user-discord.module';
+import { destroyDiscordClient } from './utils/discord-utils';
 
 @Module({
   imports: [
@@ -47,12 +49,16 @@ import { UserDiscordModule } from './user-discord/user-discord.module';
   controllers: [AppController],
   providers: [AppService, AppProvider],
 })
-export class AppModule implements NestModule, OnModuleInit {
+export class AppModule implements NestModule, OnModuleInit, OnModuleDestroy {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
   }
 
   async onModuleInit() {
     await registerDiscordCommands();
+  }
+
+  async onModuleDestroy() {
+    destroyDiscordClient();
   }
 }

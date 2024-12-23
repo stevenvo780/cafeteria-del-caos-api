@@ -1,22 +1,45 @@
-# Base image
-FROM node:18
+# Build stage
+FROM node:18-alpine AS builder
 
-# Create app directory
-WORKDIR /usr/src/app
+# Instalar dependencias necesarias para la compilación
+RUN apk add --no-cache python3 make g++ git
 
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
+WORKDIR /app
+
+# Copiar archivos necesarios para la instalación
 COPY package*.json ./
+COPY tsconfig*.json nest-cli.json ./
 
-# Install app dependencies
-RUN npm install
+# Instalar dependencias con cache optimizado
+RUN npm ci --only=production
 
-# Bundle app source
+# Copiar el código fuente
 COPY . .
 
-# Creates a "dist" folder with the production build
-RUN npm run build
+# Construir la aplicación con optimización
+RUN npm run build:prod
 
-EXPOSE 8080
+# Production stage
+FROM gcr.io/distroless/nodejs:18
 
-# Start the server using the production build
-CMD [ "node", "dist/main.js" ]
+WORKDIR /app
+
+# Copiar los artefactos de construcción
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY package*.json ./
+
+# Configuración de producción
+ENV NODE_ENV=production
+ENV PORT=8080
+ENV NODE_OPTIONS="--max-old-space-size=512 --no-warnings"
+
+# Health check para garantizar el uptime en Cloud Run
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD curl --fail http://localhost:${PORT}/health || exit 1
+
+# Exponer el puerto
+EXPOSE ${PORT}
+
+# Comando de inicio
+CMD ["node", "dist/main"]
