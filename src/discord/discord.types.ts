@@ -9,7 +9,6 @@ import {
 
 export { InteractionType, InteractionResponseType };
 
-// Interfaces auxiliares para el manejo de comandos
 export interface CommandOption {
   name: string;
   type: number;
@@ -24,13 +23,17 @@ export interface CommandInteractionData {
   resolved?: APIUserInteractionDataResolved;
 }
 
-// Tipos específicos para nuestro uso
 export interface DiscordUserData {
   id: string;
   username: string;
-  nickname?: string;
   roles: string[];
-  discordData: any;
+}
+
+export interface InteractPoints {
+  userId: string;
+  points: number;
+  username: string;
+  roles: string[];
 }
 
 export type MessageComponentInteraction = APIMessageComponentInteraction;

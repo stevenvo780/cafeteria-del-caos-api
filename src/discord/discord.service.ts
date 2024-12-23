@@ -1,10 +1,13 @@
 import { Injectable, HttpException } from '@nestjs/common';
-import { CommandOption, DiscordUserData } from './types/discord.types';
+import {
+  CommandOption,
+  DiscordUserData,
+  InteractPoints,
+} from './discord.types';
 import {
   APIInteractionResponse,
   InteractionResponseType,
   APIMessageComponentInteraction,
-  APIGuildMember,
 } from 'discord.js';
 import {
   getGuildMemberCount,
@@ -14,13 +17,6 @@ import { LibraryService } from '../library/library.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
 import * as nacl from 'tweetnacl';
 import { ConfigService } from '../config/config.service';
-
-const INFRACTION_POINTS: Record<string, number> = {
-  BLACK: 10,
-  RED: 5,
-  ORANGE: 3,
-  YELLOW: 2,
-};
 
 @Injectable()
 export class DiscordService {
@@ -109,200 +105,80 @@ export class DiscordService {
     }
   }
 
-  async handleInfraction(
-    options: CommandOption[],
+  private async handlePointsOperation(
+    data: InteractPoints,
+    operation: 'add' | 'remove' | 'set',
   ): Promise<APIInteractionResponse> {
     try {
-      const userOption = options.find((opt) => opt.name === 'usuario');
-      const tipo = options.find((opt) => opt.name === 'tipo')?.value as string;
-
-      if (!userOption?.user || !tipo || !(tipo in INFRACTION_POINTS)) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              'Error: Usuario y tipo de infracción válido son requeridos.',
-          },
-        };
-      }
+      const { userId, points, username, roles } = data;
 
       const discordUserData: DiscordUserData = {
-        id: userOption.value as string,
-        username: userOption.user.username,
-        nickname: (userOption.member as APIGuildMember)?.nick,
-        roles: (userOption.member as APIGuildMember)?.roles || [],
-        discordData: {
-          ...userOption.user,
-          member: userOption.member,
-        },
+        id: userId,
+        username,
+        roles: roles,
       };
 
-      const discordUser = await this.userDiscordService.findOrCreate(
-        discordUserData,
-      );
-
-      const points = INFRACTION_POINTS[tipo];
-      await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
-
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Se han añadido ${points} puntos de penalización al usuario ${discordUser.username} por infracción de tipo ${tipo}.`,
-        },
-      };
-    } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content:
-            'Error al procesar la infracción. Por favor, intenta nuevamente.',
-        },
-      };
-    }
-  }
-
-  async handleAddPoints(
-    options: CommandOption[],
-  ): Promise<APIInteractionResponse> {
-    try {
-      const userOption = options.find((opt) => opt.name === 'usuario');
-      const pointsValue = options.find((opt) => opt.name === 'puntos')?.value;
-      const points =
-        typeof pointsValue === 'string'
-          ? parseInt(pointsValue, 10)
-          : Number(pointsValue);
-
-      if (!userOption?.user || isNaN(points)) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'Error: Usuario y puntos válidos son requeridos.' },
-        };
-      }
-
-      const discordUserData: DiscordUserData = {
-        id: userOption.value as string,
-        username: userOption.user.username,
-        nickname: (userOption.member as APIGuildMember)?.nick,
-        roles: (userOption.member as APIGuildMember)?.roles || [],
-        discordData: userOption.user,
-      };
       console.log('discordUserData', discordUserData);
       const discordUser = await this.userDiscordService.findOrCreate(
         discordUserData,
       );
-      await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
+
+      let newPoints: number;
+      let actionText: string;
+
+      switch (operation) {
+        case 'add':
+          await this.userDiscordService.addPenaltyPoints(
+            discordUser.id,
+            points,
+          );
+          newPoints = discordUser.penaltyPoints + points;
+          actionText = 'añadido';
+          break;
+        case 'remove':
+          await this.userDiscordService.addPenaltyPoints(
+            discordUser.id,
+            -points,
+          );
+          newPoints = discordUser.penaltyPoints - points;
+          actionText = 'quitado';
+          break;
+        case 'set':
+          await this.userDiscordService.updatePoints(discordUser.id, points);
+          newPoints = points;
+          actionText = 'establecido';
+          break;
+      }
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `Se han añadido ${points} puntos de penalización al usuario ${
-            discordUser.username
-          }. Total actual: ${discordUser.penaltyPoints + points} puntos.`,
+          content: `Se han ${actionText} ${points} puntos de penalización al usuario ${discordUser.username}. Total actual: ${newPoints} puntos.`,
         },
       };
     } catch (error) {
-      console.error('Error añadiendo puntos:', error);
+      console.error(`Error ${operation} puntos:`, error);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: 'Error al añadir puntos. Por favor, intenta nuevamente.',
+          content: `Error al ${operation} puntos. Por favor, intenta nuevamente.`,
         },
       };
     }
+  }
+
+  async handleAddPoints(data: InteractPoints): Promise<APIInteractionResponse> {
+    return this.handlePointsOperation(data, 'add');
   }
 
   async handleRemovePoints(
-    options: CommandOption[],
+    data: InteractPoints,
   ): Promise<APIInteractionResponse> {
-    try {
-      const userOption = options.find((opt) => opt.name === 'usuario');
-      const pointsValue = options.find((opt) => opt.name === 'puntos')?.value;
-      const points =
-        typeof pointsValue === 'string'
-          ? parseInt(pointsValue, 10)
-          : Number(pointsValue);
-
-      if (!userOption?.user || isNaN(points)) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'Error: Usuario y puntos válidos son requeridos.' },
-        };
-      }
-
-      const discordUserData: DiscordUserData = {
-        id: userOption.value as string,
-        username: userOption.user.username,
-        nickname: (userOption.member as APIGuildMember)?.nick,
-        roles: (userOption.member as APIGuildMember)?.roles || [],
-        discordData: userOption.user,
-      };
-
-      const discordUser = await this.userDiscordService.findOrCreate(
-        discordUserData,
-      );
-      await this.userDiscordService.addPenaltyPoints(discordUser.id, -points);
-
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Se han quitado ${points} puntos de penalización al usuario ${discordUser.username}.`,
-        },
-      };
-    } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: 'Error al quitar puntos. Por favor, intenta nuevamente.',
-        },
-      };
-    }
+    return this.handlePointsOperation(data, 'remove');
   }
 
-  async handleSetPoints(
-    options: CommandOption[],
-  ): Promise<APIInteractionResponse> {
-    try {
-      const userOption = options.find((opt) => opt.name === 'usuario');
-      const pointsValue = options.find((opt) => opt.name === 'puntos')?.value;
-      const points =
-        typeof pointsValue === 'string'
-          ? parseInt(pointsValue, 10)
-          : Number(pointsValue);
-
-      if (!userOption?.user || isNaN(points)) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'Error: Usuario y puntos válidos son requeridos.' },
-        };
-      }
-
-      const discordUserData: DiscordUserData = {
-        id: userOption.value as string,
-        username: userOption.user.username,
-        nickname: (userOption.member as APIGuildMember)?.nick,
-        roles: (userOption.member as APIGuildMember)?.roles || [],
-        discordData: userOption.user,
-      };
-
-      const discordUser = await this.userDiscordService.findOrCreate(
-        discordUserData,
-      );
-      await this.userDiscordService.updatePoints(discordUser.id, points);
-
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Se han establecido ${points} puntos de penalización al usuario ${discordUser.username}.`,
-        },
-      };
-    } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: 'Error al establecer puntos. Por favor, intenta nuevamente.',
-        },
-      };
-    }
+  async handleSetPoints(data: InteractPoints): Promise<APIInteractionResponse> {
+    return this.handlePointsOperation(data, 'set');
   }
 
   async handleMessage(

@@ -20,6 +20,7 @@ import {
   APIInteractionDataResolvedGuildMember,
   APIUser,
 } from 'discord.js';
+import { InteractPoints } from './discord.types';
 
 @ApiTags('discord')
 @Controller('discord')
@@ -114,40 +115,24 @@ export class DiscordController {
 
         const options = commandData.options || [];
 
-        console.log('Command data:', commandData);
-
         switch (commandData.name) {
           case 'crear-nota':
             return await this.discordService.handleCreateNote(options);
-          case 'infraccion':
-            return await this.discordService.handleInfraction(options);
           case 'añadir-puntos':
           case 'quitar-puntos':
           case 'establecer-puntos': {
             const validation = this.validatePointsCommand(commandData);
-
             if ('error' in validation) {
               return validation.error;
             }
 
-            const { userOption, pointsOption } = validation;
-
             switch (commandData.name) {
               case 'añadir-puntos':
-                return await this.discordService.handleAddPoints([
-                  userOption,
-                  pointsOption,
-                ]);
+                return await this.discordService.handleAddPoints(validation);
               case 'quitar-puntos':
-                return await this.discordService.handleRemovePoints([
-                  userOption,
-                  pointsOption,
-                ]);
+                return await this.discordService.handleRemovePoints(validation);
               case 'establecer-puntos':
-                return await this.discordService.handleSetPoints([
-                  userOption,
-                  pointsOption,
-                ]);
+                return await this.discordService.handleSetPoints(validation);
             }
           }
           default:
@@ -217,7 +202,7 @@ export class DiscordController {
 
   private validatePointsCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
-  ) {
+  ): InteractPoints | { error: any } {
     const userOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as APIApplicationCommandInteractionDataUserOption;
@@ -264,6 +249,11 @@ export class DiscordController {
       roles: resolvedMember.roles || [],
     });
 
-    return { userOption, pointsOption, resolvedUser, resolvedMember };
+    return {
+      userId,
+      points,
+      username: resolvedUser.username,
+      roles: resolvedMember.roles || [],
+    };
   }
 }
