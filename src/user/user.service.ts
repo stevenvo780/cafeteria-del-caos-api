@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { User } from './entities/user.entity';
+import { FindUsersDto } from './dto/find-users.dto';
 
 @Injectable()
 export class UserService {
@@ -14,8 +15,48 @@ export class UserService {
     return this.userRepository.save(createUserDto);
   }
 
-  findAll(): Promise<User[]> {
-    return this.userRepository.find();
+  async findAll(
+    findUsersDto?: FindUsersDto,
+  ): Promise<{ users: User[]; total: number }> {
+    if (!findUsersDto) {
+      const users = await this.userRepository.find();
+      return { users, total: users.length };
+    }
+
+    const {
+      limit = 10,
+      offset = 0,
+      search,
+      minPoints,
+      maxPoints,
+    } = findUsersDto;
+
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+
+    if (search) {
+      queryBuilder.where(
+        '(user.name ILIKE :search OR user.email ILIKE :search)',
+        {
+          search: `%${search}%`,
+        },
+      );
+    }
+
+    if (minPoints !== undefined) {
+      queryBuilder.andWhere('user.penaltyPoints >= :minPoints', { minPoints });
+    }
+
+    if (maxPoints !== undefined) {
+      queryBuilder.andWhere('user.penaltyPoints <= :maxPoints', { maxPoints });
+    }
+
+    const [users, total] = await queryBuilder
+      .orderBy('user.penaltyPoints', 'DESC')
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
+
+    return { users, total };
   }
 
   findOne(id: string): Promise<User | null> {
@@ -36,5 +77,13 @@ export class UserService {
 
     const newPoints = user.penaltyPoints + points;
     return this.userRepository.update(id, { penaltyPoints: newPoints });
+  }
+
+  async updatePoints(id: string, points: number): Promise<UpdateResult> {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+    return this.userRepository.update(id, { penaltyPoints: points });
   }
 }
