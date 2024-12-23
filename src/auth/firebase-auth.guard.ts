@@ -5,16 +5,21 @@ import {
   UnauthorizedException,
   InternalServerErrorException,
   ForbiddenException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import admin from '../utils/firebase-admin.config';
 import { User, UserRole } from '../user/entities/user.entity';
+import { UserService } from '../user/user.service';
 
 @Injectable()
 export class FirebaseAuthGuard implements CanActivate {
   constructor(
+    @Inject(forwardRef(() => UserService))
+    private userService: UserService,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
   ) {}

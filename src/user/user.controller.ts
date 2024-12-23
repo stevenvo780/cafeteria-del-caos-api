@@ -94,21 +94,4 @@ export class UserController {
   ): Promise<UpdateResult> {
     return this.userService.updateRole(id, updateUserDto.role);
   }
-
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({
-    summary: 'Actualizar puntos de penalización de un usuario',
-  })
-  @ApiOkResponse({
-    description: 'Puntos actualizados correctamente',
-  })
-  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
-  @Patch(':id/points')
-  updatePoints(
-    @Param('id') id: string,
-    @Body() updatePointsDto: UpdatePointsDto,
-  ): Promise<UpdateResult> {
-    return this.userService.updatePoints(id, updatePointsDto.points);
-  }
 }

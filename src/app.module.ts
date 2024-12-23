@@ -20,6 +20,7 @@ import { TemplateModule } from './template/template.module';
 import { LikeModule } from './like/like.module';
 import { DiscordModule } from './discord/discord.module';
 import { registerDiscordCommands } from './utils/register-commands.ts';
+import { UserDiscordModule } from './user-discord/user-discord.module';
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { registerDiscordCommands } from './utils/register-commands.ts';
     TemplateModule,
     LikeModule,
     DiscordModule,
+    UserDiscordModule,
   ],
   controllers: [AppController],
   providers: [AppService, AppProvider],

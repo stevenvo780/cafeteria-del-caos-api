@@ -47,11 +47,4 @@ export class User extends SharedProp {
     example: UserRole.USER,
   })
   role: UserRole;
-
-  @Column({ default: 0 })
-  @ApiProperty({
-    description: 'Puntos de penalización del usuario',
-    example: 0,
-  })
-  penaltyPoints: number;
 }

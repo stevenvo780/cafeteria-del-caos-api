@@ -4,7 +4,7 @@ import {
   getOnlineMemberCount,
 } from '../utils/discord-utils';
 import { LibraryService } from '../library/library.service';
-import { UserService } from '../user/user.service';
+import { UserDiscordService } from '../user-discord/user-discord.service';
 import { InteractionResponseType } from 'discord.js';
 import * as nacl from 'tweetnacl';
 
@@ -21,7 +21,7 @@ export class DiscordService {
 
   constructor(
     private readonly libraryService: LibraryService,
-    private readonly userService: UserService,
+    private readonly userDiscordService: UserDiscordService,
   ) {}
 
   verifyDiscordRequest(
@@ -80,16 +80,26 @@ export class DiscordService {
   }
 
   async handleInfraction(options: any[]): Promise<any> {
-    const userId = options.find((option) => option.name === 'usuario').value;
+    const userOption = options.find((option) => option.name === 'usuario');
     const tipo = options.find((option) => option.name === 'tipo').value;
 
+    // Crear o actualizar usuario de Discord con sus roles
+    const discordUser = await this.userDiscordService.findOrCreate({
+      id: userOption.value,
+      username: userOption.user.username,
+      nickname: userOption.member?.nickname,
+      roles: userOption.member?.roles || [],
+      // Incluir cualquier otro dato relevante de Discord
+      ...userOption.user,
+    });
+
     const points = INFRACTION_POINTS[tipo];
-    await this.userService.addPenaltyPoints(userId, points);
+    await this.userDiscordService.addPenaltyPoints(discordUser.id, points);
 
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: `Se han añadido ${points} puntos de penalización al usuario.`,
+        content: `Se han añadido ${points} puntos de penalización al usuario ${discordUser.username}.`,
       },
     };
   }

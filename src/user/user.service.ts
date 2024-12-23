@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -69,21 +69,5 @@ export class UserService {
 
   updateRole(id: string, role: User['role']): Promise<UpdateResult> {
     return this.userRepository.update(id, { role });
-  }
-
-  async addPenaltyPoints(id: string, points: number): Promise<UpdateResult> {
-    const user = await this.findOne(id);
-    if (!user) throw new Error('Usuario no encontrado');
-
-    const newPoints = user.penaltyPoints + points;
-    return this.userRepository.update(id, { penaltyPoints: newPoints });
-  }
-
-  async updatePoints(id: string, points: number): Promise<UpdateResult> {
-    const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
-    }
-    return this.userRepository.update(id, { penaltyPoints: points });
   }
 }
