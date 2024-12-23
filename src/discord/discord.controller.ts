@@ -15,7 +15,7 @@ import { InteractionType, InteractionResponseType } from 'discord.js';
 @ApiTags('discord')
 @Controller('discord')
 export class DiscordController {
-  constructor(private readonly discordService: DiscordService) {}
+  constructor(private readonly discordService: DiscordService) { }
 
   @ApiOperation({
     summary: 'Obtener el total de miembros de un servidor de Discord',
@@ -70,6 +70,8 @@ export class DiscordController {
     ) {
       throw new UnauthorizedException('Invalid request signature');
     }
+
+    console.log('Discord interaction:', interactionPayload);
 
     if (interactionPayload.type === InteractionType.Ping) {
       return { type: InteractionResponseType.Pong };
