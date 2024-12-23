@@ -68,6 +68,26 @@ export class ConfigController {
     return this.configService.getPrivacyNotice();
   }
 
+  @Get('watched-channels')
+  @ApiOperation({ summary: 'Obtener los canales observados' })
+  @ApiOkResponse({
+    description: 'Lista de IDs de canales observados',
+    type: [String],
+  })
+  async getWatchedChannels(): Promise<string[]> {
+    return this.configService.getWatchedChannels();
+  }
+
+  @Get('watched-forums')
+  @ApiOperation({ summary: 'Obtener los foros observados' })
+  @ApiOkResponse({
+    description: 'Lista de IDs de foros observados',
+    type: [String],
+  })
+  async getWatchedForums(): Promise<string[]> {
+    return this.configService.getWatchedForums();
+  }
+
   @Patch()
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)

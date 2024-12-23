@@ -7,6 +7,7 @@ import { LibraryService } from '../library/library.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
 import { InteractionResponseType } from 'discord.js';
 import * as nacl from 'tweetnacl';
+import { ConfigService } from '../config/config.service';
 
 const INFRACTION_POINTS = {
   BLACK: 10,
@@ -24,6 +25,7 @@ export class DiscordService {
   constructor(
     private readonly libraryService: LibraryService,
     private readonly userDiscordService: UserDiscordService,
+    private readonly configService: ConfigService,
   ) {}
 
   verifyDiscordRequest(
@@ -294,7 +296,11 @@ export class DiscordService {
 
   async handleMessage(message: any): Promise<any> {
     try {
-      if (!this.watchedChannels.includes(message.channel_id)) {
+      const isWatchedChannel = await this.configService.isWatchedChannel(
+        message.channel_id,
+      );
+
+      if (!isWatchedChannel) {
         return null;
       }
 

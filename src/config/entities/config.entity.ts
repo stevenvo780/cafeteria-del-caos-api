@@ -50,4 +50,20 @@ export class Config extends SharedProp {
     example: '<p>Aviso de privacidad...</p>',
   })
   privacyNotice: string;
+
+  @Column('simple-array', { default: '' })
+  @ApiProperty({
+    description: 'IDs de canales de Discord observados',
+    type: [String],
+    example: ['channel_id1', 'channel_id2'],
+  })
+  watchedChannels: string[];
+
+  @Column('simple-array', { default: '' })
+  @ApiProperty({
+    description: 'IDs de foros de Discord observados',
+    type: [String],
+    example: ['forum_id1', 'forum_id2'],
+  })
+  watchedForums: string[];
 }

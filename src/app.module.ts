@@ -15,7 +15,6 @@ import { LoggerMiddleware } from './logger.middleware';
 import AppProvider from './app.provider';
 import { LibraryModule } from './library/library.module';
 import { PublicationModule } from './publication/publication.module';
-import { ConfigAppModule } from './config/config.module';
 import { TemplateModule } from './template/template.module';
 import { LikeModule } from './like/like.module';
 import { DiscordModule } from './discord/discord.module';
@@ -40,7 +39,6 @@ import { UserDiscordModule } from './user-discord/user-discord.module';
     UserModule,
     PublicationModule,
     LibraryModule,
-    ConfigAppModule,
     TemplateModule,
     LikeModule,
     DiscordModule,

@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { DiscordService } from './discord.service';
 import { DiscordController } from './discord.controller';
-import { EventsModule } from 'src/events/events.module';
+import { ConfigModule } from '../config/config.module';
 import { LibraryModule } from 'src/library/library.module';
 import { UserModule } from '../user/user.module';
-import { UserDiscordModule } from '../user-discord/user-discord.module'; // Añadir esta importación
+import { UserDiscordModule } from '../user-discord/user-discord.module';
 
 @Module({
-  imports: [EventsModule, LibraryModule, UserModule, UserDiscordModule], // Importar el módulo
+  imports: [ConfigModule, LibraryModule, UserModule, UserDiscordModule],
   controllers: [DiscordController],
   providers: [DiscordService],
   exports: [DiscordService],

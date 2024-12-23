@@ -40,7 +40,8 @@ export class ConfigService {
     defaultConfig.privacyPolicies =
       '<p>Políticas de privacidad predeterminadas.</p>';
     defaultConfig.privacyNotice = '<p>Aviso de privacidad predeterminado.</p>';
-
+    defaultConfig.watchedChannels = [];
+    defaultConfig.watchedForums = [];
     return this.configRepository.save(defaultConfig);
   }
 
@@ -73,5 +74,23 @@ export class ConfigService {
   async getPrivacyNotice(): Promise<string> {
     const config = await this.getConfig();
     return config.privacyNotice;
+  }
+
+  async isWatchedChannel(channelId: string): Promise<boolean> {
+    const config = await this.getConfig();
+    return (
+      config.watchedChannels.includes(channelId) ||
+      config.watchedForums.includes(channelId)
+    );
+  }
+
+  async getWatchedChannels(): Promise<string[]> {
+    const config = await this.getConfig();
+    return config.watchedChannels;
+  }
+
+  async getWatchedForums(): Promise<string[]> {
+    const config = await this.getConfig();
+    return config.watchedForums;
   }
 }
