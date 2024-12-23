@@ -142,8 +142,58 @@ export class LibraryService {
       );
     }
 
-    Object.assign(libraryItem, updateLibraryDto);
+    // Manejar el cambio de padre
+    if (updateLibraryDto.parentNoteId !== undefined) {
+      if (updateLibraryDto.parentNoteId === null) {
+        // Si se elimina el padre
+        libraryItem.parent = null;
+      } else {
+        // Si se asigna un nuevo padre
+        const newParent = await this.libraryRepository.findOne({
+          where: { id: updateLibraryDto.parentNoteId },
+        });
+        if (!newParent) {
+          throw new Error('Nota padre no encontrada');
+        }
+        // Verificar que no se esté creando un ciclo
+        if (await this.wouldCreateCycle(id, updateLibraryDto.parentNoteId)) {
+          throw new ForbiddenException(
+            'No se puede crear un ciclo en la jerarquía de notas',
+          );
+        }
+        libraryItem.parent = newParent;
+      }
+    }
+
+    // Actualizar otros campos
+    if (updateLibraryDto.title !== undefined)
+      libraryItem.title = updateLibraryDto.title;
+    if (updateLibraryDto.description !== undefined)
+      libraryItem.description = updateLibraryDto.description;
+    if (updateLibraryDto.visibility !== undefined)
+      libraryItem.visibility = updateLibraryDto.visibility;
+    if (updateLibraryDto.referenceDate !== undefined)
+      libraryItem.referenceDate = updateLibraryDto.referenceDate;
+
     return await this.libraryRepository.save(libraryItem);
+  }
+
+  // Nuevo método auxiliar para verificar ciclos
+  private async wouldCreateCycle(
+    libraryId: number,
+    newParentId: number,
+  ): Promise<boolean> {
+    let currentId = newParentId;
+    while (currentId) {
+      if (currentId === libraryId) return true;
+      const parent = await this.libraryRepository.findOne({
+        where: { id: currentId },
+        relations: ['parent'],
+      });
+      if (!parent || !parent.parent) break;
+      currentId = parent.parent.id;
+    }
+    return false;
   }
 
   async remove(id: number, user: User): Promise<DeleteResult> {

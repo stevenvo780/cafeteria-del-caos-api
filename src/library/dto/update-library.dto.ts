@@ -1,5 +1,6 @@
-import { IsString, IsDate, IsOptional } from 'class-validator';
+import { IsString, IsDate, IsOptional, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { LibraryVisibility } from '../entities/library.entity';
 
 export class UpdateLibraryDto {
   @IsString()
@@ -36,4 +37,13 @@ export class UpdateLibraryDto {
     required: false,
   })
   parentNoteId?: number;
+
+  @IsOptional()
+  @IsEnum(LibraryVisibility)
+  @ApiProperty({
+    description: 'The visibility of the library reference',
+    enum: LibraryVisibility,
+    required: false,
+  })
+  visibility?: LibraryVisibility;
 }
