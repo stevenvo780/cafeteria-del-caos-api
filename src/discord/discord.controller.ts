@@ -48,6 +48,7 @@ export class DiscordController {
     @Headers('x-signature-ed25519') signature: string,
     @Headers('x-signature-timestamp') timestamp: string,
   ): Promise<any> {
+    console.log('Discord webhook:', eventPayload);
     try {
       if (!signature || !timestamp) {
         return {
