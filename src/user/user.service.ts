@@ -45,11 +45,11 @@ export class UserService {
     }
 
     if (minPoints !== undefined) {
-      queryBuilder.andWhere('user.penaltyPoints >= :minPoints', { minPoints });
+      queryBuilder.andWhere('user.points >= :minPoints', { minPoints });
     }
 
     if (maxPoints !== undefined) {
-      queryBuilder.andWhere('user.penaltyPoints <= :maxPoints', { maxPoints });
+      queryBuilder.andWhere('user.points <= :maxPoints', { maxPoints });
     }
 
     // Corregimos el orderBy para usar correctamente el alias de la tabla

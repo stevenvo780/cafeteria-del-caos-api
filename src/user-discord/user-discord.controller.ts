@@ -1,33 +1,29 @@
 import {
   Controller,
   Get,
+  Post,
   Body,
   Patch,
   Param,
+  Delete,
   UseGuards,
   Query,
-  Post,
 } from '@nestjs/common';
 import { UserDiscordService } from './user-discord.service';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import {
-  UserRole,
-  UserDiscord,
-  DiscordRole,
-} from './entities/user-discord.entity'; // Añadida importación de DiscordRole
+import { UserRole, UserDiscord } from './entities/user-discord.entity';
 import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
-  ApiNotFoundResponse,
   ApiBearerAuth,
   ApiResponse,
 } from '@nestjs/swagger';
-import { UpdateResult } from 'typeorm';
 import { FindUsersDto } from './dto/find-users.dto';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
+import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 
 @ApiTags('discord-users')
 @ApiBearerAuth()
@@ -35,30 +31,21 @@ import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 export class UserDiscordController {
   constructor(private readonly userDiscordService: UserDiscordService) {}
 
+  @Post()
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({
-    summary: 'Obtener usuarios de Discord con filtros opcionales y paginación',
-  })
-  @ApiOkResponse({
-    description: 'Lista de usuarios de Discord',
-    schema: {
-      properties: {
-        users: {
-          type: 'array',
-          items: { $ref: '#/components/schemas/UserDiscord' },
-        },
-        total: {
-          type: 'number',
-          description: 'Total de usuarios que coinciden con los filtros',
-        },
-      },
-    },
-  })
+  @ApiOperation({ summary: 'Crear nuevo usuario de Discord' })
+  @ApiResponse({ status: 201, type: UserDiscord })
+  create(@Body() createUserDiscordDto: CreateUserDiscordDto) {
+    return this.userDiscordService.create(createUserDiscordDto);
+  }
+
   @Get()
-  @ApiOperation({ summary: 'Obtener usuarios con filtros avanzados' })
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Obtener usuarios con filtros' })
   @ApiOkResponse({
-    description: 'Lista paginada de usuarios con total',
+    description: 'Lista paginada de usuarios',
     type: UserDiscord,
     isArray: true,
   })
@@ -66,54 +53,34 @@ export class UserDiscordController {
     return this.userDiscordService.findAll(findUsersDto);
   }
 
-  @Post()
-  @ApiOperation({ summary: 'Crear nuevo usuario de Discord' })
-  @ApiResponse({ status: 201, description: 'Usuario creado exitosamente' })
-  create(@Body() createUserDiscordDto: CreateUserDiscordDto) {
-    return this.userDiscordService.create(createUserDiscordDto);
-  }
-
+  @Get(':id')
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Obtener un usuario de Discord por ID' })
-  @ApiOkResponse({ description: 'Usuario encontrado', type: UserDiscord })
-  @ApiNotFoundResponse({ description: 'Usuario no encontrado.' })
-  @Get(':id')
-  findOne(@Param('id') id: string): Promise<UserDiscord> {
+  @ApiOperation({ summary: 'Obtener un usuario por ID' })
+  @ApiOkResponse({ type: UserDiscord })
+  findOne(@Param('id') id: string) {
     return this.userDiscordService.findOne(id);
   }
 
+  @Patch(':id')
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({
-    summary: 'Actualizar roles de un usuario de Discord',
-  })
-  @ApiOkResponse({
-    description: 'Roles actualizados correctamente',
-  })
-  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
-  @Patch(':id/roles')
-  updateRoles(
+  @ApiOperation({ summary: 'Actualizar un usuario' })
+  @ApiOkResponse({ type: UserDiscord })
+  update(
     @Param('id') id: string,
-    @Body() updateRolesDto: { roles: DiscordRole[] },
-  ): Promise<UpdateResult> {
-    return this.userDiscordService.updateRoles(id, updateRolesDto.roles);
+    @Body() updateUserDiscordDto: UpdateUserDiscordDto,
+  ) {
+    console.log(updateUserDiscordDto);
+    return this.userDiscordService.update(id, updateUserDiscordDto);
   }
 
+  @Delete(':id')
   @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({
-    summary: 'Actualizar puntos de penalización de un usuario de Discord',
-  })
-  @ApiOkResponse({
-    description: 'Puntos actualizados correctamente',
-  })
-  @ApiNotFoundResponse({ description: 'Usuario no encontrado' })
-  @Patch(':id/points')
-  updatePoints(
-    @Param('id') id: string,
-    @Body() updatePointsDto: { points: number },
-  ): Promise<UpdateResult> {
-    return this.userDiscordService.updatePoints(id, updatePointsDto.points);
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Eliminar un usuario' })
+  @ApiOkResponse({ description: 'Usuario eliminado' })
+  remove(@Param('id') id: string) {
+    return this.userDiscordService.remove(id);
   }
 }

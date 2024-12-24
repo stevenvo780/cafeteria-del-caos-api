@@ -5,6 +5,8 @@ import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto'; // Añadido SortOrder
 import { APIInteractionResponse, InteractionResponseType } from 'discord.js';
 import { InteractPoints, InteractCoins } from '../discord/discord.types';
+import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
+import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 
 @Injectable()
 export class UserDiscordService {
@@ -12,6 +14,84 @@ export class UserDiscordService {
     @InjectRepository(UserDiscord)
     private userDiscordRepository: Repository<UserDiscord>,
   ) {}
+
+  async create(
+    createUserDiscordDto: CreateUserDiscordDto,
+  ): Promise<UserDiscord> {
+    const user = this.userDiscordRepository.create(createUserDiscordDto);
+    return this.userDiscordRepository.save(user);
+  }
+
+  async findAll(
+    findUsersDto: FindUsersDto,
+  ): Promise<{ users: UserDiscord[]; total: number }> {
+    const {
+      limit = 10,
+      offset = 0,
+      search,
+      minPoints,
+      maxPoints,
+      roleIds,
+      sortBy = 'createdAt',
+      sortOrder = SortOrder.DESC,
+    } = findUsersDto;
+
+    const queryBuilder = this.userDiscordRepository.createQueryBuilder('user');
+
+    if (search) {
+      queryBuilder.where(
+        '(user.username ILIKE :search OR user.nickname ILIKE :search)',
+        { search: `%${search}%` },
+      );
+    }
+
+    if (minPoints !== undefined) {
+      queryBuilder.andWhere('user.points >= :minPoints', { minPoints });
+    }
+
+    if (maxPoints !== undefined) {
+      queryBuilder.andWhere('user.points <= :maxPoints', { maxPoints });
+    }
+
+    if (roleIds?.length) {
+      queryBuilder.andWhere('user.roles::jsonb ?| array[:...roleIds]', {
+        roleIds,
+      });
+    }
+
+    const [users, total] = await queryBuilder
+      .orderBy(`user.${sortBy}`, sortOrder)
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
+
+    return { users, total };
+  }
+
+  async findOne(id: string): Promise<UserDiscord> {
+    const user = await this.userDiscordRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+    return user;
+  }
+
+  async update(
+    id: string,
+    updateUserDiscordDto: UpdateUserDiscordDto,
+  ): Promise<UserDiscord> {
+    const user = await this.findOne(id);
+    Object.assign(user, updateUserDiscordDto);
+    console.log('Updated user:', user);
+    return this.userDiscordRepository.save(user);
+  }
+
+  async remove(id: string): Promise<void> {
+    const result = await this.userDiscordRepository.delete(id);
+    if (result.affected === 0) {
+      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+    }
+  }
 
   async findOrCreate(discordData: any): Promise<UserDiscord> {
     let user = await this.findOne(discordData.id);
@@ -45,60 +125,6 @@ export class UserDiscordService {
     return user.roles.some((role) => role.id === roleId);
   }
 
-  create(createUserDto: Partial<UserDiscord>): Promise<UserDiscord> {
-    return this.userDiscordRepository.save(createUserDto);
-  }
-
-  async findAll(
-    findUsersDto: FindUsersDto,
-  ): Promise<{ users: UserDiscord[]; total: number }> {
-    const {
-      limit = 10,
-      offset = 0,
-      search,
-      minPoints,
-      maxPoints,
-      roleIds,
-      sortBy = 'createdAt',
-      sortOrder = SortOrder.DESC,
-    } = findUsersDto;
-
-    const queryBuilder = this.userDiscordRepository.createQueryBuilder('user');
-
-    if (search) {
-      queryBuilder.where(
-        '(user.username ILIKE :search OR user.nickname ILIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    if (minPoints !== undefined) {
-      queryBuilder.andWhere('user.penaltyPoints >= :minPoints', { minPoints });
-    }
-
-    if (maxPoints !== undefined) {
-      queryBuilder.andWhere('user.penaltyPoints <= :maxPoints', { maxPoints });
-    }
-
-    if (roleIds && roleIds.length > 0) {
-      queryBuilder.andWhere('user.roles::jsonb ?| array[:...roleIds]', {
-        roleIds,
-      });
-    }
-
-    const [users, total] = await queryBuilder
-      .orderBy(`user.${sortBy}`, sortOrder)
-      .skip(offset)
-      .take(limit)
-      .getManyAndCount();
-
-    return { users, total };
-  }
-
-  findOne(id: string): Promise<UserDiscord | null> {
-    return this.userDiscordRepository.findOne({ where: { id } });
-  }
-
   async updateRoles(
     id: string,
     roles: UserDiscord['roles'],
@@ -114,8 +140,8 @@ export class UserDiscordService {
       );
     }
 
-    const newPoints = user.penaltyPoints + points;
-    return this.userDiscordRepository.update(id, { penaltyPoints: newPoints });
+    const newPoints = user.points + points;
+    return this.userDiscordRepository.update(id, { points: newPoints });
   }
 
   async updatePoints(id: string, points: number): Promise<UpdateResult> {
@@ -125,7 +151,7 @@ export class UserDiscordService {
         `Usuario de Discord con ID ${id} no encontrado`,
       );
     }
-    return this.userDiscordRepository.update(id, { penaltyPoints: points });
+    return this.userDiscordRepository.update(id, { points: points });
   }
 
   async handlePointsOperation(
@@ -146,12 +172,12 @@ export class UserDiscordService {
       switch (operation) {
         case 'add':
           await this.addPenaltyPoints(discordUser.id, points);
-          newPoints = discordUser.penaltyPoints + points;
+          newPoints = discordUser.points + points;
           actionText = 'añadido';
           break;
         case 'remove':
           await this.addPenaltyPoints(discordUser.id, -points);
-          newPoints = discordUser.penaltyPoints - points;
+          newPoints = discordUser.points - points;
           actionText = 'quitado';
           break;
         case 'set':

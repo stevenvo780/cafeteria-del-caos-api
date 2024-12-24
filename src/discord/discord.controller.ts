@@ -189,7 +189,7 @@ export class DiscordController {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
-            content: 'Autocompletado no implementado.',
+            content: ':PEPE: ¡El autocompletado es para débiles! :PSYCO:',
           },
         };
 
@@ -205,7 +205,8 @@ export class DiscordController {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
-            content: 'Tipo de interacción no soportado.',
+            content:
+              ':CAOS: ¡¿QUÉ DEMONIOS INTENTAS HACER?! Esa interacción no existe en este reino de caos :KILL:',
           },
         };
     }
@@ -256,7 +257,8 @@ export class DiscordController {
         error: {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
-            content: 'Error: Faltan parámetros requeridos (usuario o puntos).',
+            content:
+              ':KILL: La estupidez humana se manifiesta... ¿Dónde están los datos fundamentales? :PSYCO:',
           },
         },
       };
@@ -276,7 +278,7 @@ export class DiscordController {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
             content:
-              'Error: No se pudo resolver el usuario o miembro especificado.',
+              ':ESQUIZO: ¡NO ENCUENTRO A ESE USUARIO, PEDAZO DE ALCORNOQUE! :CAOS:',
           },
         },
       };
@@ -316,7 +318,7 @@ export class DiscordController {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
             content:
-              'Error: Faltan parámetros requeridos (usuario o cantidad).',
+              ':TSUNAMI: Ah, la mediocridad... ¿Las monedas viajan sin destino ni cantidad? :ALIENS:',
           },
         },
       };

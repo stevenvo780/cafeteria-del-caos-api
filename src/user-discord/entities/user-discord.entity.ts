@@ -60,7 +60,7 @@ export class UserDiscord extends SharedProp {
     description: 'Puntos de penalización acumulados',
     example: 0,
   })
-  penaltyPoints: number;
+  points: number;
 
   @Column({ default: 0 })
   @ApiProperty({

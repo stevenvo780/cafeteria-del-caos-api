@@ -70,7 +70,8 @@ export class DiscordService {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
-            content: 'Error: Título y contenido son requeridos.',
+            content:
+              ':PSYCO: Ah, la ignorancia... ¿Pretendías crear una nota sin su esencia básica? :CAOS:',
           },
         };
       }
@@ -90,14 +91,15 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `Nota creada exitosamente!\nURL: ${process.env.FRONT_URL}/library/${note.id}\n\nContenido:\n${truncatedContent}`,
+          content: `:ALIENS: La sabiduría ha sido plasmada en el vacío digital :ESQUIZO:\n${process.env.FRONT_URL}/library/${note.id}\n\n:TSUNAMI: He aquí la verdad revelada:\n${truncatedContent}`,
         },
       };
     } catch (error) {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: 'Error al crear la nota. Por favor, intenta nuevamente.',
+          content:
+            ':KILL: El caos ha engullido tu nota. La nada prevalece :PEPE:',
         },
       };
     }
@@ -155,7 +157,7 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `Nota creada exitosamente para el mensaje de ${userData.username}`,
+          content: `:PANAS: Las palabras de ${userData.username} han trascendido al reino de lo eterno :zizekok~1:`,
         },
       };
     } catch (error) {
@@ -163,7 +165,8 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: 'Error al procesar el mensaje.',
+          content:
+            ':PSYCO: ¡MALDITA SEA! El mensaje se perdió en el vacío del caos :CAOS:',
         },
       };
     }
