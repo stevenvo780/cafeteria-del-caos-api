@@ -1,6 +1,3 @@
-Aquí tienes el archivo completamente traducido y adaptado en inglés:
-
-```markdown
 # Cafeteria del Caos API
 
 The **Cafeteria del Caos API** is built using [NestJS](https://nestjs.com/) and designed to serve the Cafeteria del Caos community on Discord. It provides various endpoints to manage community-related content and facilitate knowledge sharing.
@@ -58,6 +55,11 @@ The complete API documentation is available at the following link:
     DATABASE_URL=postgres://user:password@localhost:5432/cafeteriadelcaos
     ```
 
+### Variables de Entorno y Secretos
+
+#### Local Development
+Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+
 ### Running the Application
 
 You can run the application in different modes depending on your needs:
@@ -90,6 +92,29 @@ If you prefer using Docker, ensure Docker is installed and follow these steps:
     ```
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser to view the application running in Docker.
+
+### Variables de Entorno y Secretos
+
+#### Docker
+Para configurar las variables de entorno en Docker, puedes pasar el archivo `.env` al contenedor usando la opción `--env-file`:
+
+```bash
+docker run --env-file .env -p 3000:3000 cafeteria-del-caos-api
+```
+
+#### Google Cloud Build
+Para configurar las variables de entorno en Google Cloud Build, puedes usar `secretManager` para gestionar tus secretos de forma segura. Aquí tienes un ejemplo de configuración en el archivo `cloudbuild.yaml`:
+
+```yaml
+steps:
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['build', '-t', 'gcr.io/$PROJECT_ID/cafeteria-del-caos-api', '.']
+  secretEnv: ['DATABASE_URL']
+secrets:
+- kmsKeyName: projects/$PROJECT_ID/locations/global/keyRings/$KEYRING/cryptoKeys/$KEY
+  secretEnv:
+    DATABASE_URL: 'projects/$PROJECT_ID/secrets/DATABASE_URL/versions/latest'
+```
 
 ## Testing
 
