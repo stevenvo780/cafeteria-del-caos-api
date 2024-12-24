@@ -86,10 +86,14 @@ export class UserDiscordService {
     return this.userDiscordRepository.save(user);
   }
 
-  async remove(id: string): Promise<void> {
-    const result = await this.userDiscordRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
+  async remove(id: string): Promise<UserDiscord> {
+    try {
+      const user = await this.findOne(id);
+      await this.userDiscordRepository.delete(id);
+      return user;
+    } catch (error) {
+      console.log(error);
+      throw new NotFoundException(`error deleting user with ID ${id}`);
     }
   }
 
