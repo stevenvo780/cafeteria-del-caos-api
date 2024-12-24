@@ -1,10 +1,22 @@
-import { REST, Routes, Client, TextChannel, NewsChannel } from 'discord.js';
+import {
+  REST,
+  Routes,
+  Client,
+  TextChannel,
+  NewsChannel,
+  GatewayIntentBits,
+} from 'discord.js';
 import { config } from 'dotenv';
 config();
 
 export async function setupWebhook() {
   const client = new Client({
-    intents: ['Guilds', 'GuildWebhooks'],
+    intents: [
+      GatewayIntentBits.Guilds,
+      GatewayIntentBits.GuildWebhooks,
+      GatewayIntentBits.GuildMessages,
+      GatewayIntentBits.MessageContent,
+    ],
   });
 
   try {
@@ -22,23 +34,34 @@ export async function setupWebhook() {
       }
 
       const webhooks = await channel.fetchWebhooks();
-      const existingWebhook = webhooks.find(
-        (wh) => wh.name === 'Publicaciones',
-      );
+      let webhook = webhooks.find((wh) => wh.name === 'Publicaciones');
 
-      if (!existingWebhook) {
-        const botAvatarUrl = client.user?.displayAvatarURL();
-        await channel.createWebhook({
+      if (!webhook) {
+        webhook = await channel.createWebhook({
           name: 'Publicaciones',
-          avatar: botAvatarUrl,
+          avatar: client.user?.displayAvatarURL(),
+          reason: 'Webhook para monitoreo de mensajes',
         });
-        console.log(`Created webhook for channel ${channel.name}`);
+
+        // Verificar que el webhook se creó correctamente
+        if (webhook) {
+          console.log(
+            `Created webhook for channel ${channel.name} with URL: ${webhook.url}`,
+          );
+        } else {
+          console.error(`Failed to create webhook for channel ${channel.name}`);
+        }
+      } else {
+        console.log(
+          `Using existing webhook for channel ${channel.name} with URL: ${webhook.url}`,
+        );
       }
     }
 
-    console.log('Webhooks setup completed');
+    console.log('Webhooks setup completed successfully');
   } catch (error) {
     console.error('Error setting up webhooks:', error);
+    throw error; // Re-throw the error para que se pueda manejar en el nivel superior
   } finally {
     client.destroy();
   }

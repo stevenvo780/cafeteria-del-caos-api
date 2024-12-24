@@ -55,28 +55,59 @@ The complete API documentation is available at the following link:
     DATABASE_URL=postgres://user:password@localhost:5432/cafeteriadelcaos
     ```
 
-### Variables de Entorno y Secretos
+### Environment Variables and Secrets
 
 #### Local Development
-Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
+Create a `.env` file in the project root with the following variables:
+```bash
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+DB_NAME=cafeteria-del-caos
+DB_SYNCHRONIZE=true
 
-### Registro de Comandos de Discord
+# Firebase
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_client_email
+FIREBASE_PRIVATE_KEY=your_private_key
 
-**Importante**: El registro de comandos de Discord se realiza de forma manual desde la rama develop. Este proceso no está incluido en el despliegue automático.
+# Discord
+DISCORD_BOT_TOKEN=your_bot_token
+DISCORD_CLIENT_ID=your_client_id
+DISCORD_GUILD_ID=your_guild_id
+DISCORD_PUBLIC_KEY=your_public_key
+DISCORD_WATCHED_CHANNELS=channel_id
 
-Para registrar los comandos:
+# Frontend
+FRONT_URL=http://localhost:3000
+```
 
-1. Asegúrate de estar en la rama develop:
+### Discord Commands Registration
+
+**Important**: Discord commands registration is a manual process that must be performed in the following situations:
+- When adding new commands
+- When modifying existing commands
+- After each production deployment
+
+To register commands:
+
+1. Configure Discord environment variables in your `.env` file:
     ```bash
-    git checkout develop
+    DISCORD_BOT_TOKEN=your_token
+    DISCORD_CLIENT_ID=your_client_id
+    DISCORD_GUILD_ID=your_guild_id
     ```
 
-2. Ejecuta el comando de registro:
+2. Run the registration command:
     ```bash
-    npm run commands:register
+    npm run register-commands
     ```
 
-3. Verifica que los comandos se hayan registrado correctamente en tu servidor de Discord.
+3. Verify in your Discord server that the commands have been updated correctly.
+
+**Note**: This step is necessary in both development and production environments for Discord commands to work properly.
 
 ### Running the Application
 
@@ -111,17 +142,17 @@ If you prefer using Docker, ensure Docker is installed and follow these steps:
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser to view the application running in Docker.
 
-### Variables de Entorno y Secretos
+### Environment Variables and Secrets
 
 #### Docker
-Para configurar las variables de entorno en Docker, puedes pasar el archivo `.env` al contenedor usando la opción `--env-file`:
+To configure environment variables in Docker, you can pass the `.env` file to the container using the `--env-file` option:
 
 ```bash
 docker run --env-file .env -p 3000:3000 cafeteria-del-caos-api
 ```
 
 #### Google Cloud Build
-Para configurar las variables de entorno en Google Cloud Build, puedes usar `secretManager` para gestionar tus secretos de forma segura. Aquí tienes un ejemplo de configuración en el archivo `cloudbuild.yaml`:
+To configure environment variables in Google Cloud Build, you can use `secretManager` to securely manage your secrets. Here's an example configuration in the `cloudbuild.yaml` file:
 
 ```yaml
 steps:
