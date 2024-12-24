@@ -2,7 +2,6 @@ import {
   Module,
   NestModule,
   MiddlewareConsumer,
-  OnModuleInit,
   OnModuleDestroy,
 } from '@nestjs/common';
 import { AppController } from './app.controller';
@@ -41,13 +40,9 @@ import { typeOrmConfig } from './config/typeorm.config';
   controllers: [AppController],
   providers: [AppService, AppProvider],
 })
-export class AppModule implements NestModule, OnModuleInit, OnModuleDestroy {
+export class AppModule implements NestModule, OnModuleDestroy {
   configure(consumer: MiddlewareConsumer) {
     consumer.apply(LoggerMiddleware).forRoutes('*');
-  }
-
-  async onModuleInit() {
-    await registerDiscordCommands();
   }
 
   async onModuleDestroy() {

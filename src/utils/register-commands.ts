@@ -1,4 +1,46 @@
-import { REST, Routes } from 'discord.js';
+import { REST, Routes, Client, TextChannel, NewsChannel } from 'discord.js';
+
+export async function setupWebhook() {
+  const client = new Client({
+    intents: ['Guilds', 'GuildWebhooks'],
+  });
+
+  try {
+    await client.login(process.env.DISCORD_BOT_TOKEN);
+    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
+    const watchedChannels =
+      process.env.DISCORD_WATCHED_CHANNELS?.split(',') || [];
+
+    for (const channelId of watchedChannels) {
+      const channel = await guild.channels.fetch(channelId);
+
+      if (!(channel instanceof TextChannel || channel instanceof NewsChannel)) {
+        console.error(`Channel ${channelId} is not a text or news channel`);
+        continue;
+      }
+
+      const webhooks = await channel.fetchWebhooks();
+      const existingWebhook = webhooks.find(
+        (wh) => wh.name === 'Publicaciones',
+      );
+
+      if (!existingWebhook) {
+        const botAvatarUrl = client.user?.displayAvatarURL();
+        await channel.createWebhook({
+          name: 'Publicaciones',
+          avatar: botAvatarUrl,
+        });
+        console.log(`Created webhook for channel ${channel.name}`);
+      }
+    }
+
+    console.log('Webhooks setup completed');
+  } catch (error) {
+    console.error('Error setting up webhooks:', error);
+  } finally {
+    client.destroy();
+  }
+}
 
 export async function registerDiscordCommands() {
   const commands = [
@@ -173,7 +215,9 @@ export async function registerDiscordCommands() {
     });
 
     console.info('Successfully reloaded application (/) commands.');
+
+    await setupWebhook();
   } catch (error) {
-    console.error('Error registering commands:', error);
+    console.error('Error registering commands or setting up webhooks:', error);
   }
 }

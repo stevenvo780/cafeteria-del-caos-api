@@ -1,9 +1,7 @@
 import { Injectable, HttpException } from '@nestjs/common';
-import {
-  CommandOption,
-  DiscordUserData,
-  InteractPoints,
-} from './discord.types';
+import { marked } from 'marked';
+import { PublicationService } from '../publication/publication.service';
+import { CommandOption } from './discord.types';
 import {
   APIInteractionResponse,
   InteractionResponseType,
@@ -26,6 +24,7 @@ export class DiscordService {
   constructor(
     private readonly libraryService: LibraryService,
     private readonly configService: ConfigService,
+    private readonly publicationService: PublicationService,
   ) {}
 
   verifyDiscordRequest(
@@ -119,8 +118,22 @@ export class DiscordService {
       }
 
       const userData = interaction.member?.user || interaction.user;
-      const channelData = interaction.channel;
       const messageData = interaction.message;
+
+      const htmlContent = await Promise.resolve(marked(messageData.content));
+
+      const publicationData = {
+        title: `Mensaje de ${userData.username}`,
+        content: htmlContent,
+        isPublished: true,
+        channelId: channelId,
+        messageId: messageData.id,
+        originalContent: messageData.content,
+      };
+
+      await this.publicationService.create(publicationData, null);
+
+      const channelData = interaction.channel;
 
       const userNoteData = {
         title: `Notas de ${userData.username}`,
@@ -157,7 +170,7 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `:PANAS: Las palabras de ${userData.username} han trascendido al reino de lo eterno :zizekok~1:`,
+          content: `:PANAS: El mensaje de ${userData.username} ha sido guardado como publicación y nota :zizekok~1:`,
         },
       };
     } catch (error) {
@@ -165,10 +178,34 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content:
-            ':PSYCO: ¡MALDITA SEA! El mensaje se perdió en el vacío del caos :CAOS:',
+          content: ':PSYCO: ¡Error al procesar el mensaje! :CAOS:',
         },
       };
+    }
+  }
+
+  async handleWebhook(event: any): Promise<void> {
+    if (event.type === 'MESSAGE_CREATE' && event.content) {
+      const watchedChannels =
+        process.env.DISCORD_WATCHED_CHANNELS?.split(',') || [];
+      const isValid = await watchedChannels.includes(event.channel_id);
+
+      if (!isValid) {
+        console.log(
+          `Ignoring message from non-watched channel: ${event.channel_id}`,
+        );
+        return;
+      }
+
+      const htmlContent = await Promise.resolve(marked(event.content));
+
+      const publicationData = {
+        title: `Mensaje de ${event.author.username}`,
+        content: htmlContent,
+        isPublished: true,
+      };
+
+      await this.publicationService.create(publicationData, null);
     }
   }
 }

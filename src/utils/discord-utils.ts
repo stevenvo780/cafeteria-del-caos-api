@@ -93,7 +93,17 @@ export async function createDiscordEvent(
   }
 }
 
-// Las demás funciones solo obtienen el cliente cuando es necesario
+export async function getChannelInfo(channelId: string) {
+  try {
+    const client = await getDiscordClient();
+    const channel = await client.channels.fetch(channelId);
+    return channel;
+  } catch (error) {
+    console.error('Error fetching channel info:', error);
+    return null;
+  }
+}
+
 export async function getGuildMemberCount(guildId: string): Promise<number> {
   try {
     const client = await getDiscordClient();

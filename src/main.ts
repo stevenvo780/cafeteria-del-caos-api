@@ -4,6 +4,7 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import compression from 'compression';
 import { ConfigService } from '@nestjs/config';
 import * as dotenv from 'dotenv';
+import { registerDiscordCommands } from './utils/register-commands';
 
 async function bootstrap() {
   dotenv.config();
@@ -37,6 +38,11 @@ async function bootstrap() {
   const port = configService.get('PORT', 8080);
   await app.listen(port, '0.0.0.0', () => {
     console.log(`Application is running on port ${port}`);
+    registerDiscordCommands()
+      .then(() => console.log('Discord commands registered successfully'))
+      .catch((error) =>
+        console.error('Failed to register Discord commands:', error),
+      );
   });
 }
 bootstrap();

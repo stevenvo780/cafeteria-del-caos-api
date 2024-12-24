@@ -236,9 +236,8 @@ export class DiscordController {
       throw new UnauthorizedException('Invalid request signature');
     }
 
-    console.log('Discord webhook event:', eventPayload);
-
-    return { message: 'Webhook received' };
+    await this.discordService.handleWebhook(eventPayload);
+    return { message: 'Webhook processed successfully' };
   }
 
   private validatePointsCommand(
