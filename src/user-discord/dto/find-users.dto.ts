@@ -6,8 +6,9 @@ import {
   Min,
   IsArray,
   IsEnum,
+  IsInt,
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export enum SortOrder {
   ASC = 'ASC',
@@ -17,20 +18,20 @@ export enum SortOrder {
 export class FindUsersDto {
   @ApiPropertyOptional({ description: 'Límite de resultados', default: 10 })
   @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Type(() => Number)
-  limit?: number = 10;
+  @IsInt()
+  @Min(0)
+  @Transform(({ value }) => parseInt(value))
+  limit?: number;
 
   @ApiPropertyOptional({
     description: 'Número de registros a saltar',
     default: 0,
   })
   @IsOptional()
-  @IsNumber()
+  @IsInt()
   @Min(0)
-  @Type(() => Number)
-  offset?: number = 0;
+  @Transform(({ value }) => parseInt(value))
+  offset?: number;
 
   @ApiPropertyOptional({ description: 'Buscar por username o nickname' })
   @IsOptional()
@@ -39,16 +40,14 @@ export class FindUsersDto {
 
   @ApiPropertyOptional({ description: 'Filtrar por puntos mínimos' })
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Type(() => Number)
+  @IsInt()
+  @Transform(({ value }) => parseInt(value))
   minPoints?: number;
 
   @ApiPropertyOptional({ description: 'Filtrar por puntos máximos' })
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Type(() => Number)
+  @IsInt()
+  @Transform(({ value }) => parseInt(value))
   maxPoints?: number;
 
   @ApiPropertyOptional({ description: 'Filtrar por roles específicos' })
@@ -56,10 +55,14 @@ export class FindUsersDto {
   @IsArray()
   roleIds?: string[];
 
-  @ApiPropertyOptional({ description: 'Ordenar por campo' })
+  @ApiPropertyOptional({
+    description: 'Ordenar por campo',
+    enum: ['createdAt', 'updatedAt', 'username', 'points', 'coins'],
+    default: 'createdAt',
+  })
+  @IsEnum(['points', 'coins'])
   @IsOptional()
-  @IsString()
-  sortBy?: string = 'createdAt';
+  sortBy?: string;
 
   @ApiPropertyOptional({
     description: 'Dirección del ordenamiento',

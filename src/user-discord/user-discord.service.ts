@@ -31,18 +31,16 @@ export class UserDiscordService {
       search,
       minPoints,
       maxPoints,
-      roleIds,
-      sortBy = 'createdAt',
+      sortBy = 'points',
       sortOrder = SortOrder.DESC,
     } = findUsersDto;
 
     const queryBuilder = this.userDiscordRepository.createQueryBuilder('user');
 
     if (search) {
-      queryBuilder.where(
-        '(user.username ILIKE :search OR user.nickname ILIKE :search)',
-        { search: `%${search}%` },
-      );
+      queryBuilder.where('LOWER(user.username) LIKE LOWER(:search)', {
+        search: `%${search}%`,
+      });
     }
 
     if (minPoints !== undefined) {
@@ -53,17 +51,19 @@ export class UserDiscordService {
       queryBuilder.andWhere('user.points <= :maxPoints', { maxPoints });
     }
 
-    if (roleIds?.length) {
-      queryBuilder.andWhere('user.roles::jsonb ?| array[:...roleIds]', {
-        roleIds,
-      });
-    }
+    const sortMapping = {
+      points: 'points',
+      coins: 'coins',
+    };
 
-    const [users, total] = await queryBuilder
-      .orderBy(`user.${sortBy}`, sortOrder)
-      .skip(offset)
-      .take(limit)
-      .getManyAndCount();
+    const orderByColumn = sortMapping[sortBy] || 'points';
+
+    queryBuilder
+      .orderBy(`user.${orderByColumn}`, sortOrder)
+      .limit(limit)
+      .offset(offset);
+
+    const [users, total] = await queryBuilder.getManyAndCount();
 
     return { users, total };
   }
