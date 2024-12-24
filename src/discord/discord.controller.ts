@@ -94,9 +94,6 @@ export class DiscordController {
       case InteractionType.Ping:
         return { type: InteractionResponseType.Pong };
 
-      case InteractionType.MessageComponent:
-        return await this.discordService.handleMessage(interactionPayload);
-
       case InteractionType.ApplicationCommand: {
         const commandData =
           interactionPayload.data as APIChatInputApplicationCommandInteractionData;
