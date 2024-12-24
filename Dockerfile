@@ -20,9 +20,6 @@ COPY . .
 # Construir la aplicación con optimización
 RUN npm run build:prod
 
-# Registrar comandos (requiere variables de entorno)
-RUN npm run register-commands
-
 # Prune para producción
 RUN npm prune --production
 
