@@ -14,7 +14,6 @@ import {
   getOnlineMemberCount,
 } from '../utils/discord-utils';
 import { LibraryService } from '../library/library.service';
-import { UserDiscordService } from '../user-discord/user-discord.service';
 import * as nacl from 'tweetnacl';
 import { ConfigService } from '../config/config.service';
 
@@ -26,7 +25,6 @@ export class DiscordService {
 
   constructor(
     private readonly libraryService: LibraryService,
-    private readonly userDiscordService: UserDiscordService,
     private readonly configService: ConfigService,
   ) {}
 
@@ -103,20 +101,6 @@ export class DiscordService {
         },
       };
     }
-  }
-
-  async handleAddPoints(data: InteractPoints): Promise<APIInteractionResponse> {
-    return this.userDiscordService.handleAddPoints(data);
-  }
-
-  async handleRemovePoints(
-    data: InteractPoints,
-  ): Promise<APIInteractionResponse> {
-    return this.userDiscordService.handleRemovePoints(data);
-  }
-
-  async handleSetPoints(data: InteractPoints): Promise<APIInteractionResponse> {
-    return this.userDiscordService.handleSetPoints(data);
   }
 
   async handleMessage(

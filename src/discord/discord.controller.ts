@@ -9,6 +9,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { DiscordService } from './discord.service';
+import { UserDiscordService } from '../user-discord/user-discord.service';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import {
   APIInteraction,
@@ -20,12 +21,15 @@ import {
   APIInteractionDataResolvedGuildMember,
   APIUser,
 } from 'discord.js';
-import { InteractPoints } from './discord.types';
+import { InteractPoints, InteractCoins } from './discord.types';
 
 @ApiTags('discord')
 @Controller('discord')
 export class DiscordController {
-  constructor(private readonly discordService: DiscordService) {}
+  constructor(
+    private readonly discordService: DiscordService,
+    private readonly userDiscordService: UserDiscordService,
+  ) {}
 
   @ApiOperation({
     summary: 'Obtener el total de miembros de un servidor de Discord',
@@ -116,11 +120,55 @@ export class DiscordController {
 
           switch (commandData.name) {
             case 'añadir-puntos':
-              return await this.discordService.handleAddPoints(validation);
+              return await this.userDiscordService.handleAddPoints(validation);
             case 'quitar-puntos':
-              return await this.discordService.handleRemovePoints(validation);
+              return await this.userDiscordService.handleRemovePoints(
+                validation,
+              );
             case 'establecer-puntos':
-              return await this.discordService.handleSetPoints(validation);
+              return await this.userDiscordService.handleSetPoints(validation);
+          }
+        }
+
+        if (
+          [
+            'dar-monedas',
+            'quitar-monedas',
+            'establecer-monedas',
+            'transferir-monedas',
+          ].includes(commandData.name)
+        ) {
+          const validation = this.validateCoinsCommand(
+            commandData,
+            interactionPayload,
+            commandData.name === 'transferir-monedas',
+          );
+
+          if ('error' in validation) {
+            return validation.error;
+          }
+
+          switch (commandData.name) {
+            case 'dar-monedas':
+              return await this.userDiscordService.handleCoinsOperation(
+                validation,
+                'add',
+              );
+            case 'quitar-monedas':
+              return await this.userDiscordService.handleCoinsOperation(
+                validation,
+                'remove',
+              );
+            case 'establecer-monedas':
+              return await this.userDiscordService.handleCoinsOperation(
+                validation,
+                'set',
+              );
+            case 'transferir-monedas':
+              return await this.userDiscordService.handleCoinsOperation(
+                validation,
+                'transfer',
+              );
           }
         }
 
@@ -247,5 +295,62 @@ export class DiscordController {
       username: resolvedUser.username,
       roles: resolvedMember.roles || [],
     };
+  }
+
+  private validateCoinsCommand(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+    isTransfer = false,
+  ): InteractCoins | { error: any } {
+    const userOption = commandData.options?.find(
+      (opt) => opt.name === (isTransfer ? 'usuario' : 'usuario'),
+    ) as APIApplicationCommandInteractionDataUserOption;
+
+    const coinsOption = commandData.options?.find(
+      (opt) => opt.name === (isTransfer ? 'cantidad' : 'cantidad'),
+    ) as APIApplicationCommandInteractionDataNumberOption;
+
+    if (!userOption || !coinsOption) {
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content:
+              'Error: Faltan parámetros requeridos (usuario o cantidad).',
+          },
+        },
+      };
+    }
+
+    const userId = userOption.value;
+    const coins = coinsOption.value;
+
+    const resolvedUser = commandData.resolved?.users?.[userId] as APIUser;
+    const resolvedMember = commandData.resolved?.members?.[
+      userId
+    ] as APIInteractionDataResolvedGuildMember;
+
+    if (!resolvedUser || !resolvedMember) {
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content:
+              'Error: No se pudo resolver el usuario o miembro especificado.',
+          },
+        },
+      };
+    }
+
+    // Para transferencias, necesitamos el ID del usuario que ejecuta el comando
+    const result: InteractCoins = {
+      userId: isTransfer ? interactionPayload.member.user.id : userId,
+      targetId: isTransfer ? userId : undefined,
+      coins,
+      username: resolvedUser.username,
+      roles: resolvedMember.roles || [],
+    };
+
+    return result;
   }
 }
