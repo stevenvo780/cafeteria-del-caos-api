@@ -167,38 +167,36 @@ export class UserDiscordService {
       });
 
       let newPoints: number;
-      let actionText: string;
+      let message: string;
 
       switch (operation) {
         case 'add':
           await this.addPenaltyPoints(discordUser.id, points);
           newPoints = discordUser.points + points;
-          actionText = 'añadido';
+          message = `💀 BOOM! ${discordUser.username} la cagó. ${points} PUNTOS DE CASTIGO AÑADIDOS. Ahora tiene ${newPoints} puntos de SHAME!`;
           break;
         case 'remove':
           await this.addPenaltyPoints(discordUser.id, -points);
           newPoints = discordUser.points - points;
-          actionText = 'quitado';
+          message = `😎 ${discordUser.username} se redimió. ${points} puntos menos de vergüenza. Aún carga con ${newPoints} puntos.`;
           break;
         case 'set':
           await this.updatePoints(discordUser.id, points);
           newPoints = points;
-          actionText = 'establecido';
+          message = `⚖️ SE HA HABLADO! ${discordUser.username} ahora tiene ${newPoints} puntos porque YO LO DIGO!`;
           break;
       }
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Se han ${actionText} ${points} puntos de penalización al usuario ${discordUser.username}. Total actual: ${newPoints} puntos.`,
-        },
+        data: { content: message },
       };
     } catch (error) {
-      console.error(`Error en operación de puntos ${operation}:`, error);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `Error al ${operation} puntos. Por favor, intenta nuevamente.`,
+          content:
+            '💀 LA OPERACIÓN SE FUE A LA MIERDA! Inténtalo de nuevo, si te atreves.',
         },
       };
     }
@@ -298,15 +296,15 @@ export class UserDiscordService {
       switch (operation) {
         case 'add':
           await this.addCoins(discordUser.id, coins);
-          message = `Se han añadido ${coins} monedas al usuario ${discordUser.username}`;
+          message = `💰 LLUVIA DE MONEDAS! ${discordUser.username} recibe ${coins} monedas del CAOS!`;
           break;
         case 'remove':
           await this.addCoins(discordUser.id, -coins);
-          message = `Se han quitado ${coins} monedas al usuario ${discordUser.username}`;
+          message = `🔥 GET REKT ${discordUser.username}! Perdiste ${coins} monedas, AJAJAJA!`;
           break;
         case 'set':
           await this.updateCoins(discordUser.id, coins);
-          message = `Se ha establecido el balance a ${coins} monedas para el usuario ${discordUser.username}`;
+          message = `⚡ ESTABLECIDO! ${discordUser.username} ahora tiene ${coins} monedas porque así lo decreto!`;
           break;
         case 'transfer':
           if (!targetId) throw new Error('targetId required for transfer');
@@ -314,18 +312,18 @@ export class UserDiscordService {
       }
 
       const updatedUser = await this.findOne(discordUser.id);
-      message += `. Balance actual: ${updatedUser?.coins} monedas.`;
+      message += `\n💎 Balance total: ${updatedUser?.coins} monedas en el banco del CAOS!`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: { content: message },
       };
     } catch (error) {
-      console.error(`Error en operación de monedas ${operation}:`, error);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `Error al ${operation} monedas. Por favor, intenta nuevamente.`,
+          content:
+            '💀 LA OPERACIÓN SE FUE A LA MIERDA! Inténtalo de nuevo, si te atreves.',
         },
       };
     }
