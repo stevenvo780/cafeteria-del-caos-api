@@ -10,6 +10,14 @@ WORKDIR /app
 COPY package*.json ./
 COPY tsconfig*.json nest-cli.json ./
 
+# Definir argumentos para las variables sensibles
+ARG DISCORD_BOT_TOKEN
+ARG DISCORD_WATCHED_CHANNELS
+
+# Pasar los argumentos como variables de entorno
+ENV DISCORD_BOT_TOKEN=$DISCORD_BOT_TOKEN
+ENV DISCORD_WATCHED_CHANNELS=$DISCORD_WATCHED_CHANNELS
+
 # Instalar dependencias con cache optimizado
 RUN npm ci
 
@@ -18,7 +26,11 @@ COPY . .
 
 # Construir la aplicación con optimización
 RUN npm run build:prod
+
+# Registrar comandos (requiere variables de entorno)
 RUN npm run register-commands
+
+# Prune para producción
 RUN npm prune --production
 
 # Production stage

@@ -1,24 +1,59 @@
 steps:
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', '$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA', '.']
-    secretEnv: ['DISCORD_BOT_TOKEN', 'DISCORD_WATCHED_CHANNELS']
-  - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', '$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA']
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    entrypoint: 'bash'
+  - name: gcr.io/cloud-builders/docker
     args:
-      - '-c'
-      - |
-        gcloud run deploy $_SERVICE_NAME \
-          --image=$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA \
-          --region=$_DEPLOY_REGION \
-          --platform=managed \
-          --quiet \
-          --update-env-vars=DISCORD_BOT_TOKEN=$$DISCORD_BOT_TOKEN,DISCORD_WATCHED_CHANNELS=$$DISCORD_WATCHED_CHANNELS
-    secretEnv: ['DISCORD_BOT_TOKEN', 'DISCORD_WATCHED_CHANNELS']
+      - build
+      - '--no-cache'
+      - '--build-arg'
+      - DISCORD_BOT_TOKEN=$$DISCORD_BOT_TOKEN
+      - '--build-arg'
+      - DISCORD_WATCHED_CHANNELS=$$DISCORD_WATCHED_CHANNELS
+      - '-t'
+      - >-
+        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - '.'
+      - '-f'
+      - Dockerfile
+    id: Build
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - >-
+        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+    id: Push
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME
+      - '--platform=managed'
+      - >-
+        --image=$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - >-
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
+      - '--region=$_DEPLOY_REGION'
+      - '--quiet'
+    id: Deploy
+    entrypoint: gcloud
+images:
+  - >-
+    $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+options:
+  substitutionOption: ALLOW_LOOSE
+  logging: CLOUD_LOGGING_ONLY
 availableSecrets:
   secretManager:
     - versionName: projects/$PROJECT_ID/secrets/DISCORD_BOT_TOKEN/versions/latest
       env: 'DISCORD_BOT_TOKEN'
     - versionName: projects/$PROJECT_ID/secrets/DISCORD_WATCHED_CHANNELS/versions/latest
       env: 'DISCORD_WATCHED_CHANNELS'
+substitutions:
+  _SERVICE_NAME: cafeteria-del-caos-api
+  _DEPLOY_REGION: us-central1
+  _AR_HOSTNAME: us-central1-docker.pkg.dev
+  _PLATFORM: managed
+  _TRIGGER_ID: 2fda3ecd-7f08-4132-9292-bf5f2b03806c
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+  - cafeteria-del-caos-api
