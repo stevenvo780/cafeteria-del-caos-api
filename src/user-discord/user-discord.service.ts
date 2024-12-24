@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { UserDiscord } from './entities/user-discord.entity';
-import { FindUsersDto, SortOrder } from './dto/find-users.dto'; // Añadido SortOrder
+import { FindUsersDto, SortOrder } from './dto/find-users.dto';
 import { APIInteractionResponse, InteractionResponseType } from 'discord.js';
 import { InteractPoints, InteractCoins } from '../discord/discord.types';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';

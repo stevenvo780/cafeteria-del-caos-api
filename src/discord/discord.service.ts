@@ -70,7 +70,7 @@ export class DiscordService {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
             content:
-              ':PSYCO: Ah, la ignorancia... ¿Pretendías crear una nota sin su esencia básica? :CAOS:',
+              'Ah, la ignorancia... ¿Pretendías crear una nota sin su esencia básica?',
           },
         };
       }
@@ -90,15 +90,14 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `:ALIENS: La sabiduría ha sido plasmada en el vacío digital :ESQUIZO:\n${process.env.FRONT_URL}/library/${note.id}\n\n:TSUNAMI: He aquí la verdad revelada:\n${truncatedContent}`,
+          content: `La sabiduría ha sido plasmada en el vacío digital\n${process.env.FRONT_URL}/library/${note.id}\n\nHe aquí la verdad revelada:\n${truncatedContent}`,
         },
       };
     } catch (error) {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content:
-            ':KILL: El caos ha engullido tu nota. La nada prevalece :PEPE:',
+          content: 'El caos ha engullido tu nota. La nada prevalece',
         },
       };
     }
@@ -170,7 +169,7 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `:PANAS: El mensaje de ${userData.username} ha sido guardado como publicación y nota :zizekok~1:`,
+          content: `El mensaje de ${userData.username} ha sido guardado como publicación y nota`,
         },
       };
     } catch (error) {
@@ -178,7 +177,7 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: ':PSYCO: ¡Error al procesar el mensaje! :CAOS:',
+          content: '¡Error al procesar el mensaje, pedazo de inútil!',
         },
       };
     }

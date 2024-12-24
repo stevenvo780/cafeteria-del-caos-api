@@ -142,20 +142,16 @@ export class LibraryService {
       );
     }
 
-    // Manejar el cambio de padre
     if (updateLibraryDto.parentNoteId !== undefined) {
       if (updateLibraryDto.parentNoteId === null) {
-        // Si se elimina el padre
         libraryItem.parent = null;
       } else {
-        // Si se asigna un nuevo padre
         const newParent = await this.libraryRepository.findOne({
           where: { id: updateLibraryDto.parentNoteId },
         });
         if (!newParent) {
           throw new Error('Nota padre no encontrada');
         }
-        // Verificar que no se esté creando un ciclo
         if (await this.wouldCreateCycle(id, updateLibraryDto.parentNoteId)) {
           throw new ForbiddenException(
             'No se puede crear un ciclo en la jerarquía de notas',
@@ -165,7 +161,6 @@ export class LibraryService {
       }
     }
 
-    // Actualizar otros campos
     if (updateLibraryDto.title !== undefined)
       libraryItem.title = updateLibraryDto.title;
     if (updateLibraryDto.description !== undefined)
@@ -178,7 +173,6 @@ export class LibraryService {
     return await this.libraryRepository.save(libraryItem);
   }
 
-  // Nuevo método auxiliar para verificar ciclos
   private async wouldCreateCycle(
     libraryId: number,
     newParentId: number,

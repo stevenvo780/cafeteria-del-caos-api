@@ -8,7 +8,7 @@ import { UserModule } from '../user/user.module';
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserDiscord]),
-    forwardRef(() => UserModule), // Usar forwardRef para evitar dependencia circular
+    forwardRef(() => UserModule),
   ],
   controllers: [UserDiscordController],
   providers: [UserDiscordService],

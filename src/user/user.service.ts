@@ -52,7 +52,6 @@ export class UserService {
       queryBuilder.andWhere('user.points <= :maxPoints', { maxPoints });
     }
 
-    // Corregimos el orderBy para usar correctamente el alias de la tabla
     const [users, total] = await queryBuilder
       .orderBy(`user.${sortBy}`, sortOrder as 'ASC' | 'DESC')
       .skip(offset)

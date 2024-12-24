@@ -3,7 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from './config.service';
 import { ConfigController } from './config.controller';
 import { Config } from './entities/config.entity';
-import { UserModule } from '../user/user.module'; // Añadir esta importación
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Config]), UserModule],

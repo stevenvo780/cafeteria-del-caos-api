@@ -13,7 +13,7 @@ import { PublicationModule } from '../publication/publication.module';
     LibraryModule,
     UserModule,
     UserDiscordModule,
-    PublicationModule, // Aseguramos que PublicationModule está importado
+    PublicationModule,
   ],
   controllers: [DiscordController],
   providers: [DiscordService],

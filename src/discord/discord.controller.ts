@@ -189,7 +189,7 @@ export class DiscordController {
         return {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
-            content: ':PEPE: ¡El autocompletado es para débiles! :PSYCO:',
+            content: '¡El autocompletado es para débiles!',
           },
         };
 
@@ -206,7 +206,7 @@ export class DiscordController {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
             content:
-              ':CAOS: ¡¿QUÉ DEMONIOS INTENTAS HACER?! Esa interacción no existe en este reino de caos :KILL:',
+              '¡¿QUÉ DEMONIOS INTENTAS HACER?! Esa interacción no existe en este reino de caos',
           },
         };
     }
@@ -257,7 +257,7 @@ export class DiscordController {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
             content:
-              ':KILL: La estupidez humana se manifiesta... ¿Dónde están los datos fundamentales? :PSYCO:',
+              'La estupidez humana se manifiesta... ¿Dónde están los datos fundamentales?',
           },
         },
       };
@@ -276,8 +276,7 @@ export class DiscordController {
         error: {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
-            content:
-              ':ESQUIZO: ¡NO ENCUENTRO A ESE USUARIO, PEDAZO DE ALCORNOQUE! :CAOS:',
+            content: '¡NO ENCUENTRO A ESE USUARIO, PEDAZO DE ALCORNOQUE!',
           },
         },
       };
@@ -317,7 +316,7 @@ export class DiscordController {
           type: InteractionResponseType.ChannelMessageWithSource,
           data: {
             content:
-              ':TSUNAMI: Ah, la mediocridad... ¿Las monedas viajan sin destino ni cantidad? :ALIENS:',
+              'Ah, la mediocridad... ¿Las monedas viajan sin destino ni cantidad?',
           },
         },
       };
@@ -343,7 +342,6 @@ export class DiscordController {
       };
     }
 
-    // Para transferencias, necesitamos el ID del usuario que ejecuta el comando
     const result: InteractCoins = {
       userId: isTransfer ? interactionPayload.member.user.id : userId,
       targetId: isTransfer ? userId : undefined,

@@ -9,6 +9,6 @@ import { UserModule } from '../user/user.module';
   imports: [TypeOrmModule.forFeature([Publication]), UserModule],
   controllers: [PublicationController],
   providers: [PublicationService],
-  exports: [PublicationService], // Añadimos esta línea para exportar el servicio
+  exports: [PublicationService],
 })
 export class PublicationModule {}
