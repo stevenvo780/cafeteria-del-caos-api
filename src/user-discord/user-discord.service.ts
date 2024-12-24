@@ -98,7 +98,9 @@ export class UserDiscordService {
   }
 
   async findOrCreate(discordData: any): Promise<UserDiscord> {
-    let user = await this.findOne(discordData.id);
+    let user = await this.userDiscordRepository.findOne({
+      where: { id: discordData.id },
+    });
 
     if (!user) {
       user = this.userDiscordRepository.create({
