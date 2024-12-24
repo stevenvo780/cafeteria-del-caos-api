@@ -1,71 +1,6 @@
-import {
-  REST,
-  Routes,
-  Client,
-  TextChannel,
-  NewsChannel,
-  GatewayIntentBits,
-} from 'discord.js';
+import { REST, Routes } from 'discord.js';
 import { config } from 'dotenv';
 config();
-
-export async function setupWebhook() {
-  const client = new Client({
-    intents: [
-      GatewayIntentBits.Guilds,
-      GatewayIntentBits.GuildWebhooks,
-      GatewayIntentBits.GuildMessages,
-      GatewayIntentBits.MessageContent,
-    ],
-  });
-
-  try {
-    await client.login(process.env.DISCORD_BOT_TOKEN);
-    const guild = await client.guilds.fetch(process.env.DISCORD_GUILD_ID);
-    const watchedChannels =
-      process.env.DISCORD_WATCHED_CHANNELS?.split(',') || [];
-
-    for (const channelId of watchedChannels) {
-      const channel = await guild.channels.fetch(channelId);
-
-      if (!(channel instanceof TextChannel || channel instanceof NewsChannel)) {
-        console.error(`Channel ${channelId} is not a text or news channel`);
-        continue;
-      }
-
-      const webhooks = await channel.fetchWebhooks();
-      let webhook = webhooks.find((wh) => wh.name === 'Publicaciones');
-
-      if (!webhook) {
-        webhook = await channel.createWebhook({
-          name: 'Publicaciones',
-          avatar: client.user?.displayAvatarURL(),
-          reason: 'Webhook para monitoreo de mensajes',
-        });
-
-        // Verificar que el webhook se creó correctamente
-        if (webhook) {
-          console.log(
-            `Created webhook for channel ${channel.name} with URL: ${webhook.url}`,
-          );
-        } else {
-          console.error(`Failed to create webhook for channel ${channel.name}`);
-        }
-      } else {
-        console.log(
-          `Using existing webhook for channel ${channel.name} with URL: ${webhook.url}`,
-        );
-      }
-    }
-
-    console.log('Webhooks setup completed successfully');
-  } catch (error) {
-    console.error('Error setting up webhooks:', error);
-    throw error; // Re-throw the error para que se pueda manejar en el nivel superior
-  } finally {
-    client.destroy();
-  }
-}
 
 export async function registerDiscordCommands() {
   const commands = [
@@ -239,7 +174,6 @@ export async function registerDiscordCommands() {
       body: commands,
     });
     console.info('Commands registered successfully');
-    await setupWebhook();
   } catch (error) {
     console.error('Error registering commands or setting up webhooks:', error);
     throw error;
