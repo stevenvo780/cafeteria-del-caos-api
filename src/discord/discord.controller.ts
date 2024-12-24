@@ -180,6 +180,68 @@ export class DiscordController {
         }
 
         switch (commandData.name) {
+          case 'puntaje': {
+            const userOption = commandData.options?.find(
+              (opt) => opt.name === 'usuario',
+            ) as APIApplicationCommandInteractionDataUserOption;
+
+            let targetUser;
+            if (userOption) {
+              const resolvedUser = commandData.resolved?.users?.[
+                userOption.value
+              ] as APIUser;
+              const resolvedMember = commandData.resolved?.members?.[
+                userOption.value
+              ] as APIInteractionDataResolvedGuildMember;
+
+              if (!resolvedUser || !resolvedMember) {
+                return {
+                  type: InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    content:
+                      '❌ Error: No se encontró al usuario especificado.',
+                  },
+                };
+              }
+
+              targetUser = await this.userDiscordService.findOrCreate({
+                id: userOption.value,
+                username: resolvedUser.username,
+                roles: resolvedMember.roles || [],
+              });
+            } else {
+              // Si no se especificó usuario, usar el que ejecutó el comando
+              targetUser = await this.userDiscordService.findOrCreate({
+                id: interactionPayload.member.user.id,
+                username: interactionPayload.member.user.username,
+                roles: interactionPayload.member.roles || [],
+              });
+            }
+
+            const message = userOption
+              ? `🎯 ${targetUser.username} tiene ${targetUser.points} puntos de penalización en su historial del CAOS!`
+              : `🎯 ¡${targetUser.username}! Cargas con ${targetUser.points} puntos de penalización en tu historial del CAOS!`;
+
+            return {
+              type: InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                content: message,
+              },
+            };
+          }
+
+          case 'saldo':
+            const user = await this.userDiscordService.findOrCreate({
+              id: interactionPayload.member.user.id,
+              username: interactionPayload.member.user.username,
+              roles: interactionPayload.member.roles || [],
+            });
+            return {
+              type: InteractionResponseType.ChannelMessageWithSource,
+              data: {
+                content: `💰 ¡${user.username}! Tu fortuna asciende a ${user.coins} monedas del caos!\n\n🏦 Balance actual del banco del CAOS`,
+              },
+            };
           case 'crear-nota':
             return await this.discordService.handleCreateNote(
               commandData.options || [],

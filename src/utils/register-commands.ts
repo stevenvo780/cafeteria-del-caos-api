@@ -5,6 +5,23 @@ config();
 export async function registerDiscordCommands() {
   const commands = [
     {
+      name: 'puntaje',
+      description: 'Consulta los puntos de penalización',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description:
+            'Usuario del que quieres consultar los puntos (opcional)',
+          required: false,
+        },
+      ],
+    },
+    {
+      name: 'saldo',
+      description: 'Consulta tu balance de monedas del caos',
+    },
+    {
       name: 'crear-nota',
       description: 'Crea una nota pública en la librería',
       options: [

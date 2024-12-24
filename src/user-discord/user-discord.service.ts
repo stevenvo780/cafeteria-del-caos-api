@@ -255,7 +255,8 @@ export class UserDiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: 'Error: Usuario no encontrado.',
+          content:
+            '❌ Error: ¡Usuario no encontrado en los registros del caos!',
         },
       };
     }
@@ -264,8 +265,7 @@ export class UserDiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content:
-            'Error: No tienes suficientes monedas para realizar esta transferencia.',
+          content: `❌ ¡INSENSATO! ${fromUser.username}, no puedes transferir lo que no posees.\n💰 Tu saldo actual es de ${fromUser.coins} monedas.`,
         },
       };
     }
@@ -280,7 +280,13 @@ export class UserDiscordService {
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: {
-        content: `Transferencia exitosa: ${amount} monedas de ${fromUser.username} a ${toUser.username}`,
+        content: `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${
+          fromUser.username
+        } ha enviado ${amount} monedas a ${
+          toUser.username
+        }\n\n💰 Nuevos balances:\n${fromUser.username}: ${
+          fromUser.coins - amount
+        } monedas\n${toUser.username}: ${toUser.coins + amount} monedas`,
       },
     };
   }
