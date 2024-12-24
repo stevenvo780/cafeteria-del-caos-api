@@ -1,4 +1,6 @@
 import { REST, Routes, Client, TextChannel, NewsChannel } from 'discord.js';
+import { config } from 'dotenv';
+config();
 
 export async function setupWebhook() {
   const client = new Client({
@@ -213,11 +215,13 @@ export async function registerDiscordCommands() {
     await rest.put(Routes.applicationCommands(clientId), {
       body: commands,
     });
-
-    console.info('Successfully reloaded application (/) commands.');
-
+    console.info('Commands registered successfully');
     await setupWebhook();
   } catch (error) {
     console.error('Error registering commands or setting up webhooks:', error);
+    throw error;
   }
+  console.info('Successfully reloaded application');
 }
+
+registerDiscordCommands();

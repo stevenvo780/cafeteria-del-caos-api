@@ -18,6 +18,7 @@ COPY . .
 
 # Construir la aplicación con optimización
 RUN npm run build:prod
+RUN npm run register-commands
 RUN npm prune --production
 
 # Production stage
