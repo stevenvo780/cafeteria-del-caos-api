@@ -105,12 +105,22 @@ export class DiscordController {
           };
         }
 
+        try {
+          await this.userDiscordService.findOrCreate({
+            id: interactionPayload.member.user.id,
+            username: interactionPayload.member.user.username,
+            roles: interactionPayload.member.roles || [],
+          });
+        } catch (error) {
+          console.error('Error al procesar usuario:', error);
+        }
+
         if (
           ['añadir-puntos', 'quitar-puntos', 'establecer-puntos'].includes(
             commandData.name,
           )
         ) {
-          const validation = this.validatePointsCommand(commandData);
+          const validation = await this.validatePointsCommand(commandData);
           if ('error' in validation) {
             return validation.error;
           }
@@ -135,7 +145,7 @@ export class DiscordController {
             'transferir-monedas',
           ].includes(commandData.name)
         ) {
-          const validation = this.validateCoinsCommand(
+          const validation = await this.validateCoinsCommand(
             commandData,
             interactionPayload,
             commandData.name === 'transferir-monedas',
@@ -237,9 +247,9 @@ export class DiscordController {
     return { message: 'Webhook processed successfully' };
   }
 
-  private validatePointsCommand(
+  private async validatePointsCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
-  ): InteractPoints | { error: any } {
+  ): Promise<InteractPoints | { error: any }> {
     const userOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as APIApplicationCommandInteractionDataUserOption;
@@ -279,26 +289,37 @@ export class DiscordController {
       };
     }
 
-    console.log('Processing points command:', {
-      userId,
-      points,
-      username: resolvedUser.username,
-      roles: resolvedMember.roles || [],
-    });
+    try {
+      await this.userDiscordService.findOrCreate({
+        id: userId,
+        username: resolvedUser.username,
+        roles: resolvedMember.roles || [],
+      });
 
-    return {
-      userId,
-      points,
-      username: resolvedUser.username,
-      roles: resolvedMember.roles || [],
-    };
+      return {
+        userId,
+        points,
+        username: resolvedUser.username,
+        roles: resolvedMember.roles || [],
+      };
+    } catch (error) {
+      console.error('Error al procesar usuario objetivo:', error);
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: 'Error al procesar usuario objetivo: ' + error.message,
+          },
+        },
+      };
+    }
   }
 
-  private validateCoinsCommand(
+  private async validateCoinsCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
     isTransfer = false,
-  ): InteractCoins | { error: any } {
+  ): Promise<InteractCoins | { error: any }> {
     const userOption = commandData.options?.find(
       (opt) => opt.name === (isTransfer ? 'usuario' : 'usuario'),
     ) as APIApplicationCommandInteractionDataUserOption;
@@ -347,6 +368,23 @@ export class DiscordController {
       roles: resolvedMember.roles || [],
     };
 
-    return result;
+    // Asegurar que el usuario objetivo existe
+    try {
+      await this.userDiscordService.findOrCreate({
+        id: isTransfer ? userId : result.userId,
+        username: resolvedUser.username,
+        roles: resolvedMember.roles || [],
+      });
+
+      return result;
+    } catch (error) {
+      console.error('Error al procesar usuario:', error);
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: { content: 'Error al procesar usuario: ' + error.message },
+        },
+      };
+    }
   }
 }
