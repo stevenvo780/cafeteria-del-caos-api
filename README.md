@@ -60,6 +60,24 @@ The complete API documentation is available at the following link:
 #### Local Development
 Crea un archivo `.env` en la raíz del proyecto con las siguientes variables:
 
+### Registro de Comandos de Discord
+
+**Importante**: El registro de comandos de Discord se realiza de forma manual desde la rama develop. Este proceso no está incluido en el despliegue automático.
+
+Para registrar los comandos:
+
+1. Asegúrate de estar en la rama develop:
+    ```bash
+    git checkout develop
+    ```
+
+2. Ejecuta el comando de registro:
+    ```bash
+    npm run commands:register
+    ```
+
+3. Verifica que los comandos se hayan registrado correctamente en tu servidor de Discord.
+
 ### Running the Application
 
 You can run the application in different modes depending on your needs:
@@ -152,6 +170,3 @@ https://cafeteriadelcaos-api-zlkelu7v2a-uc.a.run.app/api
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more details.
-```
-
-Let me know if you need additional adjustments or further refinements!
