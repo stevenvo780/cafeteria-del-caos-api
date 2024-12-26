@@ -100,28 +100,21 @@ export class DiscordService {
 
       const rootFolder = await this.libraryService.findOrCreateByTitle(
         'Notas de Discord',
+        LibraryVisibility.GENERAL,
       );
 
       const userFolder = await this.libraryService.findOrCreateByTitle(
         `Notas de ${username}`,
+        LibraryVisibility.GENERAL,
         rootFolder,
-        LibraryVisibility.USERS,
       );
-
-      if (!userFolder.parent) {
-        await this.libraryService.update(
-          userFolder.id,
-          { parentNoteId: rootFolder.id },
-          null,
-        );
-      }
 
       const data = {
         title: titulo,
         description: contenido,
         referenceDate: new Date(),
         parent: userFolder,
-        visibility: LibraryVisibility.USERS,
+        visibility: LibraryVisibility.GENERAL,
       };
 
       const note = await this.libraryService.create(data, null);

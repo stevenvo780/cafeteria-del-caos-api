@@ -247,8 +247,8 @@ export class LibraryService {
 
   async findOrCreateByTitle(
     title: string,
-    parent?: Library | null,
     visibility: LibraryVisibility = LibraryVisibility.USERS,
+    parent?: Library | null,
   ): Promise<Library> {
     const existingNote = await this.libraryRepository.findOne({
       where: { title },
