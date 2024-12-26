@@ -764,10 +764,12 @@ export class DiscordService {
         `Compra: ${quantity}x ${product.title}`,
       );
 
+      const newBalance = await this.kardexService.getUserLastBalance(userId);
+
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `✅ ¡Compra exitosa!\n\n🛍️ Artículo: ${product.title}\n📦 Cantidad: ${quantity}\n💰 Precio total: ${totalPrice} monedas`,
+          content: `✅ ¡Compra exitosa!\n\n🛍️ Artículo: ${product.title}\n📦 Cantidad: ${quantity}\n💰 Precio total: ${totalPrice} monedas\n💳 Saldo restante: ${newBalance} monedas`,
         },
       };
     } catch (error) {
