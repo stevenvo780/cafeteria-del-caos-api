@@ -58,6 +58,7 @@ export class UserDiscordService {
     const sortMapping = {
       points: 'points',
       coins: 'coins',
+      experience: 'experience',
     };
 
     const orderByColumn = sortMapping[sortBy] || 'points';
@@ -308,11 +309,14 @@ export class UserDiscordService {
       });
 
       let message: string;
+      let experienceGained = 0;
 
       switch (operation) {
         case 'add':
           await this.addCoins(discordUser.id, coins);
-          message = `💰 LLUVIA DE MONEDAS! ${discordUser.username} recibe ${coins} monedas del CAOS!`;
+          experienceGained = Math.floor(coins / 2);
+          await this.addExperience(discordUser.id, experienceGained);
+          message = `💰 LLUVIA DE MONEDAS! ${discordUser.username} recibe ${coins} monedas y ${experienceGained} de experiencia del CAOS!`;
           break;
         case 'remove':
           await this.addCoins(discordUser.id, -coins);
@@ -328,7 +332,7 @@ export class UserDiscordService {
       }
 
       const updatedUser = await this.findOne(discordUser.id);
-      message += `\n💎 Balance total: ${updatedUser?.coins} monedas en el banco del CAOS!`;
+      message += `\n💎 Balance total: ${updatedUser?.coins} monedas y ${updatedUser?.experience} XP en el banco del CAOS!`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
@@ -343,6 +347,25 @@ export class UserDiscordService {
         },
       };
     }
+  }
+
+  async addExperience(id: string, amount: number): Promise<UpdateResult> {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuario de Discord con ID ${id} no encontrado`,
+      );
+    }
+    const newExperience = user.experience + amount;
+    return this.userDiscordRepository.update(id, { experience: newExperience });
+  }
+
+  async findTopByExperience(limit = 10): Promise<UserDiscord[]> {
+    return this.userDiscordRepository
+      .createQueryBuilder('user')
+      .orderBy('user.experience', 'DESC')
+      .limit(limit)
+      .getMany();
   }
 
   async findTopRanking(limit = 10): Promise<UserDiscord[]> {

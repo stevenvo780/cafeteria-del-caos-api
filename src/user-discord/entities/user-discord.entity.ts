@@ -69,6 +69,13 @@ export class UserDiscord extends SharedProp {
   })
   coins: number;
 
+  @Column({ default: 0 })
+  @ApiProperty({
+    description: 'Experiencia del usuario',
+    example: 50,
+  })
+  experience: number;
+
   @Column('jsonb', { nullable: true })
   @ApiProperty({
     description: 'Datos adicionales del usuario de Discord',

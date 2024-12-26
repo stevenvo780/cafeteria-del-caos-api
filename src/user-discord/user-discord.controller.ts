@@ -93,7 +93,6 @@ export class UserDiscordController {
     @Param('id') id: string,
     @Body() updateUserDiscordDto: UpdateUserDiscordDto,
   ) {
-    console.log(updateUserDiscordDto);
     return this.userDiscordService.update(id, updateUserDiscordDto);
   }
 
