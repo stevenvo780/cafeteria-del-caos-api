@@ -24,6 +24,7 @@ import { LibraryService } from '../library/library.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
 import { LibraryVisibility } from '../library/entities/library.entity';
 import * as nacl from 'tweetnacl';
+import { KardexService } from '../kardex/kardex.service';
 
 @Injectable()
 export class DiscordService {
@@ -32,6 +33,7 @@ export class DiscordService {
   constructor(
     private readonly libraryService: LibraryService,
     private readonly userDiscordService: UserDiscordService,
+    private readonly kardexService: KardexService, // <-- Inyectamos KardexService
   ) {}
 
   verifyDiscordRequest(
@@ -65,7 +67,7 @@ export class DiscordService {
 
   private errorResponse(message: string): ErrorResponse {
     return {
-      type: InteractionResponseType.ChannelMessageWithSource as const, // Añadir 'as const' para fijar el tipo
+      type: InteractionResponseType.ChannelMessageWithSource as const,
       data: { content: message },
       isError: true,
     };
@@ -93,18 +95,16 @@ export class DiscordService {
         };
       }
 
-      // 1. Crear o encontrar la carpeta raíz "Notas de Discord"
       const rootFolder = await this.libraryService.findOrCreateByTitle(
         'Notas de Discord',
       );
 
-      // 2. Crear o encontrar la carpeta del usuario
       const userFolder = await this.libraryService.findOrCreateByTitle(
         `Notas de ${username}`,
+        rootFolder,
         LibraryVisibility.USERS,
       );
 
-      // 3. Establecer la carpeta del usuario como hija de la carpeta raíz si aún no lo es
       if (!userFolder.parent) {
         await this.libraryService.update(
           userFolder.id,
@@ -113,12 +113,11 @@ export class DiscordService {
         );
       }
 
-      // 4. Crear la nota del usuario como hija de su carpeta personal
       const data = {
         title: titulo,
         description: contenido,
         referenceDate: new Date(),
-        parentNoteId: userFolder.id,
+        parent: userFolder,
         visibility: LibraryVisibility.USERS,
       };
 
@@ -131,7 +130,7 @@ export class DiscordService {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `La sabiduría ha sido plasmada en el vacío digital\n${process.env.FRONT_URL}/library/${note.id}\n\nHe aquí la verdad revelada:\n${truncatedContent}`,
+          content: `La sabiduría ha sido plasmada\n${process.env.FRONT_URL}/library/${note.id}\n\nHe aquí la verdad:\n${truncatedContent}\n\nURL: https://www.cafeteriadelcaos.com/library/${note.id}`,
         },
       };
     } catch (error) {
@@ -145,7 +144,6 @@ export class DiscordService {
     }
   }
 
-  // Añadir método helper para extraer valores de string de forma segura
   private getStringOptionValue(
     option: APIApplicationCommandInteractionDataOption | undefined,
   ): string | null {
@@ -199,17 +197,81 @@ export class DiscordService {
       return validation.error;
     }
 
-    const operationMap = {
-      'dar-monedas': 'add',
-      'quitar-monedas': 'remove',
-      'establecer-monedas': 'set',
-      'transferir-monedas': 'transfer',
-    } as const;
+    const { userId, targetId, coins, username, roles } = validation;
+    const user = await this.userDiscordService.findOrCreate({
+      id: userId,
+      username,
+      roles,
+    });
 
-    return await this.userDiscordService.handleCoinsOperation(
-      validation,
-      operationMap[commandName],
-    );
+    let message: string;
+    try {
+      switch (commandName) {
+        case 'dar-monedas': {
+          await this.kardexService.addCoins(userId, coins, 'Discord command');
+          const newBalance = await this.kardexService.getUserLastBalance(
+            userId,
+          );
+          message = `💰 LLUVIA DE MONEDAS! ${user.username} +${coins}\nSaldo actual: ${newBalance} monedas.`;
+          break;
+        }
+        case 'quitar-monedas': {
+          await this.kardexService.removeCoins(
+            userId,
+            coins,
+            'Discord command',
+          );
+          const newBalance = await this.kardexService.getUserLastBalance(
+            userId,
+          );
+          message = `🔥 GET REKT ${user.username} -${coins} monedas.\nSaldo actual: ${newBalance} monedas.`;
+          break;
+        }
+        case 'establecer-monedas': {
+          await this.kardexService.setCoins(userId, coins, 'Discord command');
+          const newBalance = await this.kardexService.getUserLastBalance(
+            userId,
+          );
+          message = `⚡ ESTABLECIDO! ${user.username} ahora tiene ${newBalance} monedas.`;
+          break;
+        }
+        case 'transferir-monedas': {
+          if (!targetId) {
+            return this.errorResponse('❌ Falta el usuario de destino.');
+          }
+          const toUser = await this.userDiscordService.findOrCreate({
+            id: targetId,
+            username: 'Unknown user',
+          });
+          await this.kardexService.transferCoins(userId, targetId, coins);
+
+          const fromBalance = await this.kardexService.getUserLastBalance(
+            userId,
+          );
+          const toBalance = await this.kardexService.getUserLastBalance(
+            targetId,
+          );
+
+          message = `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${user.username} ha enviado ${coins} monedas a ${toUser.username}\n\n💰 Nuevos balances:\n${user.username}: ${fromBalance} monedas\n${toUser.username}: ${toBalance} monedas`;
+          break;
+        }
+        default: {
+          return this.errorResponse('Comando de monedas no reconocido.');
+        }
+      }
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: { content: message },
+      };
+    } catch (error) {
+      console.error('Error en operación de monedas:', error);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '💀 Error en la operación de monedas. Intenta de nuevo.',
+        },
+      };
+    }
   }
 
   async handleUserBalance(
@@ -226,21 +288,24 @@ export class DiscordService {
       interactionMember,
     );
     if ('error' in targetUser) {
-      return this.errorResponse(
-        '❌ Error: No se encontró al usuario especificado.',
-      );
+      return this.errorResponse('❌ Error: No se encontró al usuario.');
     }
 
-    const topUsers = await this.userDiscordService.findTopByCoins(10);
-    const userRank = topUsers.findIndex((u) => u.id === targetUser.id) + 1;
+    const lastBalance = await this.kardexService.getUserLastBalance(
+      targetUser.id,
+    );
+
+    const topCoins = await this.kardexService.findTopByCoins(10);
+    const userRank =
+      topCoins.findIndex((item) => item.userDiscordId === targetUser.id) + 1;
     const rankText =
       userRank > 0 && userRank <= 10
         ? `\n🏆 Ranking: #${userRank} en el top 10`
         : '';
 
     const message = userOption
-      ? `💰 ${targetUser.username} tiene ${targetUser.coins} monedas del caos!${rankText}`
-      : `💰 ¡${targetUser.username}! Tu fortuna asciende a ${targetUser.coins} monedas del caos!${rankText}`;
+      ? `💰 ${targetUser.username} tiene ${lastBalance} monedas del caos!${rankText}`
+      : `💰 ¡${targetUser.username}! Tu fortuna asciende a ${lastBalance} monedas del caos!${rankText}`;
 
     return {
       type: InteractionResponseType.ChannelMessageWithSource,
@@ -274,26 +339,41 @@ export class DiscordService {
       data: { content: message },
     };
   }
-
   async handleTopCoins(): Promise<DiscordCommandResponse> {
-    const topUsers = await this.userDiscordService.findTopByCoins(10);
-    if (!topUsers || topUsers.length === 0) {
+    try {
+      const topCoins = await this.kardexService.findTopByCoins(10);
+      if (!topCoins || topCoins.length === 0) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: { content: 'No hay usuarios con monedas registradas.' },
+        };
+      }
+
+      const leaderboardLines = [];
+      for (let i = 0; i < topCoins.length; i++) {
+        const item = topCoins[i];
+        const user = await this.userDiscordService.findOne(item.userDiscordId);
+        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '💰';
+        leaderboardLines.push(
+          `${medal} #${i + 1} ${user.username} - ${item.total} monedas`,
+        );
+      }
+
+      const response = ['🏆 Top 10 usuarios con más monedas:']
+        .concat(leaderboardLines)
+        .join('\n');
+
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: 'No hay usuarios o monedas registradas.' },
+        data: { content: response },
+      };
+    } catch (error) {
+      console.error('Error al obtener ranking de monedas:', error);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: { content: '❌ Error al obtener el ranking de monedas.' },
       };
     }
-
-    const response = ['💰 Top 10 usuarios con más monedas:']
-      .concat(
-        topUsers.map((u, i) => `#${i + 1} ${u.username} - ${u.coins} monedas`),
-      )
-      .join('\n');
-
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: { content: response },
-    };
   }
 
   async handleUserExperience(
@@ -328,7 +408,7 @@ export class DiscordService {
 
     const message = userOption
       ? `✨ ${targetUser.username} tiene ${targetUser.experience} puntos de experiencia!${rankText}`
-      : `✨ ¡${targetUser.username}! Has acumulado ${targetUser.experience} puntos de experiencia!${rankText}`;
+      : `✨ ¡${targetUser.username}! Has acumulado ${targetUser.experience} XP!${rankText}`;
 
     return {
       type: InteractionResponseType.ChannelMessageWithSource as const,
@@ -454,7 +534,6 @@ export class DiscordService {
     const resolvedMember = commandData.resolved?.members?.[
       userId
     ] as APIInteractionDataResolvedGuildMember;
-
     if (!resolvedUser || !resolvedMember) {
       return {
         error: {
@@ -545,14 +624,12 @@ export class DiscordService {
       roles: resolvedMember.roles || [],
     };
 
-    // Asegurar que el usuario objetivo existe
     try {
       await this.userDiscordService.findOrCreate({
         id: isTransfer ? userId : result.userId,
         username: resolvedUser.username,
         roles: resolvedMember.roles || [],
       });
-
       return result;
     } catch (error) {
       console.error('Error al procesar usuario:', error);

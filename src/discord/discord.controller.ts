@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { DiscordService } from './discord.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
+import { KardexService } from '../kardex/kardex.service';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { InteractionType, InteractionResponseType } from 'discord.js';
 import { DiscordInteractionResponse, ErrorResponse } from './discord.types';
@@ -21,6 +22,7 @@ export class DiscordController {
   constructor(
     private readonly discordService: DiscordService,
     private readonly userDiscordService: UserDiscordService,
+    private readonly kardexService: KardexService,
   ) {}
 
   @ApiOperation({
@@ -99,7 +101,6 @@ export class DiscordController {
     interactionPayload: any,
   ) {
     try {
-      // Separar los comandos por categorías para mejor organización
       const experienceCommands = [
         'dar-experiencia',
         'quitar-experiencia',
@@ -117,7 +118,6 @@ export class DiscordController {
         'transferir-monedas',
       ];
 
-      // Manejar comandos de experiencia
       if (experienceCommands.includes(commandData.name)) {
         return await this.discordService.handleExperienceOperations(
           commandData.name,
@@ -125,7 +125,6 @@ export class DiscordController {
         );
       }
 
-      // Manejar comandos de puntos
       if (pointCommands.includes(commandData.name)) {
         return await this.discordService.handleUserPoints(
           commandData.name,
@@ -133,7 +132,6 @@ export class DiscordController {
         );
       }
 
-      // Manejar comandos de monedas
       if (coinCommands.includes(commandData.name)) {
         return await this.discordService.handleUserCoins(
           commandData.name,
@@ -142,7 +140,6 @@ export class DiscordController {
         );
       }
 
-      // Manejar otros comandos
       switch (commandData.name) {
         case 'experiencia':
           return await this.discordService.handleUserExperience(
@@ -238,13 +235,24 @@ export class DiscordController {
     if (botKey !== process.env.BOT_SYNC_KEY) {
       throw new UnauthorizedException('Llave inválida');
     }
-    const user = await this.userDiscordService.findOrCreate({
+
+    await this.userDiscordService.findOrCreate({
       id: userId,
       username: 'Bot',
     });
-    user.coins += amount;
-    await this.userDiscordService.updateCoins(userId, user.coins);
-    return { newBalance: user.coins };
+
+    if (amount >= 0) {
+      await this.kardexService.addCoins(userId, amount, 'Report from Bot');
+    } else {
+      await this.kardexService.removeCoins(
+        userId,
+        Math.abs(amount),
+        'Report from Bot',
+      );
+    }
+
+    const newBalance = await this.kardexService.getUserLastBalance(userId);
+    return { newBalance };
   }
 
   @Get('coins/:id')
@@ -255,10 +263,13 @@ export class DiscordController {
     if (botKey !== process.env.BOT_SYNC_KEY) {
       throw new UnauthorizedException('Llave inválida');
     }
-    const user = await this.userDiscordService.findOrCreate({
+
+    await this.userDiscordService.findOrCreate({
       id: userId,
       username: 'Unknown',
     });
-    return { balance: user.coins };
+
+    const balance = await this.kardexService.getUserLastBalance(userId);
+    return { balance };
   }
 }

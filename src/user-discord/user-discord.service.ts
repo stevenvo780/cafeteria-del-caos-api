@@ -5,7 +5,6 @@ import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto';
 import {
   InteractPoints,
-  InteractCoins,
   DiscordCommandResponse,
 } from '../discord/discord.types';
 import { InteractionResponseType } from 'discord.js';
@@ -57,7 +56,6 @@ export class UserDiscordService {
 
     const sortMapping = {
       points: 'points',
-      coins: 'coins',
       experience: 'experience',
     };
 
@@ -69,7 +67,6 @@ export class UserDiscordService {
       .offset(offset);
 
     const [users, total] = await queryBuilder.getManyAndCount();
-
     return { users, total };
   }
 
@@ -87,7 +84,6 @@ export class UserDiscordService {
   ): Promise<UserDiscord> {
     const user = await this.findOne(id);
     Object.assign(user, updateUserDiscordDto);
-    console.log('Updated user:', user);
     return this.userDiscordRepository.save(user);
   }
 
@@ -97,7 +93,6 @@ export class UserDiscordService {
       await this.userDiscordRepository.delete(id);
       return user;
     } catch (error) {
-      console.log(error);
       throw new NotFoundException(`error deleting user with ID ${id}`);
     }
   }
@@ -150,7 +145,6 @@ export class UserDiscordService {
         `Usuario de Discord con ID ${id} no encontrado`,
       );
     }
-
     const newPoints = user.points + points;
     return this.userDiscordRepository.update(id, { points: newPoints });
   }
@@ -162,7 +156,7 @@ export class UserDiscordService {
         `Usuario de Discord con ID ${id} no encontrado`,
       );
     }
-    return this.userDiscordRepository.update(id, { points: points });
+    return this.userDiscordRepository.update(id, { points });
   }
 
   async handlePointsOperation(
@@ -205,10 +199,7 @@ export class UserDiscordService {
     } catch (error) {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content:
-            '💀 LA OPERACIÓN SE FUE A LA MIERDA! Inténtalo de nuevo, si te atreves.',
-        },
+        data: { content: '💀 Error en la operación de puntos.' },
       };
     }
   }
@@ -227,128 +218,6 @@ export class UserDiscordService {
     return this.handlePointsOperation(data, 'set');
   }
 
-  async updateCoins(id: string, coins: number): Promise<UpdateResult> {
-    const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException(
-        `Usuario de Discord con ID ${id} no encontrado`,
-      );
-    }
-    return this.userDiscordRepository.update(id, { coins });
-  }
-
-  async addCoins(id: string, amount: number): Promise<UpdateResult> {
-    const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException(
-        `Usuario de Discord con ID ${id} no encontrado`,
-      );
-    }
-    const newCoins = user.coins + amount;
-    return this.userDiscordRepository.update(id, { coins: newCoins });
-  }
-
-  async transferCoins(
-    fromId: string,
-    toId: string,
-    amount: number,
-  ): Promise<DiscordCommandResponse> {
-    const fromUser = await this.findOne(fromId);
-    const toUser = await this.findOne(toId);
-
-    if (!fromUser || !toUser) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content:
-            '❌ Error: ¡Usuario no encontrado en los registros del caos!',
-        },
-      };
-    }
-
-    if (fromUser.coins < amount) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `❌ ¡INSENSATO! ${fromUser.username}, no puedes transferir lo que no posees.\n💰 Tu saldo actual es de ${fromUser.coins} monedas.`,
-        },
-      };
-    }
-
-    await this.userDiscordRepository.update(fromId, {
-      coins: fromUser.coins - amount,
-    });
-    await this.userDiscordRepository.update(toId, {
-      coins: toUser.coins + amount,
-    });
-
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: {
-        content: `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${
-          fromUser.username
-        } ha enviado ${amount} monedas a ${
-          toUser.username
-        }\n\n💰 Nuevos balances:\n${fromUser.username}: ${
-          fromUser.coins - amount
-        } monedas\n${toUser.username}: ${toUser.coins + amount} monedas`,
-      },
-    };
-  }
-
-  async handleCoinsOperation(
-    data: InteractCoins,
-    operation: 'add' | 'remove' | 'set' | 'transfer',
-  ): Promise<DiscordCommandResponse> {
-    try {
-      const { userId, targetId, coins, username, roles } = data;
-      const discordUser = await this.findOrCreate({
-        id: userId,
-        username,
-        roles,
-      });
-
-      let message: string;
-      let experienceGained = 0;
-
-      switch (operation) {
-        case 'add':
-          await this.addCoins(discordUser.id, coins);
-          experienceGained = Math.floor(coins / 2);
-          await this.addExperience(discordUser.id, experienceGained);
-          message = `💰 LLUVIA DE MONEDAS! ${discordUser.username} recibe ${coins} monedas y ${experienceGained} de experiencia del CAOS!`;
-          break;
-        case 'remove':
-          await this.addCoins(discordUser.id, -coins);
-          message = `🔥 GET REKT ${discordUser.username}! Perdiste ${coins} monedas, AJAJAJA!`;
-          break;
-        case 'set':
-          await this.updateCoins(discordUser.id, coins);
-          message = `⚡ ESTABLECIDO! ${discordUser.username} ahora tiene ${coins} monedas porque así lo decreto!`;
-          break;
-        case 'transfer':
-          if (!targetId) throw new Error('targetId required for transfer');
-          return await this.transferCoins(userId, targetId, coins);
-      }
-
-      const updatedUser = await this.findOne(discordUser.id);
-      message += `\n💎 Balance total: ${updatedUser?.coins} monedas y ${updatedUser?.experience} XP en el banco del CAOS!`;
-
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: message },
-      };
-    } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content:
-            '💀 LA OPERACIÓN SE FUE A LA MIERDA! Inténtalo de nuevo, si te atreves.',
-        },
-      };
-    }
-  }
-
   async addExperience(id: string, amount: number): Promise<UpdateResult> {
     const user = await this.findOne(id);
     if (!user) {
@@ -360,12 +229,17 @@ export class UserDiscordService {
     return this.userDiscordRepository.update(id, { experience: newExperience });
   }
 
-  async findTopByExperience(limit = 10): Promise<UserDiscord[]> {
-    return this.userDiscordRepository
-      .createQueryBuilder('user')
-      .orderBy('user.experience', 'DESC')
-      .limit(limit)
-      .getMany();
+  async updateExperience(
+    id: string,
+    experience: number,
+  ): Promise<UpdateResult> {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuario de Discord con ID ${id} no encontrado`,
+      );
+    }
+    return this.userDiscordRepository.update(id, { experience });
   }
 
   async findTopRanking(limit = 10): Promise<UserDiscord[]> {
@@ -373,14 +247,6 @@ export class UserDiscordService {
       .createQueryBuilder('user')
       .orderBy('user.experience', 'DESC')
       .addOrderBy('user.coins', 'DESC')
-      .limit(limit)
-      .getMany();
-  }
-
-  async findTopByCoins(limit = 10): Promise<UserDiscord[]> {
-    return this.userDiscordRepository
-      .createQueryBuilder('user')
-      .orderBy('user.coins', 'DESC')
       .limit(limit)
       .getMany();
   }
@@ -399,7 +265,7 @@ export class UserDiscordService {
 
       if (operation === 'remove' && discordUser.experience < amount) {
         return {
-          type: InteractionResponseType.ChannelMessageWithSource as const,
+          type: InteractionResponseType.ChannelMessageWithSource,
           data: {
             content: `❌ Error: ${discordUser.username} solo tiene ${discordUser.experience} XP. No puedes quitar ${amount} XP.`,
           },
@@ -407,19 +273,18 @@ export class UserDiscordService {
       }
 
       let message: string;
-
       switch (operation) {
         case 'add':
           await this.addExperience(discordUser.id, amount);
-          message = `✨ ¡SUBIDA DE NIVEL! ${discordUser.username} ha ganado ${amount} puntos de experiencia.`;
+          message = `✨ ¡SUBIDA DE NIVEL! ${discordUser.username} +${amount} XP.`;
           break;
         case 'remove':
           await this.addExperience(discordUser.id, -amount);
-          message = `📉 ¡PÉRDIDA DE EXPERIENCIA! ${discordUser.username} ha perdido ${amount} puntos de experiencia.`;
+          message = `📉 ¡PÉRDIDA DE EXPERIENCIA! ${discordUser.username} -${amount} XP.`;
           break;
         case 'set':
           await this.updateExperience(discordUser.id, amount);
-          message = `⚡ ¡EXPERIENCIA ESTABLECIDA! ${discordUser.username} ahora tiene ${amount} puntos de experiencia.`;
+          message = `⚡ ¡EXPERIENCIA ESTABLECIDA! ${discordUser.username} ahora tiene ${amount} XP.`;
           break;
         default:
           throw new Error('Operación no válida');
@@ -445,13 +310,13 @@ export class UserDiscordService {
       }
 
       return {
-        type: InteractionResponseType.ChannelMessageWithSource as const,
+        type: InteractionResponseType.ChannelMessageWithSource,
         data: { content: message },
       };
     } catch (error) {
       console.error('Error al procesar operación de experiencia:', error);
       return {
-        type: InteractionResponseType.ChannelMessageWithSource as const,
+        type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           content: '❌ Error al procesar la operación de experiencia.',
         },
@@ -459,41 +324,45 @@ export class UserDiscordService {
     }
   }
 
-  async updateExperience(
-    id: string,
-    experience: number,
-  ): Promise<UpdateResult> {
-    const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException(
-        `Usuario de Discord con ID ${id} no encontrado`,
-      );
-    }
-    return this.userDiscordRepository.update(id, { experience });
-  }
-
-  async getUserExperience(userId: string): Promise<DiscordCommandResponse> {
+  async getUserExperience(userId: string) {
     try {
       const user = await this.findOne(userId);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `🌟 ${user.username} tiene ${user.experience} puntos de experiencia acumulados.`,
+          content: `🌟 ${user.username} tiene ${user.experience} puntos de experiencia.`,
         },
       };
     } catch (error) {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: '❌ No se pudo encontrar la información del usuario.',
-        },
+        data: { content: '❌ No se encontró la info del usuario.' },
       };
     }
+  }
+
+  // ---------------------
+  //      RANKINGS
+  // ---------------------
+
+  // Ranking por experiencia
+  async findTopByExperience(limit = 10): Promise<UserDiscord[]> {
+    return this.userDiscordRepository
+      .createQueryBuilder('user')
+      .orderBy('user.experience', 'DESC')
+      .limit(limit)
+      .getMany();
   }
 
   async getTopExperienceRanking(): Promise<DiscordCommandResponse> {
     try {
       const users = await this.findTopByExperience(10);
+      if (!users.length) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: { content: 'No hay usuarios con experiencia registrada.' },
+        };
+      }
       const rankingMessage = users
         .map((user, index) => {
           const medal =
@@ -513,9 +382,7 @@ export class UserDiscordService {
     } catch (error) {
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: '❌ Error al obtener el ranking de experiencia.',
-        },
+        data: { content: '❌ Error al obtener el ranking de experiencia.' },
       };
     }
   }

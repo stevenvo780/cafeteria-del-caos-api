@@ -247,6 +247,7 @@ export class LibraryService {
 
   async findOrCreateByTitle(
     title: string,
+    parent?: Library | null,
     visibility: LibraryVisibility = LibraryVisibility.USERS,
   ): Promise<Library> {
     const existingNote = await this.libraryRepository.findOne({
@@ -261,6 +262,9 @@ export class LibraryService {
       title,
       description: `Carpeta automática para: ${title}`,
       referenceDate: new Date(),
+      parent: parent
+        ? await this.findOrCreateByTitle(parent.title, null)
+        : null,
       visibility,
     });
 

@@ -64,13 +64,6 @@ export class UserDiscord extends SharedProp {
 
   @Column({ default: 0 })
   @ApiProperty({
-    description: 'Cantidad de monedas del usuario',
-    example: 100,
-  })
-  coins: number;
-
-  @Column({ default: 0 })
-  @ApiProperty({
     description: 'Experiencia del usuario',
     example: 50,
   })
