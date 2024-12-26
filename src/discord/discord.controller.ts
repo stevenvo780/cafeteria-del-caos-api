@@ -7,6 +7,7 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  Param,
 } from '@nestjs/common';
 import { DiscordService } from './discord.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
@@ -307,6 +308,38 @@ export class DiscordController {
 
     await this.discordService.handleWebhook(eventPayload);
     return { message: 'Webhook processed successfully' };
+  }
+
+  @Post('coins/report')
+  async reportCoins(
+    @Body() { userId, amount }: { userId: string; amount: number },
+    @Headers('x-bot-api-key') botKey: string,
+  ) {
+    if (botKey !== process.env.BOT_SYNC_KEY) {
+      throw new UnauthorizedException('Llave inválida');
+    }
+    const user = await this.userDiscordService.findOrCreate({
+      id: userId,
+      username: 'Bot',
+    });
+    user.coins += amount;
+    await this.userDiscordService.updateCoins(userId, user.coins);
+    return { newBalance: user.coins };
+  }
+
+  @Get('coins/:id')
+  async getCoins(
+    @Param('id') userId: string,
+    @Headers('x-bot-api-key') botKey: string,
+  ) {
+    if (botKey !== process.env.BOT_SYNC_KEY) {
+      throw new UnauthorizedException('Llave inválida');
+    }
+    const user = await this.userDiscordService.findOrCreate({
+      id: userId,
+      username: 'Unknown',
+    });
+    return { balance: user.coins };
   }
 
   private async validatePointsCommand(
