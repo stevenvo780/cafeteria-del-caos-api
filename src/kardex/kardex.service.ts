@@ -124,26 +124,28 @@ export class KardexService {
   async findTopByCoins(
     limit = 10,
   ): Promise<{ userDiscordId: string; total: number }[]> {
-    const subQuery = this.kardexRepository
+    const query = this.kardexRepository
       .createQueryBuilder('k1')
-      .select('k1.userDiscordId')
+      .select('k1.userDiscordId', 'userDiscordId')
       .addSelect('k1.balance', 'total')
       .where((qb) => {
         const subQuery = qb
           .subQuery()
-          .select('MAX(k2.createdAt)')
+          .select('MAX(k2.id)')
           .from(Kardex, 'k2')
           .where('k2.userDiscordId = k1.userDiscordId')
           .getQuery();
-        return 'k1.createdAt = ' + subQuery;
+        return 'k1.id = ' + subQuery;
       })
       .orderBy('k1.balance', 'DESC')
       .limit(limit);
 
-    const result = await subQuery.getRawMany();
+    const result = await query.getRawMany();
+
+    // Asegurarse que los totales sean números
     return result.map((item) => ({
       userDiscordId: item.userDiscordId,
-      total: parseInt(item.total),
+      total: parseInt(item.total) || 0,
     }));
   }
 

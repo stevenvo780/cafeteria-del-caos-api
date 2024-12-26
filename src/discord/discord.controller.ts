@@ -248,7 +248,6 @@ export class DiscordController {
 
     if (amount >= 0) {
       await this.kardexService.addCoins(userId, amount, 'Report from Bot');
-      // Añadir experiencia igual a las monedas cuando son positivas
       await this.userDiscordService.addExperience(userId, amount);
     } else {
       await this.kardexService.removeCoins(

@@ -343,15 +343,18 @@ export class DiscordService {
         };
       }
 
-      const leaderboardLines = [];
-      for (let i = 0; i < topCoins.length; i++) {
-        const item = topCoins[i];
-        const user = await this.userDiscordService.findOne(item.userDiscordId);
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '💰';
-        leaderboardLines.push(
-          `${medal} #${i + 1} ${user.username} - ${item.total} monedas`,
-        );
-      }
+      const leaderboardLines = await Promise.all(
+        topCoins.map(async (item, index) => {
+          const user = await this.userDiscordService.findOne(
+            item.userDiscordId,
+          );
+          const medal =
+            index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '💰';
+          return `${medal} #${index + 1} ${user.username} - ${
+            item.total
+          } monedas`;
+        }),
+      );
 
       const response = ['🏆 Top 10 usuarios con más monedas:']
         .concat(leaderboardLines)
