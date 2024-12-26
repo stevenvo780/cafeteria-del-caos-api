@@ -397,37 +397,63 @@ export class UserDiscordService {
         roles,
       });
 
-      let newExperience: number;
+      if (operation === 'remove' && discordUser.experience < amount) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource as const,
+          data: {
+            content: `❌ Error: ${discordUser.username} solo tiene ${discordUser.experience} XP. No puedes quitar ${amount} XP.`,
+          },
+        };
+      }
+
       let message: string;
 
       switch (operation) {
         case 'add':
           await this.addExperience(discordUser.id, amount);
-          newExperience = discordUser.experience + amount;
-          message = `✨ ¡NIVEL AUMENTADO! ${discordUser.username} recibe ${amount} puntos de experiencia. ¡Ahora tiene ${newExperience} XP!`;
+          message = `✨ ¡SUBIDA DE NIVEL! ${discordUser.username} ha ganado ${amount} puntos de experiencia.`;
           break;
         case 'remove':
           await this.addExperience(discordUser.id, -amount);
-          newExperience = discordUser.experience - amount;
-          message = `📉 ¡DEGRADADO! ${discordUser.username} pierde ${amount} puntos de experiencia. Le quedan ${newExperience} XP.`;
+          message = `📉 ¡PÉRDIDA DE EXPERIENCIA! ${discordUser.username} ha perdido ${amount} puntos de experiencia.`;
           break;
         case 'set':
           await this.updateExperience(discordUser.id, amount);
-          newExperience = amount;
-          message = `⚡ ¡ESTABLECIDO! ${discordUser.username} ahora tiene ${amount} puntos de experiencia.`;
+          message = `⚡ ¡EXPERIENCIA ESTABLECIDA! ${discordUser.username} ahora tiene ${amount} puntos de experiencia.`;
           break;
+        default:
+          throw new Error('Operación no válida');
+      }
+
+      const updatedUser = await this.findOne(discordUser.id);
+      const currentLevel = Math.floor(updatedUser.experience / 100);
+      const nextLevel = (currentLevel + 1) * 100;
+      const xpToNextLevel = nextLevel - updatedUser.experience;
+
+      message += `\n📊 Estadísticas:`;
+      message += `\n🎯 Experiencia total: ${updatedUser.experience} XP`;
+      message += `\n📈 Nivel actual: ${currentLevel}`;
+      message += `\n🎮 Experiencia para siguiente nivel: ${xpToNextLevel} XP`;
+
+      if (operation === 'add') {
+        const previousLevel = Math.floor(
+          (updatedUser.experience - amount) / 100,
+        );
+        if (currentLevel > previousLevel) {
+          message += `\n🎉 ¡FELICIDADES! Has subido al nivel ${currentLevel}!`;
+        }
       }
 
       return {
-        type: InteractionResponseType.ChannelMessageWithSource,
+        type: InteractionResponseType.ChannelMessageWithSource as const,
         data: { content: message },
       };
     } catch (error) {
+      console.error('Error al procesar operación de experiencia:', error);
       return {
-        type: InteractionResponseType.ChannelMessageWithSource,
+        type: InteractionResponseType.ChannelMessageWithSource as const,
         data: {
-          content:
-            '💀 ¡ERROR! No se pudo procesar la operación de experiencia.',
+          content: '❌ Error al procesar la operación de experiencia.',
         },
       };
     }

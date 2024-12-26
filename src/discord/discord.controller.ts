@@ -98,54 +98,83 @@ export class DiscordController {
     commandData: any,
     interactionPayload: any,
   ) {
-    const pointsCommands = [
-      'añadir-puntos',
-      'quitar-puntos',
-      'establecer-puntos',
-    ];
-    const coinsCommands = [
-      'dar-monedas',
-      'quitar-monedas',
-      'establecer-monedas',
-      'transferir-monedas',
-    ];
+    try {
+      // Separar los comandos por categorías para mejor organización
+      const experienceCommands = [
+        'dar-experiencia',
+        'quitar-experiencia',
+        'establecer-experiencia',
+      ];
+      const pointCommands = [
+        'añadir-puntos',
+        'quitar-puntos',
+        'establecer-puntos',
+      ];
+      const coinCommands = [
+        'dar-monedas',
+        'quitar-monedas',
+        'establecer-monedas',
+        'transferir-monedas',
+      ];
 
-    if (pointsCommands.includes(commandData.name)) {
-      return await this.discordService.handleUserPoints(
-        commandData.name,
-        commandData,
-      );
-    }
-
-    if (coinsCommands.includes(commandData.name)) {
-      return await this.discordService.handleUserCoins(
-        commandData.name,
-        commandData,
-        interactionPayload,
-      );
-    }
-
-    switch (commandData.name) {
-      case 'puntaje':
-        return await this.discordService.handleUserScore(
+      // Manejar comandos de experiencia
+      if (experienceCommands.includes(commandData.name)) {
+        return await this.discordService.handleExperienceOperations(
+          commandData.name,
           commandData,
-          interactionPayload.member,
         );
-      case 'saldo':
-        return await this.discordService.handleUserBalance(
+      }
+
+      // Manejar comandos de puntos
+      if (pointCommands.includes(commandData.name)) {
+        return await this.discordService.handleUserPoints(
+          commandData.name,
           commandData,
-          interactionPayload.member,
         );
-      case 'crear-nota':
-        return await this.discordService.handleCreateNote(
-          commandData.options || [],
+      }
+
+      // Manejar comandos de monedas
+      if (coinCommands.includes(commandData.name)) {
+        return await this.discordService.handleUserCoins(
+          commandData.name,
+          commandData,
+          interactionPayload,
         );
-      case 'top-monedas':
-        return await this.discordService.handleTopCoins();
-      default:
-        return this.errorResponse(
-          `Comando "${commandData.name}" no reconocido.`,
-        );
+      }
+
+      // Manejar otros comandos
+      switch (commandData.name) {
+        case 'experiencia':
+          return await this.discordService.handleUserExperience(
+            commandData,
+            interactionPayload.member,
+          );
+        case 'top-experiencia':
+          return await this.discordService.handleTopExperienceRanking();
+        case 'puntaje':
+          return await this.discordService.handleUserScore(
+            commandData,
+            interactionPayload.member,
+          );
+        case 'saldo':
+          return await this.discordService.handleUserBalance(
+            commandData,
+            interactionPayload.member,
+          );
+        case 'crear-nota':
+          return await this.discordService.handleCreateNote(
+            commandData.options || [],
+          );
+        case 'top-monedas':
+          return await this.discordService.handleTopCoins();
+        default:
+          return this.errorResponse(
+            `Comando "${commandData.name}" no reconocido.`,
+          );
+      }
+    } catch (error) {
+      console.error('Error al procesar comando:', error);
+      return this.errorResponse('Error al procesar el comando');
     }
   }
 

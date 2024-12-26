@@ -3,7 +3,6 @@ import {
   InteractionResponseType,
   APIUserInteractionDataResolved,
   APIMessageComponentInteraction,
-  APIApplicationCommandInteractionDataOption,
 } from 'discord.js';
 
 export { InteractionType, InteractionResponseType };

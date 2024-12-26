@@ -22,7 +22,7 @@ import {
 } from '../utils/discord-utils';
 import { LibraryService } from '../library/library.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
-import { LibraryVisibility } from '../library/entities/library.entity'; // Añadir esta importación
+import { LibraryVisibility } from '../library/entities/library.entity';
 import * as nacl from 'tweetnacl';
 
 @Injectable()
@@ -340,6 +340,39 @@ export class DiscordService {
       validation,
       operationMap[commandName as keyof typeof operationMap],
     );
+  }
+
+  async handleTopExperienceRanking(): Promise<DiscordCommandResponse> {
+    try {
+      const topUsers = await this.userDiscordService.findTopByExperience(10);
+      if (!topUsers || topUsers.length === 0) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource as const,
+          data: { content: 'No hay usuarios con experiencia registrada.' },
+        };
+      }
+
+      const response = ['✨ Top 10 usuarios con más experiencia:']
+        .concat(
+          topUsers.map((u, i) => {
+            const medal =
+              i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : '✨';
+            return `${medal} #${i + 1} ${u.username} - ${u.experience} XP`;
+          }),
+        )
+        .join('\n');
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource as const,
+        data: { content: response },
+      };
+    } catch (error) {
+      console.error('Error al obtener ranking de experiencia:', error);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource as const,
+        data: { content: '❌ Error al obtener el ranking de experiencia.' },
+      };
+    }
   }
 
   private async resolveTargetUser(
