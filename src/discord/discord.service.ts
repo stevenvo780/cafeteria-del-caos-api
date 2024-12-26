@@ -118,15 +118,11 @@ export class DiscordService {
       };
 
       const note = await this.libraryService.create(data, null);
-      const truncatedContent =
-        contenido.length > 1000
-          ? contenido.substring(0, 1000) + '...'
-          : contenido;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `La sabiduría ha sido plasmada\n${process.env.FRONT_URL}/library/${note.id}\n\nHe aquí la verdad:\n${truncatedContent}\n\nURL: https://www.cafeteriadelcaos.com/library/${note.id}`,
+          content: `La sabiduría ha sido plasmada\n${process.env.FRONT_URL}/library/${note.id}\n`,
         },
       };
     } catch (error) {
