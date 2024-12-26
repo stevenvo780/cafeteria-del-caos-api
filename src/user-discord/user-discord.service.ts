@@ -371,7 +371,7 @@ export class UserDiscordService {
   async findTopRanking(limit = 10): Promise<UserDiscord[]> {
     return this.userDiscordRepository
       .createQueryBuilder('user')
-      .orderBy('user.points', 'ASC')
+      .orderBy('user.experience', 'DESC')
       .addOrderBy('user.coins', 'DESC')
       .limit(limit)
       .getMany();
