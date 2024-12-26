@@ -73,13 +73,13 @@ export class DiscordService {
 
   async handleCreateNote(
     options: APIApplicationCommandInteractionDataOption[],
+    userId: string,
+    username: string,
   ): Promise<DiscordCommandResponse> {
     try {
-      // Hacer cast seguro de los tipos
       const tituloOption = options.find((opt) => opt.name === 'titulo');
       const contenidoOption = options.find((opt) => opt.name === 'contenido');
 
-      // Extraer valores con Type Guard
       const titulo = this.getStringOptionValue(tituloOption);
       const contenido = this.getStringOptionValue(contenidoOption);
 
@@ -93,18 +93,33 @@ export class DiscordService {
         };
       }
 
-      // Crear o encontrar la nota padre "Notas de Discord"
-      const parentNote = await this.libraryService.findOrCreateByTitle(
+      // 1. Crear o encontrar la carpeta raíz "Notas de Discord"
+      const rootFolder = await this.libraryService.findOrCreateByTitle(
         'Notas de Discord',
       );
 
-      // Crear la nota del usuario como hija
+      // 2. Crear o encontrar la carpeta del usuario
+      const userFolder = await this.libraryService.findOrCreateByTitle(
+        `Notas de ${username}`,
+        LibraryVisibility.USERS,
+      );
+
+      // 3. Establecer la carpeta del usuario como hija de la carpeta raíz si aún no lo es
+      if (!userFolder.parent) {
+        await this.libraryService.update(
+          userFolder.id,
+          { parentNoteId: rootFolder.id },
+          null,
+        );
+      }
+
+      // 4. Crear la nota del usuario como hija de su carpeta personal
       const data = {
         title: titulo,
         description: contenido,
         referenceDate: new Date(),
-        parentNoteId: parentNote.id, // Establecer la relación padre-hijo
-        visibility: LibraryVisibility.USERS, // Asegurarse que solo los usuarios registrados puedan verla
+        parentNoteId: userFolder.id,
+        visibility: LibraryVisibility.USERS,
       };
 
       const note = await this.libraryService.create(data, null);
@@ -649,7 +664,11 @@ export class DiscordService {
             commandData,
           );
         case 'crear-nota':
-          return await this.handleCreateNote(commandData.options || []);
+          return await this.handleCreateNote(
+            commandData.options || [],
+            interactionPayload.member.user.id,
+            interactionPayload.member.user.username,
+          );
         case 'top-monedas':
           return await this.handleTopCoins();
         // Operaciones de puntos

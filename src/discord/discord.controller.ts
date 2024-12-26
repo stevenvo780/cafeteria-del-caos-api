@@ -164,6 +164,8 @@ export class DiscordController {
         case 'crear-nota':
           return await this.discordService.handleCreateNote(
             commandData.options || [],
+            interactionPayload.member.user.id,
+            interactionPayload.member.user.username,
           );
         case 'top-monedas':
           return await this.discordService.handleTopCoins();
