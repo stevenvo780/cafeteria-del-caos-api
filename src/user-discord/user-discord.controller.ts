@@ -54,8 +54,6 @@ export class UserDiscordController {
   }
 
   @Get('top')
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({
     summary: 'Obtener top de usuarios ordenados (menos puntos, más monedas)',
   })
