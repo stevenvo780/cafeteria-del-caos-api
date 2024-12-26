@@ -20,6 +20,14 @@ export async function registerDiscordCommands() {
     {
       name: 'saldo',
       description: 'Consulta tu balance de monedas del caos',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'Usuario del que quieres consultar el saldo (opcional)',
+          required: false,
+        },
+      ],
     },
     {
       name: 'crear-nota',
@@ -171,6 +179,10 @@ export async function registerDiscordCommands() {
           min_value: 1,
         },
       ],
+    },
+    {
+      name: 'top-monedas',
+      description: 'Muestra el top 10 de usuarios con más monedas',
     },
   ];
 

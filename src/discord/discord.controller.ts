@@ -231,22 +231,84 @@ export class DiscordController {
             };
           }
 
-          case 'saldo':
-            const user = await this.userDiscordService.findOrCreate({
-              id: interactionPayload.member.user.id,
-              username: interactionPayload.member.user.username,
-              roles: interactionPayload.member.roles || [],
-            });
+          case 'saldo': {
+            const userOption = commandData.options?.find(
+              (opt) => opt.name === 'usuario',
+            ) as APIApplicationCommandInteractionDataUserOption;
+
+            let targetUser;
+            if (userOption) {
+              const resolvedUser = commandData.resolved?.users?.[
+                userOption.value
+              ] as APIUser;
+              const resolvedMember = commandData.resolved?.members?.[
+                userOption.value
+              ] as APIInteractionDataResolvedGuildMember;
+
+              if (!resolvedUser || !resolvedMember) {
+                return {
+                  type: InteractionResponseType.ChannelMessageWithSource,
+                  data: {
+                    content:
+                      '❌ Error: No se encontró al usuario especificado.',
+                  },
+                };
+              }
+
+              targetUser = await this.userDiscordService.findOrCreate({
+                id: userOption.value,
+                username: resolvedUser.username,
+                roles: resolvedMember.roles || [],
+              });
+            } else {
+              targetUser = await this.userDiscordService.findOrCreate({
+                id: interactionPayload.member.user.id,
+                username: interactionPayload.member.user.username,
+                roles: interactionPayload.member.roles || [],
+              });
+            }
+
+            const topUsers = await this.userDiscordService.findTopByCoins(10);
+            const userRank =
+              topUsers.findIndex((u) => u.id === targetUser.id) + 1;
+            const rankText =
+              userRank > 0 && userRank <= 10
+                ? `\n🏆 Ranking: #${userRank} en el top 10`
+                : '';
+
+            const message = userOption
+              ? `💰 ${targetUser.username} tiene ${targetUser.coins} monedas del caos!${rankText}`
+              : `💰 ¡${targetUser.username}! Tu fortuna asciende a ${targetUser.coins} monedas del caos!${rankText}`;
+
             return {
               type: InteractionResponseType.ChannelMessageWithSource,
-              data: {
-                content: `💰 ¡${user.username}! Tu fortuna asciende a ${user.coins} monedas del caos!\n\n🏦 Balance actual del banco del CAOS`,
-              },
+              data: { content: message },
             };
+          }
+
           case 'crear-nota':
             return await this.discordService.handleCreateNote(
               commandData.options || [],
             );
+
+          case 'top-monedas': {
+            const topUsers = await this.userDiscordService.findTopByCoins(10);
+            if (!topUsers || topUsers.length === 0) {
+              return {
+                type: InteractionResponseType.ChannelMessageWithSource,
+                data: { content: 'No hay usuarios o monedas registradas.' },
+              };
+            }
+            let response = '💰 Top 10 usuarios con más monedas:\n';
+            topUsers.forEach((u, index) => {
+              response += `#${index + 1} ${u.username} - ${u.coins} monedas\n`;
+            });
+            return {
+              type: InteractionResponseType.ChannelMessageWithSource,
+              data: { content: response },
+            };
+          }
+
           default:
             return {
               type: InteractionResponseType.ChannelMessageWithSource,

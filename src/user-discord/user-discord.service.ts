@@ -349,4 +349,12 @@ export class UserDiscordService {
       .limit(limit)
       .getMany();
   }
+
+  async findTopByCoins(limit = 10): Promise<UserDiscord[]> {
+    return this.userDiscordRepository
+      .createQueryBuilder('user')
+      .orderBy('user.coins', 'DESC')
+      .limit(limit)
+      .getMany();
+  }
 }
