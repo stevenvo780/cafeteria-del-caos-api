@@ -1,4 +1,4 @@
-import { REST, Routes } from 'discord.js';
+import { REST, Routes, ApplicationCommandOptionType } from 'discord.js';
 import { config } from 'dotenv';
 config();
 
@@ -10,7 +10,7 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description:
             'Usuario del que quieres consultar los puntos (opcional)',
           required: false,
@@ -23,7 +23,7 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'Usuario del que quieres consultar el saldo (opcional)',
           required: false,
         },
@@ -35,13 +35,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'titulo',
-          type: 3,
+          type: ApplicationCommandOptionType.String,
           description: 'El título de la nota',
           required: true,
         },
         {
           name: 'contenido',
-          type: 3,
+          type: ApplicationCommandOptionType.String,
           description: 'El contenido de la nota',
           required: true,
         },
@@ -53,13 +53,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario al que añadir puntos',
           required: true,
         },
         {
           name: 'puntos',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de puntos a añadir',
           required: true,
           min_value: 1,
@@ -72,13 +72,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario al que quitar puntos',
           required: true,
         },
         {
           name: 'puntos',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de puntos a quitar',
           required: true,
           min_value: 1,
@@ -91,13 +91,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario al que establecer los puntos',
           required: true,
         },
         {
           name: 'puntos',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de puntos a establecer',
           required: true,
           min_value: 0,
@@ -110,13 +110,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario que recibirá las monedas',
           required: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de monedas a dar',
           required: true,
           min_value: 1,
@@ -129,13 +129,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario al que quitar monedas',
           required: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de monedas a quitar',
           required: true,
           min_value: 1,
@@ -148,13 +148,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario al que establecer las monedas',
           required: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de monedas a establecer',
           required: true,
           min_value: 0,
@@ -167,13 +167,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario que recibirá las monedas',
           required: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de monedas a transferir',
           required: true,
           min_value: 1,
@@ -190,7 +190,7 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description:
             'Usuario del que quieres consultar la experiencia (opcional)',
           required: false,
@@ -203,13 +203,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario que recibirá la experiencia',
           required: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de experiencia a dar',
           required: true,
           min_value: 1,
@@ -222,13 +222,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario al que quitar experiencia',
           required: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de experiencia a quitar',
           required: true,
           min_value: 1,
@@ -242,13 +242,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'usuario',
-          type: 6,
+          type: ApplicationCommandOptionType.User,
           description: 'El usuario al que establecer la experiencia',
           required: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad de experiencia a establecer',
           required: true,
           min_value: 0,
@@ -265,14 +265,13 @@ export async function registerDiscordCommands() {
       options: [
         {
           name: 'articulo',
-          type: 3,
+          type: ApplicationCommandOptionType.String,
           description: 'ID del artículo a comprar',
           required: true,
-          autocomplete: true,
         },
         {
           name: 'cantidad',
-          type: 4,
+          type: ApplicationCommandOptionType.Integer,
           description: 'Cantidad a comprar',
           required: true,
           min_value: 1,

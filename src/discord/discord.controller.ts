@@ -166,6 +166,11 @@ export class DiscordController {
           );
         case 'top-monedas':
           return await this.discordService.handleTopCoins();
+        case 'comprar':
+          return await this.discordService.handlePurchase(
+            commandData,
+            interactionPayload,
+          );
         default:
           return this.errorResponse(
             `Comando "${commandData.name}" no reconocido.`,

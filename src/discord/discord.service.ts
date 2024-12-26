@@ -727,7 +727,6 @@ export class DiscordService {
     const productId = parseInt(articleOption.value);
     const quantity = quantityOption.value;
 
-    // Validar que el ID sea un número válido
     if (isNaN(productId)) {
       return this.errorResponse('❌ ID de producto inválido.');
     }
