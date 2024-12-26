@@ -12,17 +12,8 @@ import {
 import { DiscordService } from './discord.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
-import {
-  APIInteraction,
-  InteractionType,
-  InteractionResponseType,
-  APIChatInputApplicationCommandInteractionData,
-  APIApplicationCommandInteractionDataUserOption,
-  APIApplicationCommandInteractionDataNumberOption,
-  APIInteractionDataResolvedGuildMember,
-  APIUser,
-} from 'discord.js';
-import { InteractPoints, InteractCoins } from './discord.types';
+import { InteractionType, InteractionResponseType } from 'discord.js';
+import { DiscordInteractionResponse, ErrorResponse } from './discord.types';
 
 @ApiTags('discord')
 @Controller('discord')
@@ -63,285 +54,121 @@ export class DiscordController {
       'Endpoint para manejar interacciones de Discord (comandos, botones, etc)',
   })
   async handleDiscordInteractions(
-    @Body() interactionPayload: APIInteraction,
+    @Body() interactionPayload: any,
     @Headers('x-signature-ed25519') signature: string,
     @Headers('x-signature-timestamp') timestamp: string,
-  ): Promise<any> {
-    if (!signature || !timestamp) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: 'Error: Cabeceras de autenticación faltantes.',
-        },
-      };
-    }
+  ): Promise<DiscordInteractionResponse> {
+    this.validateHeaders(signature, timestamp);
+    this.verifyRequest(signature, timestamp, interactionPayload);
 
-    if (
-      !this.discordService.verifyDiscordRequest(
-        signature,
-        timestamp,
-        interactionPayload,
-      )
-    ) {
-      throw new UnauthorizedException('Invalid request signature');
-    }
+    const { type, data: commandData } = interactionPayload;
 
-    console.log(
-      'Discord interaction type:',
-      InteractionType[interactionPayload.type],
-    );
-
-    switch (interactionPayload.type) {
+    switch (type) {
       case InteractionType.Ping:
         return { type: InteractionResponseType.Pong };
 
       case InteractionType.ApplicationCommand: {
-        const commandData =
-          interactionPayload.data as APIChatInputApplicationCommandInteractionData;
-
-        if (!commandData?.name) {
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: { content: 'Error: Comando inválido o faltante.' },
-          };
-        }
-
         try {
+          if (!commandData?.name) {
+            return this.errorResponse('Comando inválido o faltante.');
+          }
+
           await this.userDiscordService.findOrCreate({
             id: interactionPayload.member.user.id,
             username: interactionPayload.member.user.username,
             roles: interactionPayload.member.roles || [],
           });
-        } catch (error) {
-          console.error('Error al procesar usuario:', error);
-        }
 
-        if (
-          ['añadir-puntos', 'quitar-puntos', 'establecer-puntos'].includes(
-            commandData.name,
-          )
-        ) {
-          const validation = await this.validatePointsCommand(commandData);
-          if ('error' in validation) {
-            return validation.error;
-          }
-
-          switch (commandData.name) {
-            case 'añadir-puntos':
-              return await this.userDiscordService.handleAddPoints(validation);
-            case 'quitar-puntos':
-              return await this.userDiscordService.handleRemovePoints(
-                validation,
-              );
-            case 'establecer-puntos':
-              return await this.userDiscordService.handleSetPoints(validation);
-          }
-        }
-
-        if (
-          [
-            'dar-monedas',
-            'quitar-monedas',
-            'establecer-monedas',
-            'transferir-monedas',
-          ].includes(commandData.name)
-        ) {
-          const validation = await this.validateCoinsCommand(
+          return await this.handleApplicationCommand(
             commandData,
             interactionPayload,
-            commandData.name === 'transferir-monedas',
           );
-
-          if ('error' in validation) {
-            return validation.error;
-          }
-
-          switch (commandData.name) {
-            case 'dar-monedas':
-              return await this.userDiscordService.handleCoinsOperation(
-                validation,
-                'add',
-              );
-            case 'quitar-monedas':
-              return await this.userDiscordService.handleCoinsOperation(
-                validation,
-                'remove',
-              );
-            case 'establecer-monedas':
-              return await this.userDiscordService.handleCoinsOperation(
-                validation,
-                'set',
-              );
-            case 'transferir-monedas':
-              return await this.userDiscordService.handleCoinsOperation(
-                validation,
-                'transfer',
-              );
-          }
-        }
-
-        switch (commandData.name) {
-          case 'puntaje': {
-            const userOption = commandData.options?.find(
-              (opt) => opt.name === 'usuario',
-            ) as APIApplicationCommandInteractionDataUserOption;
-
-            let targetUser;
-            if (userOption) {
-              const resolvedUser = commandData.resolved?.users?.[
-                userOption.value
-              ] as APIUser;
-              const resolvedMember = commandData.resolved?.members?.[
-                userOption.value
-              ] as APIInteractionDataResolvedGuildMember;
-
-              if (!resolvedUser || !resolvedMember) {
-                return {
-                  type: InteractionResponseType.ChannelMessageWithSource,
-                  data: {
-                    content:
-                      '❌ Error: No se encontró al usuario especificado.',
-                  },
-                };
-              }
-
-              targetUser = await this.userDiscordService.findOrCreate({
-                id: userOption.value,
-                username: resolvedUser.username,
-                roles: resolvedMember.roles || [],
-              });
-            } else {
-              // Si no se especificó usuario, usar el que ejecutó el comando
-              targetUser = await this.userDiscordService.findOrCreate({
-                id: interactionPayload.member.user.id,
-                username: interactionPayload.member.user.username,
-                roles: interactionPayload.member.roles || [],
-              });
-            }
-
-            const message = userOption
-              ? `🎯 ${targetUser.username} tiene ${targetUser.points} puntos de penalización en su historial del CAOS!`
-              : `🎯 ¡${targetUser.username}! Cargas con ${targetUser.points} puntos de penalización en tu historial del CAOS!`;
-
-            return {
-              type: InteractionResponseType.ChannelMessageWithSource,
-              data: {
-                content: message,
-              },
-            };
-          }
-
-          case 'saldo': {
-            const userOption = commandData.options?.find(
-              (opt) => opt.name === 'usuario',
-            ) as APIApplicationCommandInteractionDataUserOption;
-
-            let targetUser;
-            if (userOption) {
-              const resolvedUser = commandData.resolved?.users?.[
-                userOption.value
-              ] as APIUser;
-              const resolvedMember = commandData.resolved?.members?.[
-                userOption.value
-              ] as APIInteractionDataResolvedGuildMember;
-
-              if (!resolvedUser || !resolvedMember) {
-                return {
-                  type: InteractionResponseType.ChannelMessageWithSource,
-                  data: {
-                    content:
-                      '❌ Error: No se encontró al usuario especificado.',
-                  },
-                };
-              }
-
-              targetUser = await this.userDiscordService.findOrCreate({
-                id: userOption.value,
-                username: resolvedUser.username,
-                roles: resolvedMember.roles || [],
-              });
-            } else {
-              targetUser = await this.userDiscordService.findOrCreate({
-                id: interactionPayload.member.user.id,
-                username: interactionPayload.member.user.username,
-                roles: interactionPayload.member.roles || [],
-              });
-            }
-
-            const topUsers = await this.userDiscordService.findTopByCoins(10);
-            const userRank =
-              topUsers.findIndex((u) => u.id === targetUser.id) + 1;
-            const rankText =
-              userRank > 0 && userRank <= 10
-                ? `\n🏆 Ranking: #${userRank} en el top 10`
-                : '';
-
-            const message = userOption
-              ? `💰 ${targetUser.username} tiene ${targetUser.coins} monedas del caos!${rankText}`
-              : `💰 ¡${targetUser.username}! Tu fortuna asciende a ${targetUser.coins} monedas del caos!${rankText}`;
-
-            return {
-              type: InteractionResponseType.ChannelMessageWithSource,
-              data: { content: message },
-            };
-          }
-
-          case 'crear-nota':
-            return await this.discordService.handleCreateNote(
-              commandData.options || [],
-            );
-
-          case 'top-monedas': {
-            const topUsers = await this.userDiscordService.findTopByCoins(10);
-            if (!topUsers || topUsers.length === 0) {
-              return {
-                type: InteractionResponseType.ChannelMessageWithSource,
-                data: { content: 'No hay usuarios o monedas registradas.' },
-              };
-            }
-            let response = '💰 Top 10 usuarios con más monedas:\n';
-            topUsers.forEach((u, index) => {
-              response += `#${index + 1} ${u.username} - ${u.coins} monedas\n`;
-            });
-            return {
-              type: InteractionResponseType.ChannelMessageWithSource,
-              data: { content: response },
-            };
-          }
-
-          default:
-            return {
-              type: InteractionResponseType.ChannelMessageWithSource,
-              data: { content: `Comando "${commandData.name}" no reconocido.` },
-            };
+        } catch (error) {
+          console.error('Error al procesar comando:', error);
+          return this.errorResponse('Error al procesar el comando');
         }
       }
 
-      case InteractionType.ApplicationCommandAutocomplete:
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: '¡El autocompletado es para débiles!',
-          },
-        };
-
-      case InteractionType.ModalSubmit:
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Modales no implementados.',
-          },
-        };
-
       default:
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              '¡¿QUÉ DEMONIOS INTENTAS HACER?! Esa interacción no existe en este reino de caos',
-          },
-        };
+        return this.errorResponse('Tipo de interacción no soportada');
     }
+  }
+
+  private async handleApplicationCommand(
+    commandData: any,
+    interactionPayload: any,
+  ) {
+    const pointsCommands = [
+      'añadir-puntos',
+      'quitar-puntos',
+      'establecer-puntos',
+    ];
+    const coinsCommands = [
+      'dar-monedas',
+      'quitar-monedas',
+      'establecer-monedas',
+      'transferir-monedas',
+    ];
+
+    if (pointsCommands.includes(commandData.name)) {
+      return await this.discordService.handleUserPoints(
+        commandData.name,
+        commandData,
+      );
+    }
+
+    if (coinsCommands.includes(commandData.name)) {
+      return await this.discordService.handleUserCoins(
+        commandData.name,
+        commandData,
+        interactionPayload,
+      );
+    }
+
+    switch (commandData.name) {
+      case 'puntaje':
+        return await this.discordService.handleUserScore(
+          commandData,
+          interactionPayload.member,
+        );
+      case 'saldo':
+        return await this.discordService.handleUserBalance(
+          commandData,
+          interactionPayload.member,
+        );
+      case 'crear-nota':
+        return await this.discordService.handleCreateNote(
+          commandData.options || [],
+        );
+      case 'top-monedas':
+        return await this.discordService.handleTopCoins();
+      default:
+        return this.errorResponse(
+          `Comando "${commandData.name}" no reconocido.`,
+        );
+    }
+  }
+
+  private validateHeaders(signature: string, timestamp: string) {
+    if (!signature || !timestamp) {
+      throw new UnauthorizedException('Cabeceras de autenticación faltantes');
+    }
+  }
+
+  private verifyRequest(signature: string, timestamp: string, payload: any) {
+    if (
+      !this.discordService.verifyDiscordRequest(signature, timestamp, payload)
+    ) {
+      throw new UnauthorizedException('Firma de solicitud inválida');
+    }
+  }
+
+  private errorResponse(message: string): ErrorResponse {
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: { content: message },
+      isError: true,
+    };
   }
 
   @Post('webhook')
@@ -402,146 +229,5 @@ export class DiscordController {
       username: 'Unknown',
     });
     return { balance: user.coins };
-  }
-
-  private async validatePointsCommand(
-    commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<InteractPoints | { error: any }> {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === 'usuario',
-    ) as APIApplicationCommandInteractionDataUserOption;
-
-    const pointsOption = commandData.options?.find(
-      (opt) => opt.name === 'puntos',
-    ) as APIApplicationCommandInteractionDataNumberOption;
-
-    if (!userOption || !pointsOption) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              'La estupidez humana se manifiesta... ¿Dónde están los datos fundamentales?',
-          },
-        },
-      };
-    }
-
-    const userId = userOption.value;
-    const points = pointsOption.value;
-
-    const resolvedUser = commandData.resolved?.users?.[userId] as APIUser;
-    const resolvedMember = commandData.resolved?.members?.[
-      userId
-    ] as APIInteractionDataResolvedGuildMember;
-
-    if (!resolvedUser || !resolvedMember) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: '¡NO ENCUENTRO A ESE USUARIO, PEDAZO DE ALCORNOQUE!',
-          },
-        },
-      };
-    }
-
-    try {
-      await this.userDiscordService.findOrCreate({
-        id: userId,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-
-      return {
-        userId,
-        points,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      };
-    } catch (error) {
-      console.error('Error al procesar usuario objetivo:', error);
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Error al procesar usuario objetivo: ' + error.message,
-          },
-        },
-      };
-    }
-  }
-
-  private async validateCoinsCommand(
-    commandData: APIChatInputApplicationCommandInteractionData,
-    interactionPayload: APIInteraction,
-    isTransfer = false,
-  ): Promise<InteractCoins | { error: any }> {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === (isTransfer ? 'usuario' : 'usuario'),
-    ) as APIApplicationCommandInteractionDataUserOption;
-
-    const coinsOption = commandData.options?.find(
-      (opt) => opt.name === (isTransfer ? 'cantidad' : 'cantidad'),
-    ) as APIApplicationCommandInteractionDataNumberOption;
-
-    if (!userOption || !coinsOption) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              'Ah, la mediocridad... ¿Las monedas viajan sin destino ni cantidad?',
-          },
-        },
-      };
-    }
-
-    const userId = userOption.value;
-    const coins = coinsOption.value;
-
-    const resolvedUser = commandData.resolved?.users?.[userId] as APIUser;
-    const resolvedMember = commandData.resolved?.members?.[
-      userId
-    ] as APIInteractionDataResolvedGuildMember;
-
-    if (!resolvedUser || !resolvedMember) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              'Error: No se pudo resolver el usuario o miembro especificado.',
-          },
-        },
-      };
-    }
-
-    const result: InteractCoins = {
-      userId: isTransfer ? interactionPayload.member.user.id : userId,
-      targetId: isTransfer ? userId : undefined,
-      coins,
-      username: resolvedUser.username,
-      roles: resolvedMember.roles || [],
-    };
-
-    // Asegurar que el usuario objetivo existe
-    try {
-      await this.userDiscordService.findOrCreate({
-        id: isTransfer ? userId : result.userId,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-
-      return result;
-    } catch (error) {
-      console.error('Error al procesar usuario:', error);
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'Error al procesar usuario: ' + error.message },
-        },
-      };
-    }
   }
 }

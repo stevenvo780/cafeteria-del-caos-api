@@ -3,8 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto';
-import { APIInteractionResponse, InteractionResponseType } from 'discord.js';
-import { InteractPoints, InteractCoins } from '../discord/discord.types';
+import {
+  InteractPoints,
+  InteractCoins,
+  DiscordCommandResponse,
+} from '../discord/discord.types';
+import { InteractionResponseType } from 'discord.js';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 
@@ -163,7 +167,7 @@ export class UserDiscordService {
   async handlePointsOperation(
     data: InteractPoints,
     operation: 'add' | 'remove' | 'set',
-  ): Promise<APIInteractionResponse> {
+  ): Promise<DiscordCommandResponse> {
     try {
       const { userId, points, username, roles } = data;
       const discordUser = await this.findOrCreate({
@@ -208,17 +212,17 @@ export class UserDiscordService {
     }
   }
 
-  async handleAddPoints(data: InteractPoints): Promise<APIInteractionResponse> {
+  async handleAddPoints(data: InteractPoints): Promise<DiscordCommandResponse> {
     return this.handlePointsOperation(data, 'add');
   }
 
   async handleRemovePoints(
     data: InteractPoints,
-  ): Promise<APIInteractionResponse> {
+  ): Promise<DiscordCommandResponse> {
     return this.handlePointsOperation(data, 'remove');
   }
 
-  async handleSetPoints(data: InteractPoints): Promise<APIInteractionResponse> {
+  async handleSetPoints(data: InteractPoints): Promise<DiscordCommandResponse> {
     return this.handlePointsOperation(data, 'set');
   }
 
@@ -247,7 +251,7 @@ export class UserDiscordService {
     fromId: string,
     toId: string,
     amount: number,
-  ): Promise<APIInteractionResponse> {
+  ): Promise<DiscordCommandResponse> {
     const fromUser = await this.findOne(fromId);
     const toUser = await this.findOne(toId);
 
@@ -294,7 +298,7 @@ export class UserDiscordService {
   async handleCoinsOperation(
     data: InteractCoins,
     operation: 'add' | 'remove' | 'set' | 'transfer',
-  ): Promise<APIInteractionResponse> {
+  ): Promise<DiscordCommandResponse> {
     try {
       const { userId, targetId, coins, username, roles } = data;
       const discordUser = await this.findOrCreate({

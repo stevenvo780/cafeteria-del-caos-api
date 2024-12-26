@@ -2,20 +2,15 @@ import {
   InteractionType,
   InteractionResponseType,
   APIUserInteractionDataResolved,
-  APIUser,
-  APIGuildMember,
   APIMessageComponentInteraction,
 } from 'discord.js';
 
 export { InteractionType, InteractionResponseType };
 
-export interface CommandOption {
+export type CommandOption = {
   name: string;
-  type: number;
-  value?: string | number | boolean;
-  user?: APIUser;
-  member?: APIGuildMember;
-}
+  value: string | number;
+};
 
 export interface CommandInteractionData {
   name: string;
@@ -45,3 +40,24 @@ export interface InteractCoins {
 }
 
 export type MessageComponentInteraction = APIMessageComponentInteraction;
+
+export type DiscordCommandResponse = {
+  type: InteractionResponseType.ChannelMessageWithSource;
+  data: {
+    content: string;
+    embeds?: any[];
+    components?: any[];
+  };
+};
+
+export type ErrorResponse = DiscordCommandResponse & {
+  isError: true;
+};
+
+export type DiscordPingResponse = {
+  type: InteractionResponseType.Pong;
+};
+
+export type DiscordInteractionResponse =
+  | DiscordCommandResponse
+  | DiscordPingResponse;
