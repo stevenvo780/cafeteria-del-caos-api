@@ -42,7 +42,7 @@ export class ProductController {
   async findAll(
     @Query('limit') limit = 10,
     @Query('offset') offset = 0,
-  ): Promise<Product[]> {
+  ): Promise<{ products: Product[]; total: number }> {
     return this.productService.findAll(Number(limit), Number(offset));
   }
 

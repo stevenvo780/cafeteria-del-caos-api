@@ -259,6 +259,26 @@ export async function registerDiscordCommands() {
       name: 'top-experiencia',
       description: 'Muestra el top 10 de usuarios con más experiencia',
     },
+    {
+      name: 'comprar',
+      description: 'Compra un artículo de la tienda',
+      options: [
+        {
+          name: 'articulo',
+          type: 3,
+          description: 'ID del artículo a comprar',
+          required: true,
+          autocomplete: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad a comprar',
+          required: true,
+          min_value: 1,
+        },
+      ],
+    },
   ];
 
   const token = process.env.DISCORD_BOT_TOKEN;

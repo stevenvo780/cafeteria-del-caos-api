@@ -65,4 +65,32 @@ export class KardexController {
   remove(@Param('id') id: string) {
     return this.kardexService.remove(+id);
   }
+
+  @Post('cash-in/:userDiscordId')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Add coins to reach desired balance' })
+  async cashIn(
+    @Param('userDiscordId') userDiscordId: string,
+    @Body() body: { targetBalance: number; reference?: string },
+  ) {
+    return this.kardexService.adjustBalanceToTarget(
+      userDiscordId,
+      body.targetBalance,
+      body.reference || 'Admin cash-in',
+    );
+  }
+
+  @Post('cash-out/:userDiscordId')
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Remove coins to reach desired balance' })
+  async cashOut(
+    @Param('userDiscordId') userDiscordId: string,
+    @Body() body: { targetBalance: number; reference?: string },
+  ) {
+    return this.kardexService.adjustBalanceToTarget(
+      userDiscordId,
+      body.targetBalance,
+      body.reference || 'Admin cash-out',
+    );
+  }
 }

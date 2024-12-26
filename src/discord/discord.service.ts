@@ -15,6 +15,7 @@ import {
   APIApplicationCommandInteractionDataUserOption,
   APIUser,
   APIApplicationCommandInteractionDataOption,
+  APIApplicationCommandInteractionDataStringOption,
 } from 'discord.js';
 import {
   getGuildMemberCount,
@@ -25,6 +26,7 @@ import { UserDiscordService } from '../user-discord/user-discord.service';
 import { LibraryVisibility } from '../library/entities/library.entity';
 import * as nacl from 'tweetnacl';
 import { KardexService } from '../kardex/kardex.service';
+import { ProductService } from '../product/product.service';
 
 @Injectable()
 export class DiscordService {
@@ -34,6 +36,7 @@ export class DiscordService {
     private readonly libraryService: LibraryService,
     private readonly userDiscordService: UserDiscordService,
     private readonly kardexService: KardexService, // <-- Inyectamos KardexService
+    private readonly productService: ProductService, // Añadir esta línea
   ) {}
 
   verifyDiscordRequest(
@@ -147,10 +150,10 @@ export class DiscordService {
   private getStringOptionValue(
     option: APIApplicationCommandInteractionDataOption | undefined,
   ): string | null {
-    if (!option || !('value' in option)) {
+    if (!option || !('value' in option) || typeof option.value !== 'string') {
       return null;
     }
-    return String(option.value);
+    return option.value;
   }
 
   async handleWebhook(event: any): Promise<void> {
@@ -710,6 +713,81 @@ export class DiscordService {
     }
   }
 
+  async handlePurchase(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+  ): Promise<DiscordCommandResponse> {
+    const articleOption = commandData.options?.find(
+      (opt) => opt.name === 'articulo',
+    ) as APIApplicationCommandInteractionDataStringOption;
+
+    const quantityOption = commandData.options?.find(
+      (opt) => opt.name === 'cantidad',
+    ) as APIApplicationCommandInteractionDataNumberOption;
+
+    if (!articleOption?.value || !quantityOption?.value) {
+      return this.errorResponse(
+        '❌ Faltan parámetros necesarios para la compra.',
+      );
+    }
+
+    const productId = parseInt(articleOption.value);
+    const quantity = quantityOption.value;
+
+    // Validar que el ID sea un número válido
+    if (isNaN(productId)) {
+      return this.errorResponse('❌ ID de producto inválido.');
+    }
+
+    try {
+      const product = await this.productService.findOne(productId);
+      if (!product) {
+        return this.errorResponse('❌ Producto no encontrado.');
+      }
+
+      const userId = interactionPayload.member.user.id;
+      const currentBalance = await this.kardexService.getUserLastBalance(
+        userId,
+      );
+      const totalPrice = this.productService.calculatePrice(product) * quantity;
+
+      if (currentBalance < totalPrice) {
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: `❌ No tienes suficientes monedas. Necesitas ${totalPrice} monedas, pero solo tienes ${currentBalance}.`,
+          },
+        };
+      }
+
+      if (product.stock !== null && product.stock < quantity) {
+        return this.errorResponse(
+          `❌ No hay suficiente stock. Stock disponible: ${product.stock}`,
+        );
+      }
+
+      await this.productService.update(productId, {
+        stock: product.stock !== null ? product.stock - quantity : null,
+      });
+
+      await this.kardexService.removeCoins(
+        userId,
+        totalPrice,
+        `Compra: ${quantity}x ${product.title}`,
+      );
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `✅ ¡Compra exitosa!\n\n🛍️ Artículo: ${product.title}\n📦 Cantidad: ${quantity}\n💰 Precio total: ${totalPrice} monedas`,
+        },
+      };
+    } catch (error) {
+      console.error('Error en la compra:', error);
+      return this.errorResponse('❌ Error al procesar la compra.');
+    }
+  }
+
   async handleApplicationCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
@@ -763,6 +841,8 @@ export class DiscordService {
             commandData,
             interactionPayload,
           );
+        case 'comprar':
+          return await this.handlePurchase(commandData, interactionPayload);
         default:
           return this.errorResponse(
             `Comando "${commandData.name}" no reconocido.`,

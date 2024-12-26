@@ -10,13 +10,28 @@ import {
 import { InteractionResponseType } from 'discord.js';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
+import { KardexService } from '../kardex/kardex.service';
 
 @Injectable()
 export class UserDiscordService {
   constructor(
     @InjectRepository(UserDiscord)
     private userDiscordRepository: Repository<UserDiscord>,
+    private kardexService: KardexService,
   ) {}
+
+  private async attachBalanceToUsers(
+    users: UserDiscord[],
+  ): Promise<(UserDiscord & { coins: number })[]> {
+    const balances = await Promise.all(
+      users.map((user) => this.kardexService.getUserLastBalance(user.id)),
+    );
+
+    return users.map((user, index) => ({
+      ...user,
+      coins: balances[index],
+    }));
+  }
 
   async create(
     createUserDiscordDto: CreateUserDiscordDto,
@@ -27,7 +42,7 @@ export class UserDiscordService {
 
   async findAll(
     findUsersDto: FindUsersDto,
-  ): Promise<{ users: UserDiscord[]; total: number }> {
+  ): Promise<{ users: (UserDiscord & { coins: number })[]; total: number }> {
     const {
       limit = 10,
       offset = 0,
@@ -67,15 +82,19 @@ export class UserDiscordService {
       .offset(offset);
 
     const [users, total] = await queryBuilder.getManyAndCount();
-    return { users, total };
+    const usersWithCoins = await this.attachBalanceToUsers(users);
+
+    return { users: usersWithCoins, total };
   }
 
-  async findOne(id: string): Promise<UserDiscord> {
+  async findOne(id: string): Promise<UserDiscord & { coins: number }> {
     const user = await this.userDiscordRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`Usuario con ID ${id} no encontrado`);
     }
-    return user;
+
+    const coins = await this.kardexService.getUserLastBalance(id);
+    return { ...user, coins };
   }
 
   async update(
@@ -242,13 +261,21 @@ export class UserDiscordService {
     return this.userDiscordRepository.update(id, { experience });
   }
 
-  async findTopRanking(limit = 10): Promise<UserDiscord[]> {
-    return this.userDiscordRepository
-      .createQueryBuilder('user')
-      .orderBy('user.experience', 'DESC')
-      .addOrderBy('user.coins', 'DESC')
-      .limit(limit)
-      .getMany();
+  async findTopRanking(
+    limit = 10,
+  ): Promise<(UserDiscord & { coins: number })[]> {
+    try {
+      const users = await this.userDiscordRepository
+        .createQueryBuilder('user')
+        .orderBy('user.experience', 'DESC')
+        .limit(limit)
+        .getMany();
+
+      return this.attachBalanceToUsers(users);
+    } catch (error) {
+      console.error('Error al obtener el ranking:', error);
+      return [];
+    }
   }
 
   async handleExperienceOperation(
@@ -341,11 +368,6 @@ export class UserDiscordService {
     }
   }
 
-  // ---------------------
-  //      RANKINGS
-  // ---------------------
-
-  // Ranking por experiencia
   async findTopByExperience(limit = 10): Promise<UserDiscord[]> {
     return this.userDiscordRepository
       .createQueryBuilder('user')

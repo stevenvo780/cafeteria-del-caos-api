@@ -15,7 +15,6 @@ export class KardexService {
     private readonly userDiscordRepository: Repository<UserDiscord>,
   ) {}
 
-  // Create a new kardex entry and update user balance
   async create(dto: CreateKardexDto): Promise<Kardex> {
     await this.validateUser(dto.userDiscordId);
     const lastBalance = await this.getUserLastBalance(dto.userDiscordId);
@@ -153,5 +152,27 @@ export class KardexService {
       userDiscordId: item.userDiscordId,
       total: parseInt(item.total),
     }));
+  }
+
+  async adjustBalanceToTarget(
+    userDiscordId: string,
+    targetBalance: number,
+    reference?: string,
+  ): Promise<Kardex> {
+    const currentBalance = await this.getUserLastBalance(userDiscordId);
+
+    if (currentBalance === targetBalance) {
+      throw new Error('Target balance is equal to current balance');
+    }
+
+    const difference = targetBalance - currentBalance;
+    const operation = difference > 0 ? KardexOperation.IN : KardexOperation.OUT;
+
+    return this.create({
+      userDiscordId,
+      operation,
+      amount: Math.abs(difference),
+      reference,
+    });
   }
 }
