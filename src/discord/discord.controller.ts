@@ -248,6 +248,8 @@ export class DiscordController {
 
     if (amount >= 0) {
       await this.kardexService.addCoins(userId, amount, 'Report from Bot');
+      // Añadir experiencia igual a las monedas cuando son positivas
+      await this.userDiscordService.addExperience(userId, amount);
     } else {
       await this.kardexService.removeCoins(
         userId,
@@ -257,7 +259,11 @@ export class DiscordController {
     }
 
     const newBalance = await this.kardexService.getUserLastBalance(userId);
-    return { newBalance };
+    const user = await this.userDiscordService.findOne(userId);
+    return {
+      newBalance,
+      experience: user.experience,
+    };
   }
 
   @Get('coins/:id')

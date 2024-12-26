@@ -30,7 +30,6 @@ export class KardexService {
     return this.kardexRepository.save(entry);
   }
 
-  // Update an existing kardex entry if needed
   async update(id: number, dto: UpdateKardexDto): Promise<Kardex> {
     const kardex = await this.kardexRepository.findOne({ where: { id } });
     if (!kardex) throw new NotFoundException(`Kardex ID ${id} not found`);
@@ -39,7 +38,6 @@ export class KardexService {
     return this.kardexRepository.save(kardex);
   }
 
-  // Returns the last user balance
   async getUserLastBalance(userDiscordId: string): Promise<number> {
     const entry = await this.kardexRepository.findOne({
       where: { userDiscordId },
@@ -48,7 +46,6 @@ export class KardexService {
     return entry?.balance || 0;
   }
 
-  // Create an IN entry
   async addCoins(userDiscordId: string, amount: number, reference?: string) {
     return this.create({
       userDiscordId,
@@ -58,7 +55,6 @@ export class KardexService {
     });
   }
 
-  // Create an OUT entry
   async removeCoins(userDiscordId: string, amount: number, reference?: string) {
     const lastBalance = await this.getUserLastBalance(userDiscordId);
     if (amount > lastBalance) {
@@ -74,7 +70,6 @@ export class KardexService {
     });
   }
 
-  // Set exact balance (OUT or IN according to difference)
   async setCoins(userDiscordId: string, amount: number, reference?: string) {
     const lastBalance = await this.getUserLastBalance(userDiscordId);
     if (amount === lastBalance) return;
@@ -86,7 +81,6 @@ export class KardexService {
     }
   }
 
-  // Transfer coins from one user to another
   async transferCoins(
     fromId: string,
     toId: string,
@@ -102,7 +96,6 @@ export class KardexService {
     await this.addCoins(toId, amount, `Transfer from ${fromId}`);
   }
 
-  // Basic findAll for listing
   async findAll(): Promise<Kardex[]> {
     return this.kardexRepository.find();
   }

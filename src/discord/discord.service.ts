@@ -201,10 +201,12 @@ export class DiscordService {
       switch (commandName) {
         case 'dar-monedas': {
           await this.kardexService.addCoins(userId, coins, 'Discord command');
+          await this.userDiscordService.addExperience(userId, coins);
           const newBalance = await this.kardexService.getUserLastBalance(
             userId,
           );
-          message = `💰 LLUVIA DE MONEDAS! ${user.username} +${coins}\nSaldo actual: ${newBalance} monedas.`;
+          const user = await this.userDiscordService.findOne(userId);
+          message = `💰 LLUVIA DE MONEDAS! ${user.username} +${coins}\nSaldo actual: ${newBalance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`;
           break;
         }
         case 'quitar-monedas': {

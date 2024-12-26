@@ -78,7 +78,6 @@ DISCORD_BOT_TOKEN=your_bot_token
 DISCORD_CLIENT_ID=your_client_id
 DISCORD_GUILD_ID=your_guild_id
 DISCORD_PUBLIC_KEY=your_public_key
-DISCORD_WATCHED_CHANNELS=channel_id
 
 # Frontend
 FRONT_URL=http://localhost:3000
