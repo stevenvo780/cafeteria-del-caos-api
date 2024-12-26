@@ -1,5 +1,6 @@
-import { IsString, IsDate, IsOptional } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { LibraryVisibility } from '../entities/library.entity';
 
 export class CreateLibraryDto {
   @IsString()
@@ -16,10 +17,6 @@ export class CreateLibraryDto {
   })
   description: string;
 
-  @IsDate()
-  @ApiProperty({ description: 'The date of the library reference', type: Date })
-  referenceDate: Date;
-
   @IsOptional()
   @ApiProperty({
     description: 'The ID of the parent note',
@@ -27,4 +24,16 @@ export class CreateLibraryDto {
     required: false,
   })
   parentNoteId?: number;
+
+  @IsOptional()
+  @ApiProperty({
+    description: 'The date of the library reference',
+    type: Date,
+    required: false,
+  })
+  referenceDate?: Date;
+
+  @IsOptional()
+  @ApiProperty({ enum: LibraryVisibility, required: false })
+  visibility?: LibraryVisibility;
 }

@@ -16,15 +16,17 @@ export class LibraryService {
 
   async create(
     createLibraryDto: CreateLibraryDto,
-    user: User,
+    user: User | null,
   ): Promise<Library> {
-    const newLibraryItem = new Library();
-    Object.assign(newLibraryItem, createLibraryDto);
-    newLibraryItem.author = user;
+    const newLibraryItem = this.libraryRepository.create({
+      ...createLibraryDto,
+      author: user,
+      visibility: createLibraryDto.visibility || LibraryVisibility.USERS,
+    });
 
     if (createLibraryDto.parentNoteId) {
       const parentNote = await this.libraryRepository.findOne({
-        where: { id: createLibraryDto.parentNoteId, author: { id: user.id } },
+        where: { id: createLibraryDto.parentNoteId },
       });
       if (parentNote) {
         newLibraryItem.parent = parentNote;
@@ -245,25 +247,22 @@ export class LibraryService {
 
   async findOrCreateByTitle(
     title: string,
-    parentId?: number,
+    visibility: LibraryVisibility = LibraryVisibility.USERS,
   ): Promise<Library> {
     const existingNote = await this.libraryRepository.findOne({
-      where: { title, parent: { id: parentId } },
+      where: { title },
     });
 
     if (existingNote) {
       return existingNote;
     }
 
-    const newNote = new Library();
-    newNote.title = title;
-    newNote.description = '';
-    newNote.referenceDate = new Date();
-
-    if (parentId) {
-      const parent = await this.findOne(parentId);
-      newNote.parent = parent;
-    }
+    const newNote = this.libraryRepository.create({
+      title,
+      description: `Carpeta automática para: ${title}`,
+      referenceDate: new Date(),
+      visibility,
+    });
 
     return this.libraryRepository.save(newNote);
   }

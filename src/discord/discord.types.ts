@@ -3,13 +3,16 @@ import {
   InteractionResponseType,
   APIUserInteractionDataResolved,
   APIMessageComponentInteraction,
+  APIApplicationCommandInteractionDataOption,
 } from 'discord.js';
 
 export { InteractionType, InteractionResponseType };
 
 export type CommandOption = {
   name: string;
-  value: string | number;
+  value: string | number | boolean;
+  type: number;
+  options?: CommandOption[];
 };
 
 export interface CommandInteractionData {
@@ -42,7 +45,7 @@ export interface InteractCoins {
 export type MessageComponentInteraction = APIMessageComponentInteraction;
 
 export type DiscordCommandResponse = {
-  type: InteractionResponseType.ChannelMessageWithSource;
+  type: typeof InteractionResponseType.ChannelMessageWithSource;
   data: {
     content: string;
     embeds?: any[];
@@ -50,7 +53,13 @@ export type DiscordCommandResponse = {
   };
 };
 
-export type ErrorResponse = DiscordCommandResponse & {
+export type ErrorResponse = {
+  type: typeof InteractionResponseType.ChannelMessageWithSource;
+  data: {
+    content: string;
+    embeds?: any[];
+    components?: any[];
+  };
   isError: true;
 };
 

@@ -184,6 +184,81 @@ export async function registerDiscordCommands() {
       name: 'top-monedas',
       description: 'Muestra el top 10 de usuarios con más monedas',
     },
+    {
+      name: 'experiencia',
+      description: 'Consulta tu experiencia acumulada',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description:
+            'Usuario del que quieres consultar la experiencia (opcional)',
+          required: false,
+        },
+      ],
+    },
+    {
+      name: 'dar-experiencia',
+      description: 'Da experiencia a un usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'El usuario que recibirá la experiencia',
+          required: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad de experiencia a dar',
+          required: true,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      name: 'quitar-experiencia',
+      description: 'Quita experiencia a un usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'El usuario al que quitar experiencia',
+          required: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad de experiencia a quitar',
+          required: true,
+          min_value: 1,
+        },
+      ],
+    },
+    {
+      name: 'establecer-experiencia',
+      description:
+        'Establece una cantidad específica de experiencia a un usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: 6,
+          description: 'El usuario al que establecer la experiencia',
+          required: true,
+        },
+        {
+          name: 'cantidad',
+          type: 4,
+          description: 'Cantidad de experiencia a establecer',
+          required: true,
+          min_value: 0,
+        },
+      ],
+    },
+    {
+      name: 'top-experiencia',
+      description: 'Muestra el top 10 de usuarios con más experiencia',
+    },
   ];
 
   const token = process.env.DISCORD_BOT_TOKEN;

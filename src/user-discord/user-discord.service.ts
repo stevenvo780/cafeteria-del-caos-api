@@ -384,4 +384,113 @@ export class UserDiscordService {
       .limit(limit)
       .getMany();
   }
+
+  async handleExperienceOperation(
+    data: InteractPoints,
+    operation: 'add' | 'remove' | 'set',
+  ): Promise<DiscordCommandResponse> {
+    try {
+      const { userId, points: amount, username, roles } = data;
+      const discordUser = await this.findOrCreate({
+        id: userId,
+        username,
+        roles,
+      });
+
+      let newExperience: number;
+      let message: string;
+
+      switch (operation) {
+        case 'add':
+          await this.addExperience(discordUser.id, amount);
+          newExperience = discordUser.experience + amount;
+          message = `✨ ¡NIVEL AUMENTADO! ${discordUser.username} recibe ${amount} puntos de experiencia. ¡Ahora tiene ${newExperience} XP!`;
+          break;
+        case 'remove':
+          await this.addExperience(discordUser.id, -amount);
+          newExperience = discordUser.experience - amount;
+          message = `📉 ¡DEGRADADO! ${discordUser.username} pierde ${amount} puntos de experiencia. Le quedan ${newExperience} XP.`;
+          break;
+        case 'set':
+          await this.updateExperience(discordUser.id, amount);
+          newExperience = amount;
+          message = `⚡ ¡ESTABLECIDO! ${discordUser.username} ahora tiene ${amount} puntos de experiencia.`;
+          break;
+      }
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: { content: message },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content:
+            '💀 ¡ERROR! No se pudo procesar la operación de experiencia.',
+        },
+      };
+    }
+  }
+
+  async updateExperience(
+    id: string,
+    experience: number,
+  ): Promise<UpdateResult> {
+    const user = await this.findOne(id);
+    if (!user) {
+      throw new NotFoundException(
+        `Usuario de Discord con ID ${id} no encontrado`,
+      );
+    }
+    return this.userDiscordRepository.update(id, { experience });
+  }
+
+  async getUserExperience(userId: string): Promise<DiscordCommandResponse> {
+    try {
+      const user = await this.findOne(userId);
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `🌟 ${user.username} tiene ${user.experience} puntos de experiencia acumulados.`,
+        },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '❌ No se pudo encontrar la información del usuario.',
+        },
+      };
+    }
+  }
+
+  async getTopExperienceRanking(): Promise<DiscordCommandResponse> {
+    try {
+      const users = await this.findTopByExperience(10);
+      const rankingMessage = users
+        .map((user, index) => {
+          const medal =
+            index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '✨';
+          return `${medal} ${index + 1}. ${user.username}: ${
+            user.experience
+          } XP`;
+        })
+        .join('\n');
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `🏆 **TOP 10 - EXPERIENCIA**\n\n${rankingMessage}`,
+        },
+      };
+    } catch (error) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: '❌ Error al obtener el ranking de experiencia.',
+        },
+      };
+    }
+  }
 }

@@ -14,6 +14,7 @@ import {
   APIApplicationCommandInteractionDataNumberOption,
   APIApplicationCommandInteractionDataUserOption,
   APIUser,
+  APIApplicationCommandInteractionDataOption,
 } from 'discord.js';
 import {
   getGuildMemberCount,
@@ -21,6 +22,7 @@ import {
 } from '../utils/discord-utils';
 import { LibraryService } from '../library/library.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
+import { LibraryVisibility } from '../library/entities/library.entity'; // Añadir esta importación
 import * as nacl from 'tweetnacl';
 
 @Injectable()
@@ -63,24 +65,27 @@ export class DiscordService {
 
   private errorResponse(message: string): ErrorResponse {
     return {
-      type: InteractionResponseType.ChannelMessageWithSource,
+      type: InteractionResponseType.ChannelMessageWithSource as const, // Añadir 'as const' para fijar el tipo
       data: { content: message },
       isError: true,
     };
   }
 
   async handleCreateNote(
-    options: CommandOption[],
+    options: APIApplicationCommandInteractionDataOption[],
   ): Promise<DiscordCommandResponse> {
     try {
-      const titulo = options.find((opt) => opt.name === 'titulo')
-        ?.value as string;
-      const contenido = options.find((opt) => opt.name === 'contenido')
-        ?.value as string;
+      // Hacer cast seguro de los tipos
+      const tituloOption = options.find((opt) => opt.name === 'titulo');
+      const contenidoOption = options.find((opt) => opt.name === 'contenido');
+
+      // Extraer valores con Type Guard
+      const titulo = this.getStringOptionValue(tituloOption);
+      const contenido = this.getStringOptionValue(contenidoOption);
 
       if (!titulo || !contenido) {
         return {
-          type: InteractionResponseType.ChannelMessageWithSource,
+          type: InteractionResponseType.ChannelMessageWithSource as const,
           data: {
             content:
               'Ah, la ignorancia... ¿Pretendías crear una nota sin su esencia básica?',
@@ -88,10 +93,18 @@ export class DiscordService {
         };
       }
 
+      // Crear o encontrar la nota padre "Notas de Discord"
+      const parentNote = await this.libraryService.findOrCreateByTitle(
+        'Notas de Discord',
+      );
+
+      // Crear la nota del usuario como hija
       const data = {
         title: titulo,
         description: contenido,
         referenceDate: new Date(),
+        parentNoteId: parentNote.id, // Establecer la relación padre-hijo
+        visibility: LibraryVisibility.USERS, // Asegurarse que solo los usuarios registrados puedan verla
       };
 
       const note = await this.libraryService.create(data, null);
@@ -107,13 +120,24 @@ export class DiscordService {
         },
       };
     } catch (error) {
+      console.error('Error creating note:', error);
       return {
-        type: InteractionResponseType.ChannelMessageWithSource,
+        type: InteractionResponseType.ChannelMessageWithSource as const,
         data: {
           content: 'El caos ha engullido tu nota. La nada prevalece',
         },
       };
     }
+  }
+
+  // Añadir método helper para extraer valores de string de forma segura
+  private getStringOptionValue(
+    option: APIApplicationCommandInteractionDataOption | undefined,
+  ): string | null {
+    if (!option || !('value' in option)) {
+      return null;
+    }
+    return String(option.value);
   }
 
   async handleWebhook(event: any): Promise<void> {
@@ -255,6 +279,67 @@ export class DiscordService {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: { content: response },
     };
+  }
+
+  async handleUserExperience(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    member: any,
+  ): Promise<DiscordCommandResponse> {
+    const userOption = commandData.options?.find(
+      (opt) => opt.name === 'usuario',
+    ) as APIApplicationCommandInteractionDataUserOption;
+
+    const targetUser = await this.resolveTargetUser(
+      userOption,
+      commandData,
+      member,
+    );
+
+    if ('error' in targetUser) {
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource as const,
+        data: {
+          content: '❌ Error: No se pudo encontrar al usuario especificado.',
+        },
+      };
+    }
+
+    const topUsers = await this.userDiscordService.findTopByExperience(10);
+    const userRank = topUsers.findIndex((u) => u.id === targetUser.id) + 1;
+    const rankText =
+      userRank > 0 && userRank <= 10
+        ? `\n🏆 Ranking: #${userRank} en el top 10`
+        : '';
+
+    const message = userOption
+      ? `✨ ${targetUser.username} tiene ${targetUser.experience} puntos de experiencia!${rankText}`
+      : `✨ ¡${targetUser.username}! Has acumulado ${targetUser.experience} puntos de experiencia!${rankText}`;
+
+    return {
+      type: InteractionResponseType.ChannelMessageWithSource as const,
+      data: { content: message },
+    };
+  }
+
+  async handleExperienceOperations(
+    commandName: string,
+    commandData: APIChatInputApplicationCommandInteractionData,
+  ): Promise<DiscordCommandResponse> {
+    const validation = await this.validateExperienceCommand(commandData);
+    if ('error' in validation) {
+      return validation.error;
+    }
+
+    const operationMap = {
+      'dar-experiencia': 'add',
+      'quitar-experiencia': 'remove',
+      'establecer-experiencia': 'set',
+    } as const;
+
+    return this.userDiscordService.handleExperienceOperation(
+      validation,
+      operationMap[commandName as keyof typeof operationMap],
+    );
   }
 
   private async resolveTargetUser(
@@ -429,6 +514,134 @@ export class DiscordService {
           data: { content: 'Error al procesar usuario: ' + error.message },
         },
       };
+    }
+  }
+
+  private async validateExperienceCommand(
+    commandData: APIChatInputApplicationCommandInteractionData,
+  ): Promise<InteractPoints | { error: DiscordCommandResponse }> {
+    const userOption = commandData.options?.find(
+      (opt) => opt.name === 'usuario',
+    ) as APIApplicationCommandInteractionDataUserOption;
+
+    const amountOption = commandData.options?.find(
+      (opt) => opt.name === 'cantidad',
+    ) as APIApplicationCommandInteractionDataNumberOption;
+
+    if (!userOption || !amountOption) {
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content:
+              '❌ Error: Faltan parámetros necesarios para la operación.',
+          },
+        },
+      };
+    }
+
+    const userId = userOption.value;
+    const points = amountOption.value;
+
+    const resolvedUser = commandData.resolved?.users?.[userId] as APIUser;
+    const resolvedMember = commandData.resolved?.members?.[
+      userId
+    ] as APIInteractionDataResolvedGuildMember;
+
+    if (!resolvedUser || !resolvedMember) {
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: '❌ Error: No se pudo encontrar al usuario especificado.',
+          },
+        },
+      };
+    }
+
+    try {
+      await this.userDiscordService.findOrCreate({
+        id: userId,
+        username: resolvedUser.username,
+        roles: resolvedMember.roles || [],
+      });
+
+      return {
+        userId,
+        points,
+        username: resolvedUser.username,
+        roles: resolvedMember.roles || [],
+      };
+    } catch (error) {
+      console.error('Error al procesar usuario:', error);
+      return {
+        error: {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: {
+            content: '❌ Error al procesar el usuario: ' + error.message,
+          },
+        },
+      };
+    }
+  }
+
+  async handleApplicationCommand(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+  ): Promise<DiscordCommandResponse> {
+    try {
+      switch (commandData.name) {
+        case 'puntaje':
+          return await this.handleUserScore(
+            commandData,
+            interactionPayload.member,
+          );
+        case 'saldo':
+          return await this.handleUserBalance(
+            commandData,
+            interactionPayload.member,
+          );
+        case 'experiencia':
+          return await this.handleUserExperience(
+            commandData,
+            interactionPayload.member,
+          );
+        case 'top-experiencia':
+          return await this.userDiscordService.getTopExperienceRanking();
+        case 'dar-experiencia':
+        case 'quitar-experiencia':
+        case 'establecer-experiencia':
+          return await this.handleExperienceOperations(
+            commandData.name,
+            commandData,
+          );
+        case 'crear-nota':
+          return await this.handleCreateNote(commandData.options || []);
+        case 'top-monedas':
+          return await this.handleTopCoins();
+        // Operaciones de puntos
+        case 'añadir-puntos':
+        case 'quitar-puntos':
+        case 'establecer-puntos':
+          return await this.handleUserPoints(commandData.name, commandData);
+        // Operaciones de monedas
+        case 'dar-monedas':
+        case 'quitar-monedas':
+        case 'establecer-monedas':
+        case 'transferir-monedas':
+          return await this.handleUserCoins(
+            commandData.name,
+            commandData,
+            interactionPayload,
+          );
+        default:
+          return this.errorResponse(
+            `Comando "${commandData.name}" no reconocido.`,
+          );
+      }
+    } catch (error) {
+      console.error('Error al procesar comando:', error);
+      return this.errorResponse('Error al procesar el comando');
     }
   }
 }
