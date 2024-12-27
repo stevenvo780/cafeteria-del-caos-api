@@ -78,6 +78,7 @@ export class UserDiscordService {
 
     queryBuilder
       .orderBy(`user.${orderByColumn}`, sortOrder)
+      .addOrderBy('user.id', 'ASC')
       .limit(limit)
       .offset(offset);
 
