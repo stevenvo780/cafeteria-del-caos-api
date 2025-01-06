@@ -20,23 +20,52 @@ jobs:
         with:
           credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
 
-      # 3. Configurar gcloud
+      # 3. Configurar gcloud y verificar/crear Artifact Registry
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 4. Construir la imagen de Docker
+      - name: Ensure Artifact Registry Repository Exists
+        run: |
+          REPO_NAME="my-repo"
+          REGION="${{ secrets.GCP_REGION }}"
+          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
+          
+          # Verificar si el repositorio ya existe
+          REPO_EXISTS=$(gcloud artifacts repositories list \
+            --filter="name ~ '${REPO_NAME}' AND location:'${REGION}'" \
+            --format="value(name)")
+
+          if [ -z "$REPO_EXISTS" ]; then
+            echo "Creating Artifact Registry repository: $REPO_NAME"
+            gcloud artifacts repositories create $REPO_NAME \
+              --repository-format=docker \
+              --location=$REGION \
+              --description="Docker repository for my project"
+          else
+            echo "Artifact Registry repository $REPO_NAME already exists."
+          fi
+
+      # 4. Configurar Docker para Artifact Registry
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      # 5. Construir la imagen de Docker
       - name: Build Docker image
         run: |
-          IMAGE_NAME=my-service:latest
+          IMAGE_NAME=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest
           docker build -t $IMAGE_NAME .
 
-      # 5. Desplegar directamente en Cloud Run
+      # 6. Subir la imagen a Artifact Registry
+      - name: Push Docker image to Artifact Registry
+        run: docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest
+
+      # 7. Desplegar en Cloud Run
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy my-new-service \
-            --image my-service:latest \
+            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated
