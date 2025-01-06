@@ -820,12 +820,10 @@ export class DiscordService {
           );
         case 'top-monedas':
           return await this.handleTopCoins();
-        // Operaciones de puntos
         case 'añadir-puntos':
         case 'quitar-puntos':
         case 'establecer-puntos':
           return await this.handleUserPoints(commandData.name, commandData);
-        // Operaciones de monedas
         case 'dar-monedas':
         case 'quitar-monedas':
         case 'establecer-monedas':
