@@ -142,7 +142,6 @@ export class KardexService {
 
     const result = await query.getRawMany();
 
-    // Asegurarse que los totales sean números
     return result.map((item) => ({
       userDiscordId: item.userDiscordId,
       total: parseInt(item.total) || 0,

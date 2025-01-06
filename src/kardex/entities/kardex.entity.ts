@@ -1,4 +1,3 @@
-// kardex.entity.ts
 import {
   Entity,
   PrimaryGeneratedColumn,

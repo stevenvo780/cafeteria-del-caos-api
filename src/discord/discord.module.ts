@@ -6,7 +6,7 @@ import { LibraryModule } from '../library/library.module';
 import { UserModule } from '../user/user.module';
 import { UserDiscordModule } from '../user-discord/user-discord.module';
 import { KardexModule } from '../kardex/kardex.module';
-import { ProductModule } from '../product/product.module'; // Añadir esta línea
+import { ProductModule } from '../product/product.module';
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { ProductModule } from '../product/product.module'; // Añadir esta líne
     UserModule,
     UserDiscordModule,
     KardexModule,
-    ProductModule, // Añadir esta línea
+    ProductModule,
   ],
   controllers: [DiscordController],
   providers: [DiscordService],

@@ -1,4 +1,3 @@
-// kardex.module.ts
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { KardexService } from './kardex.service';
@@ -12,7 +11,7 @@ import { UserModule } from '../user/user.module';
   imports: [
     TypeOrmModule.forFeature([Kardex, UserDiscord]),
     forwardRef(() => UserDiscordModule),
-    forwardRef(() => UserModule), // Añade UserModule para inyectar UserService
+    forwardRef(() => UserModule),
   ],
   controllers: [KardexController],
   providers: [KardexService],

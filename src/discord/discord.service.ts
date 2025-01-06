@@ -34,8 +34,8 @@ export class DiscordService {
   constructor(
     private readonly libraryService: LibraryService,
     private readonly userDiscordService: UserDiscordService,
-    private readonly kardexService: KardexService, // <-- Inyectamos KardexService
-    private readonly productService: ProductService, // Añadir esta línea
+    private readonly kardexService: KardexService,
+    private readonly productService: ProductService,
   ) {}
 
   verifyDiscordRequest(
