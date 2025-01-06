@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+env:
+  REPO_NAME: cafeteriadelcaos
+  SERVICE_NAME: cafeteria-del-caos-api
+  IMAGE_NAME: cafeteria-del-caos-api
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -25,7 +30,6 @@ jobs:
 
       - name: Ensure Artifact Registry Repository Exists
         run: |
-          REPO_NAME="cafeteriadelcaos"
           REGION="${{ secrets.GCP_REGION }}"
           PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           
@@ -47,17 +51,17 @@ jobs:
 
       - name: Build Docker image
         run: |
-          IMAGE_NAME=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest
-          docker build -t $IMAGE_NAME .
+          IMAGE_PATH=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
+          docker build -t $IMAGE_PATH .
 
       - name: Push Docker image to Artifact Registry
-        run: docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest
+        run: docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy cafeteria-del-caos-api \
-            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest \
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
-            --allow-unauthenticated
+            --allow-unauthenticated \
             --timeout=300
