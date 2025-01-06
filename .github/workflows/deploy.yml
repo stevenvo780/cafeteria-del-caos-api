@@ -34,7 +34,7 @@ jobs:
           PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           
           REPO_EXISTS=$(gcloud artifacts repositories list \
-            --filter="name ~ '${REPO_NAME}' AND location:'${REGION}'" \
+            --filter="name:projects/${PROJECT_ID}/locations/${REGION}/repositories/${REPO_NAME}" \
             --format="value(name)")
 
           if [ -z "$REPO_EXISTS" ]; then
