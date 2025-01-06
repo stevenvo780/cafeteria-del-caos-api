@@ -25,7 +25,7 @@ jobs:
 
       - name: Ensure Artifact Registry Repository Exists
         run: |
-          REPO_NAME="cafeteria_del_caos"
+          REPO_NAME="cafeteriadelcaos"
           REGION="${{ secrets.GCP_REGION }}"
           PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           
@@ -55,7 +55,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy cafeteria_del_caos_api \
+          gcloud run deploy cafeteria-del-caos-api \
             --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
