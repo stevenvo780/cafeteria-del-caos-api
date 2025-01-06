@@ -10,17 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout del repositorio
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Autenticar con Google Cloud
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
 
-      # 3. Configurar gcloud y verificar/crear Artifact Registry
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
         with:
@@ -28,17 +25,15 @@ jobs:
 
       - name: Ensure Artifact Registry Repository Exists
         run: |
-          REPO_NAME="my-repo"
+          REPO_NAME="cafeteria_del_caos"
           REGION="${{ secrets.GCP_REGION }}"
           PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
           
-          # Verificar si el repositorio ya existe
           REPO_EXISTS=$(gcloud artifacts repositories list \
             --filter="name ~ '${REPO_NAME}' AND location:'${REGION}'" \
             --format="value(name)")
 
           if [ -z "$REPO_EXISTS" ]; then
-            echo "Creating Artifact Registry repository: $REPO_NAME"
             gcloud artifacts repositories create $REPO_NAME \
               --repository-format=docker \
               --location=$REGION \
@@ -47,25 +42,22 @@ jobs:
             echo "Artifact Registry repository $REPO_NAME already exists."
           fi
 
-      # 4. Configurar Docker para Artifact Registry
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
 
-      # 5. Construir la imagen de Docker
       - name: Build Docker image
         run: |
           IMAGE_NAME=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest
           docker build -t $IMAGE_NAME .
 
-      # 6. Subir la imagen a Artifact Registry
       - name: Push Docker image to Artifact Registry
         run: docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest
 
-      # 7. Desplegar en Cloud Run
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy my-new-service \
+          gcloud run deploy cafeteria_del_caos_api \
             --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/my-repo/my-service:latest \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated
+            --timeout=300
