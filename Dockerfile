@@ -40,7 +40,7 @@ ENV NODE_OPTIONS="--max-old-space-size=512 --no-warnings"
 
 # Health check para garantizar el uptime en Cloud Run
 HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD curl --fail http://localhost:${PORT}/health || exit 1
+  CMD wget -qO- http://localhost:${PORT}/health || exit 1
 
 # Exponer el puerto
 EXPOSE ${PORT}

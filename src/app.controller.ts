@@ -43,4 +43,11 @@ export class AppController {
     });
     return routes;
   }
+
+  @ApiOperation({ summary: 'Health check endpoint' })
+  @ApiOkResponse({ description: 'Application is healthy' })
+  @Get('health')
+  getHealth() {
+    return { status: 'ok', timestamp: new Date().toISOString() };
+  }
 }
