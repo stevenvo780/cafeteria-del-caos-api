@@ -35,6 +35,7 @@ export class EventsService {
     const now = new Date();
     const events = await this.eventsRepository.find({
       where: [
+        { repetition: Repetition.DAILY },
         { repetition: Repetition.WEEKLY },
         { repetition: Repetition.MONTHLY },
         { repetition: Repetition.YEARLY },
@@ -86,6 +87,9 @@ export class EventsService {
     const nextDate = new Date(currentDate);
 
     switch (repetition) {
+      case 'daily':
+        nextDate.setDate(nextDate.getDate() + 1);
+        break;
       case 'weekly':
         nextDate.setDate(nextDate.getDate() + 7);
         break;

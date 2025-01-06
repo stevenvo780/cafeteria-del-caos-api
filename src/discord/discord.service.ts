@@ -1,6 +1,5 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import {
-  CommandOption,
   InteractPoints,
   InteractCoins,
   DiscordCommandResponse,

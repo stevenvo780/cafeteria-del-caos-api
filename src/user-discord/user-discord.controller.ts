@@ -21,7 +21,7 @@ import {
   ApiBearerAuth,
   ApiResponse,
 } from '@nestjs/swagger';
-import { FindUsersDto, SortOrder } from './dto/find-users.dto';
+import { FindUsersDto } from './dto/find-users.dto';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 
@@ -41,8 +41,6 @@ export class UserDiscordController {
   }
 
   @Get()
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Obtener usuarios con filtros' })
   @ApiOkResponse({
     description: 'Lista paginada de usuarios',
@@ -59,18 +57,6 @@ export class UserDiscordController {
   })
   findTop(@Query('limit') limit?: number) {
     return this.userDiscordService.findTopRanking(limit);
-  }
-
-  @Get('ranking')
-  @ApiOperation({
-    summary: 'Obtener ranking de usuarios con paginado y búsqueda',
-  })
-  findRanking(@Query() findUsersDto: FindUsersDto) {
-    return this.userDiscordService.findAll({
-      ...findUsersDto,
-      sortBy: 'points',
-      sortOrder: SortOrder.DESC,
-    });
   }
 
   @Get(':id')

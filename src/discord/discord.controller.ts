@@ -234,34 +234,35 @@ export class DiscordController {
 
   @Post('coins/report')
   async reportCoins(
-    @Body() { userId, amount }: { userId: string; amount: number },
+    @Body()
+    {
+      user,
+      amount,
+    }: { user: { id: string; username: string }; amount: number },
     @Headers('x-bot-api-key') botKey: string,
   ) {
     if (botKey !== process.env.BOT_SYNC_KEY) {
       throw new UnauthorizedException('Llave inválida');
     }
-
     await this.userDiscordService.findOrCreate({
-      id: userId,
-      username: 'Bot',
+      id: user.id,
+      username: user.username,
     });
-
     if (amount >= 0) {
-      await this.kardexService.addCoins(userId, amount, 'Report from Bot');
-      await this.userDiscordService.addExperience(userId, amount);
+      await this.kardexService.addCoins(user.id, amount, 'Report from Bot');
+      await this.userDiscordService.addExperience(user.id, amount);
     } else {
       await this.kardexService.removeCoins(
-        userId,
+        user.id,
         Math.abs(amount),
         'Report from Bot',
       );
     }
-
-    const newBalance = await this.kardexService.getUserLastBalance(userId);
-    const user = await this.userDiscordService.findOne(userId);
+    const newBalance = await this.kardexService.getUserLastBalance(user.id);
+    const discordUser = await this.userDiscordService.findOne(user.id);
     return {
       newBalance,
-      experience: user.experience,
+      experience: discordUser.experience,
     };
   }
 
@@ -274,10 +275,11 @@ export class DiscordController {
       throw new UnauthorizedException('Llave inválida');
     }
 
-    await this.userDiscordService.findOrCreate({
-      id: userId,
-      username: 'Unknown',
-    });
+    const user = await this.userDiscordService.findOne(userId);
+
+    if (!user) {
+      throw new UnauthorizedException('Usuario no encontrado');
+    }
 
     const balance = await this.kardexService.getUserLastBalance(userId);
     return { balance };
