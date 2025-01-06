@@ -28,24 +28,6 @@ jobs:
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      - name: Ensure Artifact Registry Repository Exists
-        run: |
-          REGION="${{ secrets.GCP_REGION }}"
-          PROJECT_ID="${{ secrets.GCP_PROJECT_ID }}"
-          
-          REPO_EXISTS=$(gcloud artifacts repositories list \
-            --filter="name:projects/${PROJECT_ID}/locations/${REGION}/repositories/${REPO_NAME}" \
-            --format="value(name)")
-
-          if [ -z "$REPO_EXISTS" ]; then
-            gcloud artifacts repositories create $REPO_NAME \
-              --repository-format=docker \
-              --location=$REGION \
-              --description="Docker repository for my project"
-          else
-            echo "Artifact Registry repository $REPO_NAME already exists."
-          fi
-
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
 
@@ -57,11 +39,33 @@ jobs:
       - name: Push Docker image to Artifact Registry
         run: docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: Deploy to Cloud Run
+      - name: Deploy to Cloud Run with Dynamic Environment Variables
         run: |
+          ENV_VARS=(
+            "DB_HOST=${{ secrets.DB_HOST }}"
+            "DB_PORT=${{ secrets.DB_PORT }}"
+            "DB_USERNAME=${{ secrets.DB_USERNAME }}"
+            "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+            "DB_NAME=${{ secrets.DB_NAME }}"
+            "DB_SYNCHRONIZE=${{ secrets.DB_SYNCHRONIZE }}"
+            "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}"
+            "FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+            "FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}"
+            "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}"
+            "DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}"
+            "DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}"
+            "DISCORD_PUBLIC_KEY=${{ secrets.DISCORD_PUBLIC_KEY }}"
+            "DISCORD_WATCHED_CHANNELS=${{ secrets.DISCORD_WATCHED_CHANNELS }}"
+            "FRONT_URL=${{ secrets.FRONT_URL }}"
+            "BOT_SYNC_KEY=${{ secrets.BOT_SYNC_KEY }}"
+          )
+
+          ENV_STRING=$(IFS=,; echo "${ENV_VARS[*]}")
+
           gcloud run deploy ${{ env.SERVICE_NAME }} \
             --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
-            --timeout=300
+            --timeout=300 \
+            --set-env-vars "$ENV_STRING"
