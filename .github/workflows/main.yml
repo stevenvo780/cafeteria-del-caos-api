@@ -38,9 +38,9 @@ jobs:
           docker build -t $IMAGE_PATH .
 
       - name: Push Docker image to Artifact Registry
-        run: docker push $IMAGE_PATH
+        run: docker push ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
 
-      - name: Deploy to Cloud Run with Environment Variables
+      - name: Deploy to Cloud Run with Dynamic Environment Variables
         run: |
           ENV_VARS=(
             "DB_HOST=${{ secrets.DB_HOST }}"
