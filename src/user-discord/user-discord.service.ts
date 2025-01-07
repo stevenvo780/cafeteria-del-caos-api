@@ -131,17 +131,17 @@ export class UserDiscordService {
       });
       await this.userDiscordRepository.save(user);
     } else {
+      const objectUpdated = {
+        username: discordData.username,
+      };
       if (
         discordData.roles &&
         JSON.stringify(user.roles) !== JSON.stringify(discordData.roles)
       ) {
-        await this.userDiscordRepository.update(user.id, {
-          roles: discordData.roles,
-          username: discordData.username,
-        });
+        objectUpdated['roles'] = discordData.roles;
       }
+      await this.userDiscordRepository.update(user.id, objectUpdated);
     }
-
     return user;
   }
 
