@@ -63,7 +63,7 @@ jobs:
           ENV_STRING=$(IFS=,; echo "${ENV_VARS[*]}")
 
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image $IMAGE_PATH \
+            --image ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest \
             --region ${{ secrets.GCP_REGION }} \
             --platform managed \
             --allow-unauthenticated \
