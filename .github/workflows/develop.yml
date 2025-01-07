@@ -1,18 +1,19 @@
-name: Deploy to Cloud Run
+name: Deploy to Cloud Run (Development)
 
 on:
   push:
     branches:
-      - main
+      - develop
 
 env:
   REPO_NAME: cafeteriadelcaos
-  SERVICE_NAME: cafeteria-del-caos-api
-  IMAGE_NAME: cafeteria-del-caos-api
+  SERVICE_NAME: cafeteria-del-caos-api-dev
+  IMAGE_NAME: cafeteria-del-caos-api-dev
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: development
 
     steps:
       - name: Checkout code
@@ -42,21 +43,21 @@ jobs:
       - name: Deploy to Cloud Run with Dynamic Environment Variables
         run: |
           ENV_VARS=(
-            "DB_HOST=${{ secrets.DB_HOST }}"
-            "DB_PORT=${{ secrets.DB_PORT }}"
-            "DB_USERNAME=${{ secrets.DB_USERNAME }}"
-            "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-            "DB_NAME=${{ secrets.DB_NAME }}"
-            "DB_SYNCHRONIZE=${{ secrets.DB_SYNCHRONIZE }}"
-            "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}"
-            "FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}"
-            "FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}"
-            "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}"
-            "DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}"
-            "DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}"
-            "DISCORD_PUBLIC_KEY=${{ secrets.DISCORD_PUBLIC_KEY }}"
-            "FRONT_URL=${{ secrets.FRONT_URL }}"
-            "BOT_SYNC_KEY=${{ secrets.BOT_SYNC_KEY }}"
+            "DB_HOST=${{ secrets.DEV_DB_HOST }}"
+            "DB_PORT=${{ secrets.DEV_DB_PORT }}"
+            "DB_USERNAME=${{ secrets.DEV_DB_USERNAME }}"
+            "DB_PASSWORD=${{ secrets.DEV_DB_PASSWORD }}"
+            "DB_NAME=${{ secrets.DEV_DB_NAME }}"
+            "DB_SYNCHRONIZE=${{ secrets.DEV_DB_SYNCHRONIZE }}"
+            "FIREBASE_PROJECT_ID=${{ secrets.DEV_FIREBASE_PROJECT_ID }}"
+            "FIREBASE_CLIENT_EMAIL=${{ secrets.DEV_FIREBASE_CLIENT_EMAIL }}"
+            "FIREBASE_PRIVATE_KEY=${{ secrets.DEV_FIREBASE_PRIVATE_KEY }}"
+            "DISCORD_BOT_TOKEN=${{ secrets.DEV_DISCORD_BOT_TOKEN }}"
+            "DISCORD_CLIENT_ID=${{ secrets.DEV_DISCORD_CLIENT_ID }}"
+            "DISCORD_GUILD_ID=${{ secrets.DEV_DISCORD_GUILD_ID }}"
+            "DISCORD_PUBLIC_KEY=${{ secrets.DEV_DISCORD_PUBLIC_KEY }}"
+            "FRONT_URL=${{ secrets.DEV_FRONT_URL }}"
+            "BOT_SYNC_KEY=${{ secrets.DEV_BOT_SYNC_KEY }}"
           )
 
           ENV_STRING=$(IFS=,; echo "${ENV_VARS[*]}")

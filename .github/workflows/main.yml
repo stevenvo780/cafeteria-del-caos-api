@@ -1,0 +1,71 @@
+name: Deploy to Cloud Run (Production)
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  REPO_NAME: cafeteriadelcaos
+  SERVICE_NAME: cafeteria-del-caos-api
+  IMAGE_NAME: cafeteria-del-caos-api
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build Docker image
+        run: |
+          IMAGE_PATH=${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.IMAGE_NAME }}:latest
+          docker build -t $IMAGE_PATH .
+
+      - name: Push Docker image to Artifact Registry
+        run: docker push $IMAGE_PATH
+
+      - name: Deploy to Cloud Run with Environment Variables
+        run: |
+          ENV_VARS=(
+            "DB_HOST=${{ secrets.DB_HOST }}"
+            "DB_PORT=${{ secrets.DB_PORT }}"
+            "DB_USERNAME=${{ secrets.DB_USERNAME }}"
+            "DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+            "DB_NAME=${{ secrets.DB_NAME }}"
+            "DB_SYNCHRONIZE=${{ secrets.DB_SYNCHRONIZE }}"
+            "FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}"
+            "FIREBASE_CLIENT_EMAIL=${{ secrets.FIREBASE_CLIENT_EMAIL }}"
+            "FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}"
+            "DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}"
+            "DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}"
+            "DISCORD_GUILD_ID=${{ secrets.DISCORD_GUILD_ID }}"
+            "DISCORD_PUBLIC_KEY=${{ secrets.DISCORD_PUBLIC_KEY }}"
+            "FRONT_URL=${{ secrets.FRONT_URL }}"
+            "BOT_SYNC_KEY=${{ secrets.BOT_SYNC_KEY }}"
+          )
+
+          ENV_STRING=$(IFS=,; echo "${ENV_VARS[*]}")
+
+          gcloud run deploy ${{ env.SERVICE_NAME }} \
+            --image $IMAGE_PATH \
+            --region ${{ secrets.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --timeout=300 \
+            --set-env-vars "$ENV_STRING"
