@@ -52,12 +52,13 @@ export class DiscordInfractionService {
     const emoji = this.getInfractionEmoji(infractionType);
 
     try {
-      await this.userDiscordService.addPenaltyPoints(userId, points);
       const user = await this.userDiscordService.findOrCreate({
         id: userId,
         username: resolvedUser.username,
         roles: resolvedMember.roles || [],
       });
+
+      await this.userDiscordService.addPenaltyPoints(user.id, points);
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,

@@ -24,9 +24,9 @@ export class DiscordExperienceService {
   async handleExperienceCommand(
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     interaction: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
-    console.log('Processing experience command:', { commandName, interaction });
     const validation = await this.validateExperienceCommand(commandData);
     if ('isError' in validation) {
       return validation;
