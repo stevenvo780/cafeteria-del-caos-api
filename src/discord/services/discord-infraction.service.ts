@@ -52,7 +52,11 @@ export class DiscordInfractionService {
 
     try {
       await this.userDiscordService.addPenaltyPoints(userId, points);
-      const user = await this.userDiscordService.findOne(userId);
+      const user = await this.userDiscordService.findOrCreate({
+        id: userId,
+        username: resolvedUser.username,
+        roles: resolvedMember.roles || [],
+      });
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
@@ -62,7 +66,7 @@ export class DiscordInfractionService {
             `Tipo: ${infractionType}\n` +
             `Puntos: +${points}\n` +
             `Razón: ${reason}\n` +
-            `Total acumulado: ${user.points} puntos`,
+            `Total acumulado: ${user.points}/10 puntos`,
         },
       };
     } catch (error) {

@@ -111,7 +111,7 @@ export class DiscordService {
           commandData,
           interactionPayload,
         );
-      case 'sancionar-usuario':
+      case 'añadir-sancion':
         return await this.infractionService.handleAddInfraction(commandData);
       default:
         return this.errorResponse(
