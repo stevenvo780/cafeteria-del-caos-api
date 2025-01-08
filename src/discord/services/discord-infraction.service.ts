@@ -64,7 +64,12 @@ export class DiscordInfractionService {
 
       const coinsPenalti = points * 10;
       await this.userDiscordService.addPenaltyPoints(user.id, points);
-      await this.kardexService.removeCoins(user.id, coinsPenalti, reason);
+      const coinsUser = await this.kardexService.getUserLastBalance(user.id);
+      if (coinsUser - coinsPenalti > 0) {
+        await this.kardexService.removeCoins(user.id, coinsPenalti, reason);
+      } else {
+        await this.kardexService.setCoins(user.id, 0, reason);
+      }
 
       const pointsUpdated = await this.userDiscordService.findOne(user.id);
 
