@@ -198,17 +198,17 @@ export class UserDiscordService {
         case 'add':
           await this.addPenaltyPoints(discordUser.id, points);
           newPoints = discordUser.points + points;
-          message = `💀 BOOM! ${discordUser.username} la cagó. ${points} PUNTOS DE CASTIGO AÑADIDOS. Ahora tiene ${newPoints} puntos de SHAME!`;
+          message = `💀 ${discordUser.username} la regó y se ganó ${points} puntos malos. Total: ${newPoints}`;
           break;
         case 'remove':
           await this.addPenaltyPoints(discordUser.id, -points);
           newPoints = discordUser.points - points;
-          message = `😎 ${discordUser.username} se redimió. ${points} puntos menos de vergüenza. Aún carga con ${newPoints} puntos.`;
+          message = `😎 ${discordUser.username} se portó mejor. Le quitamos ${points} puntos. Aún tiene ${newPoints}`;
           break;
         case 'set':
           await this.updatePoints(discordUser.id, points);
           newPoints = points;
-          message = `⚖️ SE HA HABLADO! ${discordUser.username} ahora tiene ${newPoints} puntos porque YO LO DIGO!`;
+          message = `⚖️ ${discordUser.username} ahora tiene ${newPoints} puntos porque así lo decidí`;
           break;
       }
 
@@ -304,15 +304,15 @@ export class UserDiscordService {
       switch (operation) {
         case 'add':
           await this.addExperience(discordUser.id, amount);
-          message = `✨ ¡SUBIDA DE NIVEL! ${discordUser.username} +${amount} XP.`;
+          message = `✨ ${discordUser.username} ganó ${amount} XP.`;
           break;
         case 'remove':
           await this.addExperience(discordUser.id, -amount);
-          message = `📉 ¡PÉRDIDA DE EXPERIENCIA! ${discordUser.username} -${amount} XP.`;
+          message = `📉 ${discordUser.username} perdió ${amount} XP.`;
           break;
         case 'set':
           await this.updateExperience(discordUser.id, amount);
-          message = `⚡ ¡EXPERIENCIA ESTABLECIDA! ${discordUser.username} ahora tiene ${amount} XP.`;
+          message = `⚡ ${discordUser.username} tiene ${amount} XP ahora.`;
           break;
         default:
           throw new Error('Operación no válida');
@@ -323,17 +323,17 @@ export class UserDiscordService {
       const nextLevel = (currentLevel + 1) * 100;
       const xpToNextLevel = nextLevel - updatedUser.experience;
 
-      message += `\n📊 Estadísticas:`;
-      message += `\n🎯 Experiencia total: ${updatedUser.experience} XP`;
-      message += `\n📈 Nivel actual: ${currentLevel}`;
-      message += `\n🎮 Experiencia para siguiente nivel: ${xpToNextLevel} XP`;
+      message += `\n📊 Stats:`;
+      message += `\n🎯 XP total: ${updatedUser.experience}`;
+      message += `\n📈 Nivel: ${currentLevel}`;
+      message += `\n🎮 XP para subir: ${xpToNextLevel}`;
 
       if (operation === 'add') {
         const previousLevel = Math.floor(
           (updatedUser.experience - amount) / 100,
         );
         if (currentLevel > previousLevel) {
-          message += `\n🎉 ¡FELICIDADES! Has subido al nivel ${currentLevel}!`;
+          message += `\n🎉 ¡Subiste al nivel ${currentLevel}!`;
         }
       }
 
