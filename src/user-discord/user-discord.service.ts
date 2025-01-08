@@ -3,20 +3,18 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto';
-import {
-  InteractPoints,
-  DiscordCommandResponse,
-} from '../discord/discord.types';
+import { InteractPoints, CommandResponse } from '../discord/discord.types';
 import { InteractionResponseType } from 'discord.js';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 import { KardexService } from '../kardex/kardex.service';
+import { createErrorResponse } from '../discord/discord-responses.util';
 
 @Injectable()
 export class UserDiscordService {
   constructor(
     @InjectRepository(UserDiscord)
-    private userDiscordRepository: Repository<UserDiscord>,
+    private readonly userDiscordRepository: Repository<UserDiscord>,
     private kardexService: KardexService,
   ) {}
 
@@ -103,8 +101,14 @@ export class UserDiscordService {
     updateUserDiscordDto: UpdateUserDiscordDto,
   ): Promise<UserDiscord> {
     const user = await this.findOne(id);
-    Object.assign(user, updateUserDiscordDto);
-    return this.userDiscordRepository.save(user);
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+    const updatedUser = {
+      ...user,
+      ...updateUserDiscordDto,
+    };
+    return this.userDiscordRepository.save(updatedUser);
   }
 
   async remove(id: string): Promise<UserDiscord> {
@@ -182,14 +186,9 @@ export class UserDiscordService {
   async handlePointsOperation(
     data: InteractPoints,
     operation: 'add' | 'remove' | 'set',
-  ): Promise<DiscordCommandResponse> {
+  ): Promise<CommandResponse> {
     try {
-      const { userId, points, username, roles } = data;
-      const discordUser = await this.findOrCreate({
-        id: userId,
-        username,
-        roles,
-      });
+      const { user: discordUser, points } = data;
 
       let newPoints: number;
       let message: string;
@@ -225,36 +224,28 @@ export class UserDiscordService {
         data: { content: message },
       };
     } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: '💀 Error en la operación de puntos.' },
-      };
+      console.error('Error en operación de puntos:', error);
+      return createErrorResponse('💀 Error en la operación de puntos.');
     }
   }
 
-  async handleAddPoints(data: InteractPoints): Promise<DiscordCommandResponse> {
+  async handleAddPoints(data: InteractPoints): Promise<CommandResponse> {
     return this.handlePointsOperation(data, 'add');
   }
 
-  async handleRemovePoints(
-    data: InteractPoints,
-  ): Promise<DiscordCommandResponse> {
+  async handleRemovePoints(data: InteractPoints): Promise<CommandResponse> {
     return this.handlePointsOperation(data, 'remove');
   }
 
-  async handleSetPoints(data: InteractPoints): Promise<DiscordCommandResponse> {
+  async handleSetPoints(data: InteractPoints): Promise<CommandResponse> {
     return this.handlePointsOperation(data, 'set');
   }
 
-  async addExperience(id: string, amount: number): Promise<UpdateResult> {
-    const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException(
-        `Usuario de Discord con ID ${id} no encontrado`,
-      );
-    }
-    const newExperience = user.experience + amount;
-    return this.userDiscordRepository.update(id, { experience: newExperience });
+  async addExperience(userId: string, amount: number): Promise<UserDiscord> {
+    const user = await this.findOne(userId);
+    const updatedExperience = (user.experience || 0) + amount;
+    await this.update(userId, { experience: updatedExperience });
+    return this.findOne(userId);
   }
 
   async updateExperience(
@@ -290,22 +281,14 @@ export class UserDiscordService {
   async handleExperienceOperation(
     data: InteractPoints,
     operation: 'add' | 'remove' | 'set',
-  ): Promise<DiscordCommandResponse> {
+  ): Promise<CommandResponse> {
     try {
-      const { userId, points: amount, username, roles } = data;
-      const discordUser = await this.findOrCreate({
-        id: userId,
-        username,
-        roles,
-      });
+      const { user: discordUser, points: amount } = data;
 
       if (operation === 'remove' && discordUser.experience < amount) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: `❌ Error: ${discordUser.username} solo tiene ${discordUser.experience} XP. No puedes quitar ${amount} XP.`,
-          },
-        };
+        return createErrorResponse(
+          `❌ Error: ${discordUser.username} solo tiene ${discordUser.experience} XP. No puedes quitar ${amount} XP.`,
+        );
       }
 
       let message: string;
@@ -351,16 +334,13 @@ export class UserDiscordService {
       };
     } catch (error) {
       console.error('Error al procesar operación de experiencia:', error);
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: '❌ Error al procesar la operación de experiencia.',
-        },
-      };
+      return createErrorResponse(
+        '❌ Error al procesar la operación de experiencia.',
+      );
     }
   }
 
-  async getUserExperience(userId: string) {
+  async getUserExperience(userId: string): Promise<CommandResponse> {
     try {
       const user = await this.findOne(userId);
       return {
@@ -370,10 +350,7 @@ export class UserDiscordService {
         },
       };
     } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: '❌ No se encontró la info del usuario.' },
-      };
+      return createErrorResponse('❌ No se encontró la info del usuario.');
     }
   }
 
@@ -385,14 +362,13 @@ export class UserDiscordService {
       .getMany();
   }
 
-  async getTopExperienceRanking(): Promise<DiscordCommandResponse> {
+  async getTopExperienceRanking(): Promise<CommandResponse> {
     try {
       const users = await this.findTopByExperience(10);
       if (!users.length) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'No hay usuarios con experiencia registrada.' },
-        };
+        return createErrorResponse(
+          'No hay usuarios con experiencia registrada.',
+        );
       }
       const rankingMessage = users
         .map((user, index) => {
@@ -411,10 +387,10 @@ export class UserDiscordService {
         },
       };
     } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: '❌ Error al obtener el ranking de experiencia.' },
-      };
+      console.error('Error al obtener ranking de experiencia:', error);
+      return createErrorResponse(
+        '❌ Error al obtener el ranking de experiencia.',
+      );
     }
   }
 }

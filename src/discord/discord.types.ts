@@ -3,7 +3,10 @@ import {
   InteractionResponseType,
   APIUserInteractionDataResolved,
   APIMessageComponentInteraction,
+  APIChatInputApplicationCommandInteractionData,
+  APIInteraction,
 } from 'discord.js';
+import { UserDiscord } from '../user-discord/entities/user-discord.entity';
 
 export { InteractionType, InteractionResponseType };
 
@@ -20,30 +23,20 @@ export interface CommandInteractionData {
   resolved?: APIUserInteractionDataResolved;
 }
 
-export interface DiscordUserData {
-  id: string;
-  username: string;
-  roles: string[];
-}
-
 export interface InteractPoints {
-  userId: string;
+  user: UserDiscord;
   points: number;
-  username: string;
-  roles: string[];
 }
 
 export interface InteractCoins {
-  userId: string;
-  targetId?: string;
+  user: UserDiscord;
+  target?: UserDiscord | null;
   coins: number;
-  username: string;
-  roles: string[];
 }
 
 export type MessageComponentInteraction = APIMessageComponentInteraction;
 
-export type DiscordCommandResponse = {
+export type CommandResponse = {
   type: typeof InteractionResponseType.ChannelMessageWithSource;
   data: {
     content: string;
@@ -62,10 +55,15 @@ export type ErrorResponse = {
   isError: true;
 };
 
+export type ValidateResult<T> = T | ErrorResponse;
+
 export type DiscordPingResponse = {
   type: InteractionResponseType.Pong;
 };
 
-export type DiscordInteractionResponse =
-  | DiscordCommandResponse
-  | DiscordPingResponse;
+export type DiscordInteractionResponse = CommandResponse | DiscordPingResponse;
+
+export type CommandHandler = (
+  commandData: APIChatInputApplicationCommandInteractionData,
+  interactionPayload?: APIInteraction,
+) => Promise<DiscordInteractionResponse>;
