@@ -198,18 +198,26 @@ export class UserDiscordService {
         case 'add':
           await this.addPenaltyPoints(discordUser.id, points);
           newPoints = discordUser.points + points;
-          message = `💀 ${discordUser.username} la regó y se ganó ${points} puntos malos. Total: ${newPoints}`;
+          message = `💀 ${discordUser.username} la regó y se ganó ${points} puntos malos. Total: ${newPoints}/10`;
           break;
         case 'remove':
           await this.addPenaltyPoints(discordUser.id, -points);
           newPoints = discordUser.points - points;
-          message = `😎 ${discordUser.username} se portó mejor. Le quitamos ${points} puntos. Aún tiene ${newPoints}`;
+          message = `😎 ${discordUser.username} se portó mejor. Le quitamos ${points} puntos. Aún tiene ${newPoints}/10`;
           break;
         case 'set':
           await this.updatePoints(discordUser.id, points);
           newPoints = points;
-          message = `⚖️ ${discordUser.username} ahora tiene ${newPoints} puntos porque así lo decidí`;
+          message = `⚖️ ${discordUser.username} ahora tiene ${newPoints}/10 puntos porque así lo decidí`;
           break;
+      }
+
+      if (newPoints >= 10) {
+        message +=
+          '\n⚠️ **¡ADVERTENCIA!** Has alcanzado o superado el límite de puntos para un baneo.';
+      } else if (newPoints >= 8) {
+        message +=
+          '\n⚠️ **¡Cuidado!** Estás cerca del límite de puntos para un baneo.';
       }
 
       return {
