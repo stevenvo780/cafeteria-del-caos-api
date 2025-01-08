@@ -5,6 +5,7 @@ import {
   IsArray,
   IsOptional,
   ValidateNested,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { DiscordRole } from '../entities/user-discord.entity';
@@ -24,6 +25,11 @@ export class CreateUserDiscordDto {
   @IsString()
   @IsOptional()
   nickname?: string;
+
+  @ApiProperty({ description: 'Experiencia del usuario', example: 50 })
+  @IsNumber()
+  @IsOptional()
+  experience?: number;
 
   @ApiProperty({ description: 'Roles del usuario en Discord', type: [Object] })
   @IsArray()

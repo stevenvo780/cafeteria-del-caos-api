@@ -16,7 +16,7 @@ import { KardexService } from '../kardex/kardex.service';
 export class UserDiscordService {
   constructor(
     @InjectRepository(UserDiscord)
-    private userDiscordRepository: Repository<UserDiscord>,
+    private readonly userDiscordRepository: Repository<UserDiscord>,
     private kardexService: KardexService,
   ) {}
 
@@ -103,8 +103,14 @@ export class UserDiscordService {
     updateUserDiscordDto: UpdateUserDiscordDto,
   ): Promise<UserDiscord> {
     const user = await this.findOne(id);
-    Object.assign(user, updateUserDiscordDto);
-    return this.userDiscordRepository.save(user);
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+    const updatedUser = {
+      ...user,
+      ...updateUserDiscordDto,
+    };
+    return this.userDiscordRepository.save(updatedUser);
   }
 
   async remove(id: string): Promise<UserDiscord> {
@@ -238,15 +244,11 @@ export class UserDiscordService {
     return this.handlePointsOperation(data, 'set');
   }
 
-  async addExperience(id: string, amount: number): Promise<UpdateResult> {
-    const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException(
-        `Usuario de Discord con ID ${id} no encontrado`,
-      );
-    }
-    const newExperience = user.experience + amount;
-    return this.userDiscordRepository.update(id, { experience: newExperience });
+  async addExperience(userId: string, amount: number): Promise<UserDiscord> {
+    const user = await this.findOne(userId);
+    const updatedExperience = (user.experience || 0) + amount;
+    await this.update(userId, { experience: updatedExperience });
+    return this.findOne(userId);
   }
 
   async updateExperience(
