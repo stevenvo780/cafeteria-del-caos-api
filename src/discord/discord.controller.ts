@@ -171,6 +171,8 @@ export class DiscordController {
             commandData,
             interactionPayload,
           );
+        case 'añadir-sancion':
+          return await this.discordService.handleAddInfraction(commandData);
         default:
           return this.errorResponse(
             `Comando "${commandData.name}" no reconocido.`,

@@ -278,6 +278,48 @@ export async function registerDiscordCommands() {
         },
       ],
     },
+    {
+      name: 'añadir-sancion',
+      description: 'Añade una sanción a un usuario',
+      options: [
+        {
+          name: 'usuario',
+          type: ApplicationCommandOptionType.User,
+          description: 'El usuario a sancionar',
+          required: true,
+        },
+        {
+          name: 'tipo',
+          type: ApplicationCommandOptionType.String,
+          description: 'Tipo de sanción',
+          required: true,
+          choices: [
+            {
+              name: '◼️ Negro - Violencia extrema/Doxing/CP/Estafas (10 puntos)',
+              value: 'BLACK',
+            },
+            {
+              name: '♦️ Rojo - NSFW/Acoso grave/Suplantación (5 puntos)',
+              value: 'RED',
+            },
+            {
+              name: '🔶 Naranja - Insultos/Amenazas/Odio (3 puntos)',
+              value: 'ORANGE',
+            },
+            {
+              name: '☢️ Amarillo - Discriminación leve/Spam (2 puntos)',
+              value: 'YELLOW',
+            },
+          ],
+        },
+        {
+          name: 'razon',
+          type: ApplicationCommandOptionType.String,
+          description: 'Razón de la sanción',
+          required: true,
+        },
+      ],
+    },
   ];
 
   const token = process.env.DISCORD_BOT_TOKEN;
