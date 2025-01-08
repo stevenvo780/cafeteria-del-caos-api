@@ -9,7 +9,14 @@ import {
 import { KardexService } from '../../kardex/kardex.service';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
 import { ProductService } from '../../product/product.service';
-import { ErrorResponse } from '../discord.types';
+import {
+  CommandResponse,
+  DiscordInteractionResponse,
+  InteractCoins,
+  ValidateResult,
+} from '../discord.types';
+import { UserDiscord } from 'src/user-discord/entities/user-discord.entity';
+import { createErrorResponse } from '../discord-responses.util';
 
 @Injectable()
 export class DiscordCoinsService {
@@ -23,7 +30,7 @@ export class DiscordCoinsService {
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
-  ) {
+  ): Promise<DiscordInteractionResponse> {
     const isTransfer = commandName === 'transferir-monedas';
     const validation = await this.validateCoinsCommand(
       commandData,
@@ -31,72 +38,62 @@ export class DiscordCoinsService {
       isTransfer,
     );
 
-    if ('error' in validation) {
-      return validation.error;
+    if ('isError' in validation) {
+      return validation;
     }
 
-    const { userId, targetId, coins, username, roles } = validation;
-    const user = await this.userDiscordService.findOrCreate({
-      id: userId,
-      username,
-      roles,
-    });
+    const { user, target, coins } = validation;
 
     let message: string;
     try {
       switch (commandName) {
         case 'dar-monedas': {
-          await this.kardexService.addCoins(userId, coins, 'Discord command');
-          await this.userDiscordService.addExperience(userId, coins);
+          await this.kardexService.addCoins(user.id, coins, 'Discord command');
+          await this.userDiscordService.addExperience(user.id, coins);
           const newBalance = await this.kardexService.getUserLastBalance(
-            userId,
+            user.id,
           );
-          const user = await this.userDiscordService.findOne(userId);
           message = `💰 LLUVIA DE MONEDAS! ${user.username} +${coins}\nSaldo actual: ${newBalance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`;
           break;
         }
         case 'quitar-monedas': {
           await this.kardexService.removeCoins(
-            userId,
+            user.id,
             coins,
             'Discord command',
           );
           const newBalance = await this.kardexService.getUserLastBalance(
-            userId,
+            user.id,
           );
           message = `🔥 GET REKT ${user.username} -${coins} monedas.\nSaldo actual: ${newBalance} monedas.`;
           break;
         }
         case 'establecer-monedas': {
-          await this.kardexService.setCoins(userId, coins, 'Discord command');
+          await this.kardexService.setCoins(user.id, coins, 'Discord command');
           const newBalance = await this.kardexService.getUserLastBalance(
-            userId,
+            user.id,
           );
           message = `⚡ ESTABLECIDO! ${user.username} ahora tiene ${newBalance} monedas.`;
           break;
         }
         case 'transferir-monedas': {
-          if (!targetId) {
-            return this.errorResponse('❌ Falta el usuario de destino.');
+          if (!target) {
+            return createErrorResponse('❌ Falta el usuario de destino.');
           }
-          const toUser = await this.userDiscordService.findOrCreate({
-            id: targetId,
-            username: 'Unknown user',
-          });
-          await this.kardexService.transferCoins(userId, targetId, coins);
+          await this.kardexService.transferCoins(user.id, target.id, coins);
 
           const fromBalance = await this.kardexService.getUserLastBalance(
-            userId,
+            user.id,
           );
           const toBalance = await this.kardexService.getUserLastBalance(
-            targetId,
+            target.id,
           );
 
-          message = `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${user.username} ha enviado ${coins} monedas a ${toUser.username}\n\n💰 Nuevos balances:\n${user.username}: ${fromBalance} monedas\n${toUser.username}: ${toBalance} monedas`;
+          message = `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${user.username} ha enviado ${coins} monedas a ${target.username}\n\n💰 Nuevos balances:\n${user.username}: ${fromBalance} monedas\n${target.username}: ${toBalance} monedas`;
           break;
         }
         default: {
-          return this.errorResponse('Comando de monedas no reconocido.');
+          return createErrorResponse('Comando de monedas no reconocido.');
         }
       }
       return {
@@ -117,7 +114,7 @@ export class DiscordCoinsService {
   async handleUserBalance(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionMember: any,
-  ) {
+  ): Promise<CommandResponse> {
     const userOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as any;
@@ -128,8 +125,8 @@ export class DiscordCoinsService {
       interactionMember,
     );
 
-    if ('error' in targetUser) {
-      return this.errorResponse('❌ Error: No se encontró al usuario.');
+    if ('isError' in targetUser) {
+      return createErrorResponse('❌ Error: No se encontró al usuario.');
     }
 
     const lastBalance = await this.kardexService.getUserLastBalance(
@@ -154,7 +151,7 @@ export class DiscordCoinsService {
     };
   }
 
-  async handleTopCoins() {
+  async handleTopCoins(): Promise<DiscordInteractionResponse> {
     try {
       const topCoins = await this.kardexService.findTopByCoins(10);
       if (!topCoins || topCoins.length === 0) {
@@ -197,7 +194,7 @@ export class DiscordCoinsService {
   async handlePurchase(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
-  ) {
+  ): Promise<DiscordInteractionResponse> {
     const articleOption = commandData.options?.find(
       (opt) => opt.name === 'articulo',
     ) as APIApplicationCommandInteractionDataStringOption;
@@ -207,7 +204,7 @@ export class DiscordCoinsService {
     ) as APIApplicationCommandInteractionDataNumberOption;
 
     if (!articleOption?.value || !quantityOption?.value) {
-      return this.errorResponse(
+      return createErrorResponse(
         '❌ Faltan parámetros necesarios para la compra.',
       );
     }
@@ -216,13 +213,13 @@ export class DiscordCoinsService {
     const quantity = quantityOption.value;
 
     if (isNaN(productId)) {
-      return this.errorResponse('❌ ID de producto inválido.');
+      return createErrorResponse('❌ ID de producto inválido.');
     }
 
     try {
       const product = await this.productService.findOne(productId);
       if (!product) {
-        return this.errorResponse('❌ Producto no encontrado.');
+        return createErrorResponse('❌ Producto no encontrado.');
       }
 
       const userId = interactionPayload.member.user.id;
@@ -241,7 +238,7 @@ export class DiscordCoinsService {
       }
 
       if (product.stock !== null && product.stock < quantity) {
-        return this.errorResponse(
+        return createErrorResponse(
           `❌ No hay suficiente stock. Stock disponible: ${product.stock}`,
         );
       }
@@ -266,76 +263,65 @@ export class DiscordCoinsService {
       };
     } catch (error) {
       console.error('Error en la compra:', error);
-      return this.errorResponse('❌ Error al procesar la compra.');
+      return createErrorResponse('❌ Error al procesar la compra.');
     }
   }
 
   private async validateCoinsCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
-    isTransfer = false,
-  ) {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === (isTransfer ? 'usuario' : 'usuario'),
+    isTransfer: boolean,
+  ): Promise<ValidateResult<InteractCoins>> {
+    const targetOption = commandData.options?.find(
+      (opt) => opt.name === 'usuario',
     ) as any;
 
     const coinsOption = commandData.options?.find(
-      (opt) => opt.name === (isTransfer ? 'cantidad' : 'cantidad'),
+      (opt) => opt.name === 'cantidad',
     ) as any;
 
-    if (!userOption || !coinsOption) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              'Ah, la mediocridad... ¿Las monedas viajan sin destino ni cantidad?',
-          },
-        },
-      };
+    if (!targetOption || !coinsOption) {
+      return createErrorResponse(
+        'Ah, la mediocridad... ¿Las monedas viajan sin destino ni cantidad?',
+      );
     }
 
-    const userId = userOption.value;
-    const coins = coinsOption.value;
+    const sourceUserId = interactionPayload.member.user.id;
+    const sourceUser = await this.userDiscordService.findOrCreate({
+      id: sourceUserId,
+      username: interactionPayload.member.user.username,
+      roles: interactionPayload.member.roles || [],
+    });
 
-    const resolvedUser = commandData.resolved?.users?.[userId];
-    const resolvedMember = commandData.resolved?.members?.[userId];
+    const targetId = targetOption.value;
+    const resolvedUser = commandData.resolved?.users?.[targetId];
+    const resolvedMember = commandData.resolved?.members?.[targetId];
 
     if (!resolvedUser || !resolvedMember) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              'Error: No se pudo resolver el usuario o miembro especificado.',
-          },
-        },
-      };
+      return createErrorResponse('❌ No se encontró al usuario especificado.');
     }
 
-    const result = {
-      userId: isTransfer ? interactionPayload.member.user.id : userId,
-      targetId: isTransfer ? userId : undefined,
-      coins,
+    const targetUser = await this.userDiscordService.findOrCreate({
+      id: targetId,
       username: resolvedUser.username,
       roles: resolvedMember.roles || [],
-    };
+    });
+
+    if (isTransfer && sourceUserId === targetId) {
+      return createErrorResponse(
+        '❌ No puedes transferirte monedas a ti mismo.',
+      );
+    }
 
     try {
-      await this.userDiscordService.findOrCreate({
-        id: isTransfer ? userId : result.userId,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-      return result;
+      return {
+        user: sourceUser,
+        target: isTransfer ? targetUser : null,
+        coins: coinsOption.value,
+      };
     } catch (error) {
       console.error('Error al procesar usuario:', error);
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'Error al procesar usuario: ' + error.message },
-        },
-      };
+      return createErrorResponse('❌ Error al procesar el usuario.');
     }
   }
 
@@ -343,20 +329,15 @@ export class DiscordCoinsService {
     userOption: any,
     commandData: any,
     interactionMember: any,
-  ) {
+  ): Promise<ValidateResult<UserDiscord>> {
     if (userOption) {
       const resolvedUser = commandData.resolved?.users?.[userOption.value];
       const resolvedMember = commandData.resolved?.members?.[userOption.value];
 
       if (!resolvedUser || !resolvedMember) {
-        return {
-          error: {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: '❌ Error: No se encontró al usuario especificado.',
-            },
-          },
-        };
+        return createErrorResponse(
+          '❌ No se encontró al usuario especificado.',
+        );
       }
 
       return await this.userDiscordService.findOrCreate({
@@ -371,13 +352,5 @@ export class DiscordCoinsService {
       username: interactionMember.user.username,
       roles: interactionMember.roles || [],
     });
-  }
-
-  private errorResponse(message: string): ErrorResponse {
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: { content: message },
-      isError: true,
-    };
   }
 }

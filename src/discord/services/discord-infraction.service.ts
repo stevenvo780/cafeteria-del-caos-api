@@ -7,7 +7,8 @@ import {
 } from 'discord.js';
 import { InfractionType } from '../../user-discord/entities/user-discord.entity';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
-import { ErrorResponse } from '../discord.types';
+import { createErrorResponse } from '../discord-responses.util';
+import { DiscordInteractionResponse } from '../discord.types';
 
 @Injectable()
 export class DiscordInfractionService {
@@ -15,7 +16,7 @@ export class DiscordInfractionService {
 
   async handleAddInfraction(
     commandData: APIChatInputApplicationCommandInteractionData,
-  ) {
+  ): Promise<DiscordInteractionResponse> {
     const userOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as APIApplicationCommandInteractionDataUserOption;
@@ -29,7 +30,7 @@ export class DiscordInfractionService {
     ) as APIApplicationCommandInteractionDataStringOption;
 
     if (!userOption || !typeOption || !reasonOption) {
-      return this.errorResponse(
+      return createErrorResponse(
         'Faltan parámetros requeridos para la sanción.',
       );
     }
@@ -42,7 +43,7 @@ export class DiscordInfractionService {
     const resolvedMember = commandData.resolved?.members?.[userId];
 
     if (!resolvedUser || !resolvedMember) {
-      return this.errorResponse(
+      return createErrorResponse(
         'No se pudo encontrar al usuario especificado.',
       );
     }
@@ -71,7 +72,7 @@ export class DiscordInfractionService {
       };
     } catch (error) {
       console.error('Error al aplicar sanción:', error);
-      return this.errorResponse('Error al procesar la sanción.');
+      return createErrorResponse('Error al procesar la sanción.');
     }
   }
 
@@ -93,13 +94,5 @@ export class DiscordInfractionService {
       [InfractionType.YELLOW]: '☢️',
     };
     return emojiMap[type] || '❓';
-  }
-
-  private errorResponse(message: string): ErrorResponse {
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource as const,
-      data: { content: message },
-      isError: true,
-    };
   }
 }

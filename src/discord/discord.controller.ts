@@ -15,7 +15,8 @@ import { DiscordService } from './discord.service';
 import { DiscordVerificationService } from './services/discord-verification.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
 import { KardexService } from '../kardex/kardex.service';
-import { DiscordInteractionResponse, ErrorResponse } from './discord.types';
+import { DiscordInteractionResponse } from './discord.types';
+import { createErrorResponse } from './discord-responses.util';
 
 @ApiTags('discord')
 @Controller('discord')
@@ -71,7 +72,7 @@ export class DiscordController {
       case InteractionType.ApplicationCommand: {
         try {
           if (!commandData?.name) {
-            return this.errorResponse('Comando inválido o faltante.');
+            return createErrorResponse('Comando inválido o faltante.');
           }
 
           await this.userDiscordService.findOrCreate({
@@ -86,12 +87,12 @@ export class DiscordController {
           );
         } catch (error) {
           console.error('Error al procesar comando:', error);
-          return this.errorResponse('Error al procesar el comando');
+          return createErrorResponse('Error al procesar el comando');
         }
       }
 
       default:
-        return this.errorResponse('Tipo de interacción no soportada');
+        return createErrorResponse('Tipo de interacción no soportada');
     }
   }
 
@@ -122,7 +123,7 @@ export class DiscordController {
       throw new UnauthorizedException('Llave inválida');
     }
 
-    await this.userDiscordService.findOrCreate({
+    const discordUser = await this.userDiscordService.findOrCreate({
       id: user.id,
       username: user.username,
     });
@@ -139,7 +140,6 @@ export class DiscordController {
     }
 
     const newBalance = await this.kardexService.getUserLastBalance(user.id);
-    const discordUser = await this.userDiscordService.findOne(user.id);
 
     return {
       newBalance,
@@ -181,13 +181,5 @@ export class DiscordController {
     ) {
       throw new UnauthorizedException('Firma de solicitud inválida');
     }
-  }
-
-  private errorResponse(message: string): ErrorResponse {
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: { content: message },
-      isError: true,
-    };
   }
 }

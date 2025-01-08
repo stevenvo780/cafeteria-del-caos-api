@@ -5,6 +5,8 @@ import {
 } from 'discord.js';
 import { LibraryService } from '../../library/library.service';
 import { LibraryVisibility } from '../../library/entities/library.entity';
+import { createErrorResponse } from '../discord-responses.util';
+import { DiscordInteractionResponse } from '../discord.types';
 
 @Injectable()
 export class DiscordNotesService {
@@ -14,7 +16,7 @@ export class DiscordNotesService {
     options: APIApplicationCommandInteractionDataOption[],
     userId: string,
     username: string,
-  ) {
+  ): Promise<DiscordInteractionResponse> {
     const tituloOption = options.find((opt) => opt.name === 'titulo');
     const contenidoOption = options.find((opt) => opt.name === 'contenido');
 
@@ -22,13 +24,9 @@ export class DiscordNotesService {
     const contenido = this.getStringOptionValue(contenidoOption);
 
     if (!titulo || !contenido) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource as const,
-        data: {
-          content:
-            'Ah, la ignorancia... ¿Pretendías crear una nota sin su esencia básica?',
-        },
-      };
+      return createErrorResponse(
+        'Ah, la ignorancia... ¿Pretendías crear una nota sin su esencia básica?',
+      );
     }
 
     const rootFolder = await this.libraryService.findOrCreateByTitle(

@@ -8,7 +8,13 @@ import {
   APIInteractionDataResolvedGuildMember,
 } from 'discord.js';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
-import { InteractPoints } from '../discord.types';
+import {
+  CommandResponse,
+  DiscordInteractionResponse,
+  InteractPoints,
+  ValidateResult,
+} from '../discord.types';
+import { createErrorResponse } from '../discord-responses.util';
 
 @Injectable()
 export class DiscordPointsService {
@@ -17,10 +23,10 @@ export class DiscordPointsService {
   async handleUserPoints(
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
-  ) {
+  ): Promise<DiscordInteractionResponse> {
     const validation = await this.validatePointsCommand(commandData);
-    if ('error' in validation) {
-      return validation.error;
+    if ('isError' in validation) {
+      return validation;
     }
 
     switch (commandName) {
@@ -42,7 +48,7 @@ export class DiscordPointsService {
 
   private async validatePointsCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<InteractPoints | { error: any }> {
+  ): Promise<ValidateResult<InteractPoints>> {
     const userOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as APIApplicationCommandInteractionDataUserOption;
@@ -52,15 +58,9 @@ export class DiscordPointsService {
     ) as APIApplicationCommandInteractionDataNumberOption;
 
     if (!userOption || !pointsOption) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              'La estupidez humana se manifiesta... ¿Dónde están los datos fundamentales?',
-          },
-        },
-      };
+      return createErrorResponse(
+        'La estupidez humana se manifiesta... ¿Dónde están los datos fundamentales?',
+      );
     }
 
     const userId = userOption.value;
@@ -71,46 +71,34 @@ export class DiscordPointsService {
       userId
     ] as APIInteractionDataResolvedGuildMember;
     if (!resolvedUser || !resolvedMember) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: '¡NO ENCUENTRO A ESE USUARIO, PEDAZO DE ALCORNOQUE!',
-          },
-        },
-      };
+      return createErrorResponse(
+        '¡NO ENCUENTRO A ESE USUARIO, PEDAZO DE ALCORNOQUE!',
+      );
     }
 
     try {
-      await this.userDiscordService.findOrCreate({
+      const user = await this.userDiscordService.findOrCreate({
         id: userId,
         username: resolvedUser.username,
         roles: resolvedMember.roles || [],
       });
 
       return {
-        userId,
+        user,
         points,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
       };
     } catch (error) {
       console.error('Error al procesar usuario objetivo:', error);
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: 'Error al procesar usuario objetivo: ' + error.message,
-          },
-        },
-      };
+      return createErrorResponse(
+        'Error al procesar usuario objetivo: ' + error.message,
+      );
     }
   }
 
   async handleUserScore(
     commandData: APIChatInputApplicationCommandInteractionData,
     member: any,
-  ) {
+  ): Promise<CommandResponse> {
     const userId = member.user.id;
     try {
       const user = await this.userDiscordService.findOne(userId);

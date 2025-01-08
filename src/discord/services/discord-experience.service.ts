@@ -9,7 +9,13 @@ import {
   APIInteractionDataResolvedGuildMember,
 } from 'discord.js';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
-import { InteractPoints } from '../discord.types';
+import {
+  CommandResponse,
+  DiscordInteractionResponse,
+  InteractPoints,
+  ValidateResult,
+} from '../discord.types';
+import { createErrorResponse } from '../discord-responses.util';
 
 @Injectable()
 export class DiscordExperienceService {
@@ -19,28 +25,26 @@ export class DiscordExperienceService {
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
     interaction: APIInteraction,
-  ) {
+  ): Promise<DiscordInteractionResponse> {
     console.log('Processing experience command:', { commandName, interaction });
     const validation = await this.validateExperienceCommand(commandData);
-    if ('error' in validation) {
-      return validation.error;
+    if ('isError' in validation) {
+      return validation;
     }
 
     try {
-      const user = await this.userDiscordService.findOne(validation.userId);
-
       switch (commandName) {
         case 'dar-experiencia': {
-          await this.userDiscordService.update(validation.userId, {
-            experience: (user.experience || 0) + validation.points,
+          await this.userDiscordService.update(validation.user.id, {
+            experience: (validation.user.experience || 0) + validation.points,
           });
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: `✨ ${user.username} ha ganado ${
+              content: `✨ ${validation.user.username} ha ganado ${
                 validation.points
               } puntos de experiencia!\nExperiencia total: ${
-                (user.experience || 0) + validation.points
+                (validation.user.experience || 0) + validation.points
               }`,
             },
           };
@@ -48,27 +52,27 @@ export class DiscordExperienceService {
         case 'quitar-experiencia': {
           const newExperience = Math.max(
             0,
-            (user.experience || 0) - validation.points,
+            (validation.user.experience || 0) - validation.points,
           );
-          await this.userDiscordService.update(validation.userId, {
+          await this.userDiscordService.update(validation.user.id, {
             experience: newExperience,
           });
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: `📉 ${user.username} ha perdido ${validation.points} puntos de experiencia.\nExperiencia restante: ${newExperience}`,
+              content: `📉 ${validation.user.username} ha perdido ${validation.points} puntos de experiencia.\nExperiencia restante: ${newExperience}`,
             },
           };
         }
         case 'establecer-experiencia': {
           const newExperience = Math.max(0, validation.points);
-          await this.userDiscordService.update(validation.userId, {
+          await this.userDiscordService.update(validation.user.id, {
             experience: newExperience,
           });
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: `⚡ La experiencia de ${user.username} ha sido establecida a ${newExperience} puntos`,
+              content: `⚡ La experiencia de ${validation.user.username} ha sido establecida a ${newExperience} puntos`,
             },
           };
         }
@@ -90,7 +94,7 @@ export class DiscordExperienceService {
   async handleUserExperience(
     commandData: APIChatInputApplicationCommandInteractionData,
     member: any,
-  ) {
+  ): Promise<CommandResponse> {
     const userOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as any;
@@ -121,7 +125,7 @@ export class DiscordExperienceService {
     };
   }
 
-  async handleTopExperienceRanking() {
+  async handleTopExperienceRanking(): Promise<DiscordInteractionResponse> {
     try {
       const topUsers = await this.userDiscordService.findTopByExperience(10);
       if (!topUsers || topUsers.length === 0) {
@@ -156,7 +160,7 @@ export class DiscordExperienceService {
 
   private async validateExperienceCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<InteractPoints | { error: any }> {
+  ): Promise<ValidateResult<InteractPoints>> {
     const userOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as APIApplicationCommandInteractionDataUserOption;
@@ -166,15 +170,9 @@ export class DiscordExperienceService {
     ) as APIApplicationCommandInteractionDataNumberOption;
 
     if (!userOption || !amountOption) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content:
-              '❌ Error: Faltan parámetros necesarios para la operación.',
-          },
-        },
-      };
+      return createErrorResponse(
+        '❌ Error: Faltan parámetros necesarios para la operación.',
+      );
     }
 
     const userId = userOption.value;
@@ -186,39 +184,27 @@ export class DiscordExperienceService {
     ] as APIInteractionDataResolvedGuildMember;
 
     if (!resolvedUser || !resolvedMember) {
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: '❌ Error: No se pudo encontrar al usuario especificado.',
-          },
-        },
-      };
+      return createErrorResponse(
+        '❌ Error: No se pudo encontrar al usuario especificado.',
+      );
     }
 
     try {
-      await this.userDiscordService.findOrCreate({
+      const user = await this.userDiscordService.findOrCreate({
         id: userId,
         username: resolvedUser.username,
         roles: resolvedMember.roles || [],
       });
 
       return {
-        userId,
+        user,
         points,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
       };
     } catch (error) {
       console.error('Error al procesar usuario:', error);
-      return {
-        error: {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: '❌ Error al procesar el usuario: ' + error.message,
-          },
-        },
-      };
+      return createErrorResponse(
+        '❌ Error al procesar el usuario: ' + error.message,
+      );
     }
   }
 }

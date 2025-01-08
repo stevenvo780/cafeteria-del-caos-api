@@ -10,11 +10,12 @@ import { DiscordPointsService } from './services/discord-points.service';
 import { DiscordCoinsService } from './services/discord-coins.service';
 import { DiscordExperienceService } from './services/discord-experience.service';
 import { DiscordInfractionService } from './services/discord-infraction.service';
-import { ErrorResponse } from './discord.types';
+import { DiscordInteractionResponse } from './discord.types';
 import {
   getGuildMemberCount,
   getOnlineMemberCount,
 } from '../utils/discord-utils';
+import { createErrorResponse } from './discord-responses.util';
 
 @Injectable()
 export class DiscordService {
@@ -55,7 +56,7 @@ export class DiscordService {
   async handleApplicationCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
-  ) {
+  ): Promise<DiscordInteractionResponse> {
     switch (commandData.name) {
       case 'puntaje':
         return await this.pointsService.handleUserScore(
@@ -114,18 +115,10 @@ export class DiscordService {
       case 'añadir-sancion':
         return await this.infractionService.handleAddInfraction(commandData);
       default:
-        return this.errorResponse(
+        return createErrorResponse(
           `Comando "${commandData.name}" no reconocido.`,
         );
     }
-  }
-
-  private errorResponse(message: string): ErrorResponse {
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: { content: message },
-      isError: true,
-    };
   }
 
   verifyDiscordRequest(
