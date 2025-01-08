@@ -912,7 +912,7 @@ export class DiscordService {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           content:
-            `${emoji} Sanción registrada - ${resolvedUser.username}\n` +
+            `${emoji} Sanción registrada - <@${userId}>\n` +
             `Tipo: ${infractionType}\n` +
             `Puntos: +${points}\n` +
             `Razón: ${reason}\n` +
