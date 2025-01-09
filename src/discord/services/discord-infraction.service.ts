@@ -9,10 +9,14 @@ import { InfractionType } from '../../user-discord/entities/user-discord.entity'
 import { UserDiscordService } from '../../user-discord/user-discord.service';
 import { createErrorResponse } from '../discord-responses.util';
 import { DiscordInteractionResponse } from '../discord.types';
+import { KardexService } from 'src/kardex/kardex.service';
 
 @Injectable()
 export class DiscordInfractionService {
-  constructor(private readonly userDiscordService: UserDiscordService) {}
+  constructor(
+    private readonly userDiscordService: UserDiscordService,
+    private readonly kardexService: KardexService,
+  ) {}
 
   async handleAddInfraction(
     commandData: APIChatInputApplicationCommandInteractionData,
@@ -58,7 +62,16 @@ export class DiscordInfractionService {
         roles: resolvedMember.roles || [],
       });
 
+      const coinsPenalti = points * 10;
       await this.userDiscordService.addPenaltyPoints(user.id, points);
+      const coinsUser = await this.kardexService.getUserLastBalance(user.id);
+      if (coinsUser - coinsPenalti > 0) {
+        await this.kardexService.removeCoins(user.id, coinsPenalti, reason);
+      } else {
+        await this.kardexService.setCoins(user.id, 0, reason);
+      }
+
+      const pointsUpdated = await this.userDiscordService.findOne(user.id);
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
@@ -67,8 +80,9 @@ export class DiscordInfractionService {
             `${emoji} Sanción registrada - <@${userId}>\n` +
             `Tipo: ${infractionType}\n` +
             `Puntos: +${points}\n` +
+            `Saldo: -${coinsPenalti}\n` +
             `Razón: ${reason}\n` +
-            `Total acumulado: ${user.points}/10 puntos`,
+            `Total acumulado: ${pointsUpdated}/10 puntos`,
         },
       };
     } catch (error) {
