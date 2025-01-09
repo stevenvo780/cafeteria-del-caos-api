@@ -18,6 +18,13 @@ export class DiscordInfractionService {
     private readonly kardexService: KardexService,
   ) {}
 
+  private calculateCoinPenalty(points: number, totalCoins: number): number {
+    const suma = points * 10;
+    const resta = 100 / suma;
+    const monedas = totalCoins - resta;
+    return Math.max(0, monedas);
+  }
+
   async handleAddInfraction(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<DiscordInteractionResponse> {
@@ -62,14 +69,20 @@ export class DiscordInfractionService {
         roles: resolvedMember.roles || [],
       });
 
-      let coinsPenalti = points * 10;
       await this.userDiscordService.addPenaltyPoints(user.id, points);
-      const coinsUser = await this.kardexService.getUserLastBalance(user.id);
-      if (coinsUser - coinsPenalti > 0) {
-        await this.kardexService.removeCoins(user.id, coinsPenalti, reason);
-      } else {
-        await this.kardexService.setCoins(user.id, 0, reason);
-        coinsPenalti = 0;
+
+      const currentBalance = await this.kardexService.getUserLastBalance(
+        user.id,
+      );
+      const newBalance = this.calculateCoinPenalty(points, currentBalance);
+      const coinsLost = currentBalance - newBalance;
+
+      if (coinsLost > 0) {
+        await this.kardexService.setCoins(
+          user.id,
+          newBalance,
+          `${infractionType} - ${reason}`,
+        );
       }
 
       const userUpdated = await this.userDiscordService.findOne(user.id);
@@ -80,10 +93,11 @@ export class DiscordInfractionService {
           content:
             `${emoji} Sanción registrada - <@${userId}>\n` +
             `Tipo: ${infractionType}\n` +
-            `Puntos: +${points}\n` +
-            `Saldo: -${coinsPenalti || 0} monedas\n` +
+            `Puntos de sanción: +${points}\n` +
+            `Monedas perdidas: ${coinsLost.toFixed(2)}\n` +
             `Razón: ${reason}\n` +
-            `Total acumulado: ${userUpdated.coins}/10 puntos`,
+            `Total puntos: ${userUpdated.points}/10\n` +
+            `Balance actual: ${newBalance.toFixed(2)} monedas`,
         },
       };
     } catch (error) {
