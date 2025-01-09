@@ -99,21 +99,43 @@ export class DiscordPointsService {
     commandData: APIChatInputApplicationCommandInteractionData,
     member: any,
   ): Promise<CommandResponse> {
-    const userId = member.user.id;
     try {
-      const user = await this.userDiscordService.findOne(userId);
+      const userOption = commandData.options?.find(
+        (opt) => opt.name === 'usuario',
+      ) as APIApplicationCommandInteractionDataUserOption;
+
+      let targetUserId: string;
+      let targetUsername: string;
+
+      if (userOption) {
+        targetUserId = userOption.value;
+        const resolvedUser = commandData.resolved?.users?.[targetUserId];
+        if (!resolvedUser) {
+          return createErrorResponse(
+            'No se pudo encontrar al usuario especificado.',
+          );
+        }
+        targetUsername = resolvedUser.username;
+      } else {
+        // Si no se especificó usuario, usar el del autor del comando
+        targetUserId = member.user.id;
+        targetUsername = member.user.username;
+      }
+
+      const user = await this.userDiscordService.findOne(targetUserId);
       const userPoints = user.points || 0;
+
+      const message =
+        targetUserId === member.user.id
+          ? `Tu puntaje actual es: ${userPoints} puntos.`
+          : `El puntaje de ${targetUsername} es: ${userPoints} puntos.`;
+
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `Tu puntaje actual es: ${userPoints} puntos.`,
-        },
+        data: { content: message },
       };
     } catch (error) {
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: 'Error al obtener tu puntaje' },
-      };
+      return createErrorResponse('Error al obtener el puntaje');
     }
   }
 }
