@@ -42,72 +42,91 @@ export class DiscordCoinsService {
       return validation;
     }
 
-    const { user, target, coins } = validation;
+    const { user: sourceUser, target, coins } = validation;
 
-    let message: string;
     try {
       switch (commandName) {
         case 'dar-monedas': {
-          await this.kardexService.addCoins(user.id, coins, 'Discord command');
-          await this.userDiscordService.addExperience(user.id, coins);
-          const newBalance = await this.kardexService.getUserLastBalance(
-            user.id,
+          const targetUser = target || sourceUser;
+          await this.kardexService.addCoins(
+            targetUser.id,
+            coins,
+            'Discord command',
           );
-          message = `💰 LLUVIA DE MONEDAS! ${user.username} +${coins}\nSaldo actual: ${newBalance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`;
-          break;
+          await this.userDiscordService.addExperience(targetUser.id, coins);
+          const newBalance = await this.kardexService.getUserLastBalance(
+            targetUser.id,
+          );
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: `💰 LLUVIA DE MONEDAS! ${targetUser.username} +${coins}\nSaldo actual: ${newBalance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`,
+            },
+          };
         }
         case 'quitar-monedas': {
           await this.kardexService.removeCoins(
-            user.id,
+            sourceUser.id,
             coins,
             'Discord command',
           );
           const newBalance = await this.kardexService.getUserLastBalance(
-            user.id,
+            sourceUser.id,
           );
-          message = `🔥 GET REKT ${user.username} -${coins} monedas.\nSaldo actual: ${newBalance} monedas.`;
-          break;
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: `🔥 GET REKT ${sourceUser.username} -${coins} monedas.\nSaldo actual: ${newBalance} monedas.`,
+            },
+          };
         }
         case 'establecer-monedas': {
-          await this.kardexService.setCoins(user.id, coins, 'Discord command');
-          const newBalance = await this.kardexService.getUserLastBalance(
-            user.id,
+          await this.kardexService.setCoins(
+            sourceUser.id,
+            coins,
+            'Discord command',
           );
-          message = `⚡ ESTABLECIDO! ${user.username} ahora tiene ${newBalance} monedas.`;
-          break;
+          const newBalance = await this.kardexService.getUserLastBalance(
+            sourceUser.id,
+          );
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: `⚡ ESTABLECIDO! ${sourceUser.username} ahora tiene ${newBalance} monedas.`,
+            },
+          };
         }
         case 'transferir-monedas': {
           if (!target) {
             return createErrorResponse('❌ Falta el usuario de destino.');
           }
-          await this.kardexService.transferCoins(user.id, target.id, coins);
+          await this.kardexService.transferCoins(
+            sourceUser.id,
+            target.id,
+            coins,
+          );
 
           const fromBalance = await this.kardexService.getUserLastBalance(
-            user.id,
+            sourceUser.id,
           );
           const toBalance = await this.kardexService.getUserLastBalance(
             target.id,
           );
 
-          message = `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${user.username} ha enviado ${coins} monedas a ${target.username}\n\n💰 Nuevos balances:\n${user.username}: ${fromBalance} monedas\n${target.username}: ${toBalance} monedas`;
-          break;
+          return {
+            type: InteractionResponseType.ChannelMessageWithSource,
+            data: {
+              content: `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${sourceUser.username} ha enviado ${coins} monedas a ${target.username}\n\n💰 Nuevos balances:\n${sourceUser.username}: ${fromBalance} monedas\n${target.username}: ${toBalance} monedas`,
+            },
+          };
         }
         default: {
           return createErrorResponse('Comando de monedas no reconocido.');
         }
       }
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: message },
-      };
     } catch (error) {
       console.error('Error en operación de monedas:', error);
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: '💀 Error en la operación de monedas. Intenta de nuevo.',
-        },
-      };
+      return createErrorResponse('💀 Error en la operación de monedas.');
     }
   }
 
@@ -155,10 +174,7 @@ export class DiscordCoinsService {
     try {
       const topCoins = await this.kardexService.findTopByCoins(10);
       if (!topCoins || topCoins.length === 0) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'No hay usuarios con monedas registradas.' },
-        };
+        return createErrorResponse('No hay usuarios con monedas registradas.');
       }
 
       const leaderboardLines = await Promise.all(
@@ -184,10 +200,7 @@ export class DiscordCoinsService {
       };
     } catch (error) {
       console.error('Error al obtener ranking de monedas:', error);
-      return {
-        type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: '❌ Error al obtener el ranking de monedas.' },
-      };
+      return createErrorResponse('❌ Error al obtener el ranking de monedas.');
     }
   }
 
@@ -229,12 +242,9 @@ export class DiscordCoinsService {
       const totalPrice = this.productService.calculatePrice(product) * quantity;
 
       if (currentBalance < totalPrice) {
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: {
-            content: `❌ No tienes suficientes monedas. Necesitas ${totalPrice} monedas, pero solo tienes ${currentBalance}.`,
-          },
-        };
+        return createErrorResponse(
+          `❌ No tienes suficientes monedas. Necesitas ${totalPrice} monedas, pero solo tienes ${currentBalance}.`,
+        );
       }
 
       if (product.stock !== null && product.stock < quantity) {
