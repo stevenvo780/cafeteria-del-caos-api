@@ -47,7 +47,11 @@ export class DiscordCoinsService {
     try {
       switch (commandName) {
         case 'dar-monedas': {
-          const targetUser = target || sourceUser;
+          const targetUser = target;
+          if (!targetUser) {
+            return createErrorResponse('❌ Usuario objetivo no encontrado.');
+          }
+
           await this.kardexService.addCoins(
             targetUser.id,
             coins,
@@ -57,10 +61,11 @@ export class DiscordCoinsService {
           const newBalance = await this.kardexService.getUserLastBalance(
             targetUser.id,
           );
+
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: `💰 LLUVIA DE MONEDAS! ${targetUser.username} +${coins}\nSaldo actual: ${newBalance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`,
+              content: `💰 LLUVIA DE MONEDAS! <@${targetUser.id}> +${coins}\nSaldo actual: ${newBalance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`,
             },
           };
         }
