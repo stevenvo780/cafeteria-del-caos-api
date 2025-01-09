@@ -71,33 +71,33 @@ export class DiscordCoinsService {
         }
         case 'quitar-monedas': {
           await this.kardexService.removeCoins(
-            sourceUser.id,
+            target.id,
             coins,
             'Discord command',
           );
           const newBalance = await this.kardexService.getUserLastBalance(
-            sourceUser.id,
+            target.id,
           );
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: `🔥 GET REKT ${sourceUser.username} -${coins} monedas.\nSaldo actual: ${newBalance} monedas.`,
+              content: `🔥 GET REKT ${target.username} -${coins} monedas.\nSaldo actual: ${newBalance} monedas.`,
             },
           };
         }
         case 'establecer-monedas': {
           await this.kardexService.setCoins(
-            sourceUser.id,
+            target.id,
             coins,
             'Discord command',
           );
           const newBalance = await this.kardexService.getUserLastBalance(
-            sourceUser.id,
+            target.id,
           );
           return {
             type: InteractionResponseType.ChannelMessageWithSource,
             data: {
-              content: `⚡ ESTABLECIDO! ${sourceUser.username} ahora tiene ${newBalance} monedas.`,
+              content: `⚡ ESTABLECIDO! ${target.username} ahora tiene ${newBalance} monedas.`,
             },
           };
         }
@@ -290,14 +290,13 @@ export class DiscordCoinsService {
     const targetOption = commandData.options?.find(
       (opt) => opt.name === 'usuario',
     ) as any;
-
     const coinsOption = commandData.options?.find(
       (opt) => opt.name === 'cantidad',
     ) as any;
 
     if (!targetOption || !coinsOption) {
       return createErrorResponse(
-        'Ah, la mediocridad... ¿Las monedas viajan sin destino ni cantidad?',
+        '❌ Hace falta especificar un usuario y la cantidad de monedas.',
       );
     }
 
@@ -316,12 +315,6 @@ export class DiscordCoinsService {
       return createErrorResponse('❌ No se encontró al usuario especificado.');
     }
 
-    const targetUser = await this.userDiscordService.findOrCreate({
-      id: targetId,
-      username: resolvedUser.username,
-      roles: resolvedMember.roles || [],
-    });
-
     if (isTransfer && sourceUserId === targetId) {
       return createErrorResponse(
         '❌ No puedes transferirte monedas a ti mismo.',
@@ -329,9 +322,15 @@ export class DiscordCoinsService {
     }
 
     try {
+      const targetUser = await this.userDiscordService.findOrCreate({
+        id: targetId,
+        username: resolvedUser.username,
+        roles: resolvedMember.roles || [],
+      });
+
       return {
         user: sourceUser,
-        target: isTransfer ? targetUser : null,
+        target: targetUser,
         coins: coinsOption.value,
       };
     } catch (error) {
