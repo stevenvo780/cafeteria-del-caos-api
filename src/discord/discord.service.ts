@@ -1,6 +1,5 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import {
-  InteractionResponseType,
   APIChatInputApplicationCommandInteractionData,
   APIInteraction,
 } from 'discord.js';

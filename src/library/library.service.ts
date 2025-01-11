@@ -99,10 +99,12 @@ export class LibraryService {
   }
 
   async findLatest(limit: number, user?: User): Promise<Library[]> {
+    const validLimit = Math.max(1, Number.isInteger(limit) ? limit : 10);
+
     let query = this.libraryRepository
       .createQueryBuilder('library')
       .orderBy('library.createdAt', 'DESC')
-      .take(limit);
+      .take(validLimit);
 
     if (user) {
       if (user.role === UserRole.USER || user.role === UserRole.EDITOR) {

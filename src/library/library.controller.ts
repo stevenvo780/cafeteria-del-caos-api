@@ -120,7 +120,7 @@ export class LibraryController {
     @Query('limit') limit: string,
     @Request() req: RequestWithUser,
   ): Promise<Library[]> {
-    const parsedLimit = parseInt(limit, 10);
+    const parsedLimit = Math.max(1, parseInt(limit, 10) || 10);
     return this.libraryService.findLatest(parsedLimit, req.user);
   }
 
