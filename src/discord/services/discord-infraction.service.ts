@@ -19,9 +19,9 @@ export class DiscordInfractionService {
   ) {}
 
   private calculateCoinPenalty(points: number, totalCoins: number): number {
-    const suma = points * 10;
-    const resta = 100 / suma;
-    const monedas = totalCoins - resta;
+    const suma = Math.floor(points * 10);
+    const resta = Math.floor(100 / suma);
+    const monedas = Math.floor(totalCoins - resta);
     return Math.max(0, monedas);
   }
 
@@ -94,10 +94,10 @@ export class DiscordInfractionService {
             `${emoji} Sanción registrada - <@${userId}>\n` +
             `Tipo: ${infractionType}\n` +
             `Puntos de sanción: +${points}\n` +
-            `Monedas perdidas: ${coinsLost.toFixed(2)}\n` +
+            `Monedas perdidas: ${Math.floor(coinsLost)}\n` +
             `Razón: ${reason}\n` +
             `Total puntos: ${userUpdated.points}/10\n` +
-            `Balance actual: ${newBalance.toFixed(2)} monedas`,
+            `Balance actual: ${Math.floor(newBalance)} monedas`,
         },
       };
     } catch (error) {
