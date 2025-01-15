@@ -17,7 +17,6 @@ import { LibraryModule } from './library/library.module';
 import { PublicationModule } from './publication/publication.module';
 import { TemplateModule } from './template/template.module';
 import { LikeModule } from './like/like.module';
-import { DiscordModule } from './discord/discord.module';
 import { UserDiscordModule } from './user-discord/user-discord.module';
 import { destroyDiscordClient } from './utils/discord-utils';
 import { typeOrmConfig } from './config/typeorm.config';
@@ -34,7 +33,7 @@ import { KardexModule } from './kardex/kardex.module';
     LibraryModule,
     TemplateModule,
     LikeModule,
-    DiscordModule,
+    //DiscordModule,
     UserDiscordModule,
     KardexModule,
   ],
