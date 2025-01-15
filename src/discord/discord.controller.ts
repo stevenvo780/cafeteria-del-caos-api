@@ -12,18 +12,19 @@ import {
 import { ApiTags, ApiOperation, ApiOkResponse } from '@nestjs/swagger';
 import { InteractionType, InteractionResponseType } from 'discord.js';
 import { DiscordService } from './discord.service';
-import { DiscordVerificationService } from './services/discord-verification.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
 import { KardexService } from '../kardex/kardex.service';
 import { DiscordInteractionResponse } from './discord.types';
-import { createErrorResponse } from './discord-responses.util';
+import {
+  createErrorResponse,
+  verifyDiscordRequest,
+} from './discord-responses.util';
 
 @ApiTags('discord')
 @Controller('discord')
 export class DiscordController {
   constructor(
     private readonly discordService: DiscordService,
-    private readonly verificationService: DiscordVerificationService,
     private readonly userDiscordService: UserDiscordService,
     private readonly kardexService: KardexService,
   ) {}
@@ -172,13 +173,7 @@ export class DiscordController {
   }
 
   private verifyRequest(signature: string, timestamp: string, payload: any) {
-    if (
-      !this.verificationService.verifyDiscordRequest(
-        signature,
-        timestamp,
-        payload,
-      )
-    ) {
+    if (!verifyDiscordRequest(signature, timestamp, payload)) {
       throw new UnauthorizedException('Firma de solicitud inválida');
     }
   }

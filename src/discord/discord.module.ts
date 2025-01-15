@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DiscordService } from './discord.service';
 import { DiscordController } from './discord.controller';
-import { DiscordVerificationService } from './services/discord-verification.service';
 import { DiscordNotesService } from './services/discord-notes.service';
 import { DiscordPointsService } from './services/discord-points.service';
 import { DiscordCoinsService } from './services/discord-coins.service';
@@ -26,7 +25,6 @@ import { ProductModule } from '../product/product.module';
   controllers: [DiscordController],
   providers: [
     DiscordService,
-    DiscordVerificationService,
     DiscordNotesService,
     DiscordPointsService,
     DiscordCoinsService,

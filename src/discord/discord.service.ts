@@ -3,7 +3,6 @@ import {
   APIChatInputApplicationCommandInteractionData,
   APIInteraction,
 } from 'discord.js';
-import { DiscordVerificationService } from './services/discord-verification.service';
 import { DiscordNotesService } from './services/discord-notes.service';
 import { DiscordPointsService } from './services/discord-points.service';
 import { DiscordCoinsService } from './services/discord-coins.service';
@@ -14,14 +13,16 @@ import {
   getGuildMemberCount,
   getOnlineMemberCount,
 } from '../utils/discord-utils';
-import { createErrorResponse } from './discord-responses.util';
+import {
+  createErrorResponse,
+  verifyDiscordRequest,
+} from './discord-responses.util';
 
 @Injectable()
 export class DiscordService {
   private readonly guildId = process.env.DISCORD_GUILD_ID;
 
   constructor(
-    private readonly verificationService: DiscordVerificationService,
     private readonly notesService: DiscordNotesService,
     private readonly pointsService: DiscordPointsService,
     private readonly coinsService: DiscordCoinsService,
@@ -132,10 +133,6 @@ export class DiscordService {
     timestamp: string,
     body: any,
   ): boolean {
-    return this.verificationService.verifyDiscordRequest(
-      signature,
-      timestamp,
-      body,
-    );
+    return verifyDiscordRequest(signature, timestamp, body);
   }
 }
