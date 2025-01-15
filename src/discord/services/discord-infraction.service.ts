@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import {
   InteractionResponseType,
   APIChatInputApplicationCommandInteractionData,
-  APIApplicationCommandInteractionDataUserOption,
   APIApplicationCommandInteractionDataStringOption,
 } from 'discord.js';
 import { InfractionType } from '../../user-discord/entities/user-discord.entity';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
-import { createErrorResponse } from '../discord-responses.util';
+import { createErrorResponse } from '../discord.util';
 import { DiscordInteractionResponse } from '../discord.types';
 import { KardexService } from 'src/kardex/kardex.service';
 

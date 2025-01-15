@@ -15,8 +15,7 @@ import {
   InteractCoins,
   ValidateResult,
 } from '../discord.types';
-import { UserDiscord } from 'src/user-discord/entities/user-discord.entity';
-import { createErrorResponse } from '../discord-responses.util';
+import { createErrorResponse, resolveTargetUser } from '../discord.util';
 
 @Injectable()
 export class DiscordCoinsService {
@@ -172,7 +171,8 @@ export class DiscordCoinsService {
       (opt) => opt.name === 'usuario',
     ) as any;
 
-    const targetUser = await this.resolveTargetUser(
+    const targetUser = await resolveTargetUser(
+      this.userDiscordService,
       userOption,
       commandData,
       interactionMember,
@@ -345,34 +345,5 @@ export class DiscordCoinsService {
       target,
       coins: coinsOption.value,
     };
-  }
-
-  private async resolveTargetUser(
-    userOption: any,
-    commandData: any,
-    interactionMember: any,
-  ): Promise<ValidateResult<UserDiscord>> {
-    if (userOption) {
-      const resolvedUser = commandData.resolved?.users?.[userOption.value];
-      const resolvedMember = commandData.resolved?.members?.[userOption.value];
-
-      if (!resolvedUser || !resolvedMember) {
-        return createErrorResponse(
-          '❌ No se encontró al usuario especificado.',
-        );
-      }
-
-      return await this.userDiscordService.findOrCreate({
-        id: userOption.value,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-    }
-
-    return await this.userDiscordService.findOrCreate({
-      id: interactionMember.user.id,
-      username: interactionMember.user.username,
-      roles: interactionMember.roles || [],
-    });
   }
 }

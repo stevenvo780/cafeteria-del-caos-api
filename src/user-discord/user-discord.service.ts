@@ -12,7 +12,7 @@ import {
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 import { KardexService } from '../kardex/kardex.service';
-import { createErrorResponse } from '../discord/discord-responses.util';
+import { createErrorResponse } from '../discord/discord.util';
 
 @Injectable()
 export class UserDiscordService {

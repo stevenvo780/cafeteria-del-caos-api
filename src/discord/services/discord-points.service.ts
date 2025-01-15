@@ -4,8 +4,6 @@ import {
   APIChatInputApplicationCommandInteractionData,
   APIApplicationCommandInteractionDataNumberOption,
   APIApplicationCommandInteractionDataUserOption,
-  APIUser,
-  APIInteractionDataResolvedGuildMember,
   APIInteraction,
 } from 'discord.js';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
@@ -15,7 +13,7 @@ import {
   InteractPoints,
   ValidateResult,
 } from '../discord.types';
-import { createErrorResponse } from '../discord-responses.util';
+import { createErrorResponse, resolveTargetUser } from '../discord.util';
 
 @Injectable()
 export class DiscordPointsService {
@@ -100,31 +98,21 @@ export class DiscordPointsService {
         (opt) => opt.name === 'usuario',
       ) as APIApplicationCommandInteractionDataUserOption;
 
-      let targetUserId: string;
-      let targetUsername: string;
+      const targetUser = await resolveTargetUser(
+        this.userDiscordService,
+        userOption,
+        commandData,
+        member,
+      );
 
-      if (userOption) {
-        targetUserId = userOption.value;
-        const resolvedUser = commandData.resolved?.users?.[targetUserId];
-        if (!resolvedUser) {
-          return createErrorResponse(
-            'No se pudo encontrar al usuario especificado.',
-          );
-        }
-        targetUsername = resolvedUser.username;
-      } else {
-        // Si no se especificó usuario, usar el del autor del comando
-        targetUserId = member.user.id;
-        targetUsername = member.user.username;
+      if ('isError' in targetUser) {
+        return targetUser;
       }
 
-      const user = await this.userDiscordService.findOne(targetUserId);
-      const userPoints = user.points || 0;
-
-      const message =
-        targetUserId === member.user.id
-          ? `Tu puntaje actual es: ${userPoints} puntos.`
-          : `El puntaje de ${targetUsername} es: ${userPoints} puntos.`;
+      const userPoints = targetUser.points || 0;
+      const message = userOption
+        ? `El puntaje de ${targetUser.username} es: ${userPoints} puntos.`
+        : `Tu puntaje actual es: ${userPoints} puntos.`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,

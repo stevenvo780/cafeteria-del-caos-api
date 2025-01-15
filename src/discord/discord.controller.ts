@@ -18,7 +18,7 @@ import { DiscordInteractionResponse } from './discord.types';
 import {
   createErrorResponse,
   verifyDiscordRequest,
-} from './discord-responses.util';
+} from './discord.util';
 
 @ApiTags('discord')
 @Controller('discord')

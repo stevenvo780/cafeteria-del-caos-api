@@ -5,8 +5,6 @@ import {
   APIInteraction,
   APIApplicationCommandInteractionDataUserOption,
   APIApplicationCommandInteractionDataNumberOption,
-  APIUser,
-  APIInteractionDataResolvedGuildMember,
 } from 'discord.js';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
 import {
@@ -15,7 +13,7 @@ import {
   InteractPoints,
   ValidateResult,
 } from '../discord.types';
-import { createErrorResponse } from '../discord-responses.util';
+import { createErrorResponse, resolveTargetUser } from '../discord.util';
 
 @Injectable()
 export class DiscordExperienceService {
@@ -126,45 +124,31 @@ export class DiscordExperienceService {
         (opt) => opt.name === 'usuario',
       ) as APIApplicationCommandInteractionDataUserOption;
 
-      let targetUserId: string;
-      let targetUsername: string;
+      const targetUser = await resolveTargetUser(
+        this.userDiscordService,
+        userOption,
+        commandData,
+        member,
+      );
 
-      if (userOption) {
-        targetUserId = userOption.value;
-        const resolvedUser = commandData.resolved?.users?.[targetUserId];
-        if (!resolvedUser) {
-          return createErrorResponse(
-            'No se pudo encontrar al usuario especificado.',
-          );
-        }
-        targetUsername = resolvedUser.username;
-      } else {
-        targetUserId = member.user.id;
-        targetUsername = member.user.username;
-      }
-
-      const targetUser = await this.userDiscordService.findOne(targetUserId);
-      if (!targetUser) {
-        return createErrorResponse(
-          'Usuario no encontrado en la base de datos.',
-        );
+      if ('isError' in targetUser) {
+        return targetUser;
       }
 
       const topUsers = await this.userDiscordService.findTopByExperience(10);
-      const userRank = topUsers.findIndex((u) => u.id === targetUserId) + 1;
+      const userRank = topUsers.findIndex((u) => u.id === targetUser.id) + 1;
       const rankText =
         userRank > 0 && userRank <= 10
           ? `\n🏆 Ranking: #${userRank} en el top 10`
           : '';
 
-      const message =
-        targetUserId === member.user.id
-          ? `✨ Tienes ${
-              targetUser.experience || 0
-            } puntos de experiencia!${rankText}`
-          : `✨ ${targetUsername} tiene ${
-              targetUser.experience || 0
-            } puntos de experiencia!${rankText}`;
+      const message = userOption
+        ? `✨ ${targetUser.username} tiene ${
+            targetUser.experience || 0
+          } puntos de experiencia!${rankText}`
+        : `✨ Tienes ${
+            targetUser.experience || 0
+          } puntos de experiencia!${rankText}`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,

@@ -6,7 +6,7 @@ import {
 } from 'discord.js';
 import { LibraryService } from '../../library/library.service';
 import { LibraryVisibility } from '../../library/entities/library.entity';
-import { createErrorResponse } from '../discord-responses.util';
+import { createErrorResponse } from '../discord.util';
 import { DiscordInteractionResponse } from '../discord.types';
 
 @Injectable()

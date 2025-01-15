@@ -16,7 +16,7 @@ import {
 import {
   createErrorResponse,
   verifyDiscordRequest,
-} from './discord-responses.util';
+} from './discord.util';
 
 @Injectable()
 export class DiscordService {
