@@ -44,7 +44,7 @@ export class ConfigService {
     defaultConfig.watchedForums = [];
     defaultConfig.infractions = [
       {
-        name: '◼️ Negro - Violencia extrema/Doxing/CP/Estafas',
+        name: '◼️ amarillo - Infracción leve',
         value: 'BLACK',
         points: 10,
         description: 'Infracciones graves',
