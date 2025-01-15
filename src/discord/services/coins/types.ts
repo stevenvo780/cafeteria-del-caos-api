@@ -81,22 +81,22 @@ export const CoinsCommandData = {
   [CoinsCommands.GIVE_COINS]: {
     command: CoinsCommands.GIVE_COINS,
     description: 'Da monedas a un usuario',
-    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+    options: CommonCoinsOptions.MODIFY,
   },
   [CoinsCommands.REMOVE_COINS]: {
     command: CoinsCommands.REMOVE_COINS,
     description: 'Quita monedas a un usuario',
-    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+    options: CommonCoinsOptions.MODIFY,
   },
   [CoinsCommands.SET_COINS]: {
     command: CoinsCommands.SET_COINS,
     description: 'Establece una cantidad específica de monedas a un usuario',
-    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+    options: CommonCoinsOptions.MODIFY,
   },
   [CoinsCommands.TRANSFER_COINS]: {
     command: CoinsCommands.TRANSFER_COINS,
     description: 'Transfiere monedas a otro usuario',
-    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+    options: CommonCoinsOptions.MODIFY,
   },
   [CoinsCommands.PURCHASE]: {
     command: CoinsCommands.PURCHASE,

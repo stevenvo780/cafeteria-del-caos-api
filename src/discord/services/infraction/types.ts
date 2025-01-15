@@ -55,6 +55,6 @@ export const InfractionCommandData = {
   [InfractionCommands.ADD_INFRACTION]: {
     command: InfractionCommands.ADD_INFRACTION,
     description: 'Añade una sanción a un usuario',
-    options: CommonInfractionOptions.ADD, // Quitamos el array extra
+    options: CommonInfractionOptions.ADD,
   },
 } as const;

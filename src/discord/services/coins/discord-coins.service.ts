@@ -227,11 +227,11 @@ export class DiscordCoinsService {
     }
 
     const productId = parseInt(articleOption.value);
-    const quantity = quantityOption.value;
-
     if (isNaN(productId)) {
       return createErrorResponse('❌ ID de producto inválido.');
     }
+
+    const quantity = quantityOption.value;
 
     try {
       const product = await this.productService.findOne(productId);

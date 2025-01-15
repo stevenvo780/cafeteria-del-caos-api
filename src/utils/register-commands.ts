@@ -17,7 +17,7 @@ export interface Product {
 
 async function registerDiscordCommands() {
   try {
-    const commands = buildCommandsList();
+    const commands = await buildCommandsList(); // Notar el await aquí
 
     const token = process.env.DISCORD_BOT_TOKEN;
     const clientId = process.env.DISCORD_CLIENT_ID;

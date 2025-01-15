@@ -20,15 +20,20 @@ export const DISCORD_COMMANDS = {
   [CommandCategories.INFRACTION]: InfractionCommandData,
 } as const;
 
-export const buildCommandsList = () => {
+export const buildCommandsList = async () => {
   const commands = [];
 
   for (const config of Object.values(DISCORD_COMMANDS)) {
     for (const commandData of Object.values(config)) {
+      const options =
+        typeof commandData.options === 'function'
+          ? await commandData.options()
+          : commandData.options || [];
+
       commands.push({
         name: commandData.command,
         description: commandData.description,
-        options: commandData.options || [],
+        options,
       });
     }
   }

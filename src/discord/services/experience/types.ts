@@ -34,17 +34,17 @@ export const ExperienceCommandData = {
   [ExperienceCommands.GIVE_EXPERIENCE]: {
     command: ExperienceCommands.GIVE_EXPERIENCE,
     description: 'Da experiencia a un usuario',
-    options: CommonExperienceOptions.MODIFY, // Quitamos el array extra
+    options: CommonExperienceOptions.MODIFY,
   },
   [ExperienceCommands.REMOVE_EXPERIENCE]: {
     command: ExperienceCommands.REMOVE_EXPERIENCE,
     description: 'Quita experiencia a un usuario',
-    options: CommonExperienceOptions.MODIFY, // Quitamos el array extra
+    options: CommonExperienceOptions.MODIFY,
   },
   [ExperienceCommands.SET_EXPERIENCE]: {
     command: ExperienceCommands.SET_EXPERIENCE,
     description:
       'Establece una cantidad específica de experiencia a un usuario',
-    options: CommonExperienceOptions.MODIFY, // Quitamos el array extra
+    options: CommonExperienceOptions.MODIFY,
   },
 } as const;
