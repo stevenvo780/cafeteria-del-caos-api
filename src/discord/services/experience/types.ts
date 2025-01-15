@@ -1,4 +1,4 @@
-import { QUANTITY_OPTION, USER_OPTION } from '../../base-command-options';
+import { QUANTITY_OPTION, USER_OPTION } from '../base-command-options';
 
 export enum ExperienceCommands {
   GET_EXPERIENCE = 'ver-experiencia',

@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType } from 'discord.js';
-import { USER_OPTION, QUANTITY_OPTION } from '../../base-command-options';
+import { USER_OPTION, QUANTITY_OPTION } from '../base-command-options';
 
 export enum CoinsCommands {
   GET_BALANCE = 'ver-balance',
