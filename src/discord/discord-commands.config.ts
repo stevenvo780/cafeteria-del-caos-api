@@ -49,117 +49,185 @@ export const CommandCategories = {
 
 export type Category = keyof typeof CommandCategories;
 
+const CommandOptions = {
+  USER: {
+    name: 'usuario',
+    type: ApplicationCommandOptionType.User,
+    description: 'Usuario objetivo',
+    required: false,
+  },
+
+  POINTS: {
+    name: 'puntos',
+    type: ApplicationCommandOptionType.Integer,
+    description: 'Cantidad de puntos',
+    min_value: 0,
+    required: true,
+  },
+
+  COINS: {
+    name: 'cantidad',
+    type: ApplicationCommandOptionType.Integer,
+    description: 'Cantidad de monedas',
+    min_value: 1,
+    required: true,
+  },
+
+  EXPERIENCE: {
+    name: 'cantidad',
+    type: ApplicationCommandOptionType.Integer,
+    description: 'Cantidad de experiencia',
+    min_value: 0,
+    required: true,
+  },
+
+  TITLE: {
+    name: 'titulo',
+    type: ApplicationCommandOptionType.String,
+    description: 'Título de la nota',
+    required: true,
+  },
+
+  CONTENT: {
+    name: 'contenido',
+    type: ApplicationCommandOptionType.String,
+    description: 'Contenido de la nota',
+    required: true,
+  },
+
+  ID: {
+    name: 'id',
+    type: ApplicationCommandOptionType.String,
+    description: 'ID de la nota',
+    required: true,
+  },
+
+  QUANTITY: {
+    name: 'cantidad',
+    type: ApplicationCommandOptionType.Integer,
+    description: 'Cantidad a comprar',
+    required: true,
+    min_value: 1,
+  },
+
+  ARTICLE: {
+    name: 'articulo',
+    type: ApplicationCommandOptionType.String,
+    description: 'Artículo a comprar',
+    required: true,
+  },
+
+  REASON: {
+    name: 'razon',
+    type: ApplicationCommandOptionType.String,
+    description: 'Razón de la sanción',
+    required: true,
+  },
+
+  INFRACTION_TYPE: {
+    name: 'tipo',
+    type: ApplicationCommandOptionType.String,
+    description: 'Tipo de sanción',
+    required: true,
+    choices: [
+      {
+        name: '◼️ Negro - Violencia extrema/Doxing/CP/Estafas (10 puntos)',
+        value: 'BLACK',
+      },
+      {
+        name: '♦️ Rojo - NSFW/Acoso grave/Suplantación (5 puntos)',
+        value: 'RED',
+      },
+      {
+        name: '🔶 Naranja - Insultos/Amenazas/Odio (3 puntos)',
+        value: 'ORANGE',
+      },
+      {
+        name: '☢️ Amarillo - Discriminación leve/Spam (2 puntos)',
+        value: 'YELLOW',
+      },
+    ],
+  },
+} as const;
+
 const CommonCommandOptions = {
-  VIEW: [
-    {
-      name: 'usuario',
-      type: ApplicationCommandOptionType.User,
-      description: 'Usuario objetivo',
-      required: false,
-    },
-  ],
+  VIEW: [CommandOptions.USER],
 
   MODIFY_POINTS: [
-    {
-      name: 'usuario',
-      type: ApplicationCommandOptionType.User,
-      description: 'Usuario objetivo',
-      required: true,
-    },
-    {
-      name: 'puntos',
-      type: ApplicationCommandOptionType.Integer,
-      description: 'Cantidad de puntos',
-      min_value: 0,
-      required: true,
-    },
+    { ...CommandOptions.USER, required: true },
+    CommandOptions.POINTS,
   ],
 
   MODIFY_COINS: [
-    {
-      name: 'usuario',
-      type: ApplicationCommandOptionType.User,
-      description: 'Usuario objetivo',
-      required: true,
-    },
-    {
-      name: 'cantidad',
-      type: ApplicationCommandOptionType.Integer,
-      description: 'Cantidad de monedas',
-      min_value: 1,
-      required: true,
-    },
+    { ...CommandOptions.USER, required: true },
+    CommandOptions.COINS,
   ],
 
   MODIFY_EXPERIENCE: [
-    {
-      name: 'usuario',
-      type: ApplicationCommandOptionType.User,
-      description: 'Usuario objetivo',
-      required: true,
-    },
-    {
-      name: 'cantidad',
-      type: ApplicationCommandOptionType.Integer,
-      description: 'Cantidad de experiencia',
-      min_value: 0,
-      required: true,
-    },
+    { ...CommandOptions.USER, required: true },
+    CommandOptions.EXPERIENCE,
   ],
 
-  CREATE_NOTE: [
-    {
-      name: 'titulo',
-      type: ApplicationCommandOptionType.String,
-      description: 'Título de la nota',
-      required: true,
-    },
-    {
-      name: 'contenido',
-      type: ApplicationCommandOptionType.String,
-      description: 'Contenido de la nota',
-      required: true,
-    },
+  CREATE_NOTE: [CommandOptions.TITLE, CommandOptions.CONTENT],
+
+  EDIT_NOTE: [
+    CommandOptions.ID,
+    { ...CommandOptions.TITLE, required: false },
+    { ...CommandOptions.CONTENT, required: false },
   ],
+
+  DELETE_NOTE: [CommandOptions.ID],
+
+  PURCHASE: [CommandOptions.ARTICLE, CommandOptions.QUANTITY],
 
   INFRACTION: [
     {
-      name: 'usuario',
-      type: ApplicationCommandOptionType.User,
+      ...CommandOptions.USER,
       description: 'Usuario a sancionar',
       required: true,
     },
-    {
-      name: 'tipo',
-      type: ApplicationCommandOptionType.String,
-      description: 'Tipo de sanción',
-      required: true,
-      choices: [
-        {
-          name: '◼️ Negro - Violencia extrema/Doxing/CP/Estafas (10 puntos)',
-          value: 'BLACK',
-        },
-        {
-          name: '♦️ Rojo - NSFW/Acoso grave/Suplantación (5 puntos)',
-          value: 'RED',
-        },
-        {
-          name: '🔶 Naranja - Insultos/Amenazas/Odio (3 puntos)',
-          value: 'ORANGE',
-        },
-        {
-          name: '☢️ Amarillo - Discriminación leve/Spam (2 puntos)',
-          value: 'YELLOW',
-        },
-      ],
-    },
-    {
-      name: 'razon',
-      type: ApplicationCommandOptionType.String,
-      description: 'Razón de la sanción',
-      required: true,
-    },
+    CommandOptions.INFRACTION_TYPE,
+    CommandOptions.REASON,
   ],
+
+  REMOVE_INFRACTION: [
+    { ...CommandOptions.USER, required: true },
+    CommandOptions.ID,
+  ],
+
+  EMPTY: [],
+} as const;
+
+export const DiscordCommandOptions = {
+  [PointsCommands.GET_POINTS]: CommonCommandOptions.VIEW,
+  [PointsCommands.ADD_POINTS]: CommonCommandOptions.MODIFY_POINTS,
+  [PointsCommands.REMOVE_POINTS]: CommonCommandOptions.MODIFY_POINTS,
+  [PointsCommands.SET_POINTS]: CommonCommandOptions.MODIFY_POINTS,
+
+  [ExperienceCommands.GET_EXPERIENCE]: CommonCommandOptions.VIEW,
+  [ExperienceCommands.TOP_EXPERIENCE]: CommonCommandOptions.EMPTY,
+  [ExperienceCommands.GIVE_EXPERIENCE]: CommonCommandOptions.MODIFY_EXPERIENCE,
+  [ExperienceCommands.REMOVE_EXPERIENCE]:
+    CommonCommandOptions.MODIFY_EXPERIENCE,
+  [ExperienceCommands.SET_EXPERIENCE]: CommonCommandOptions.MODIFY_EXPERIENCE,
+
+  [NotesCommands.CREATE_NOTE]: CommonCommandOptions.CREATE_NOTE,
+  [NotesCommands.EDIT_NOTE]: CommonCommandOptions.EDIT_NOTE,
+  [NotesCommands.DELETE_NOTE]: CommonCommandOptions.DELETE_NOTE,
+  [NotesCommands.VIEW_NOTES]: CommonCommandOptions.VIEW,
+
+  [CoinsCommands.GET_BALANCE]: CommonCommandOptions.VIEW,
+  [CoinsCommands.TOP_COINS]: CommonCommandOptions.EMPTY,
+  [CoinsCommands.GIVE_COINS]: CommonCommandOptions.MODIFY_COINS,
+  [CoinsCommands.REMOVE_COINS]: CommonCommandOptions.MODIFY_COINS,
+  [CoinsCommands.SET_COINS]: CommonCommandOptions.MODIFY_COINS,
+  [CoinsCommands.TRANSFER_COINS]: CommonCommandOptions.MODIFY_COINS,
+  [CoinsCommands.PURCHASE]: CommonCommandOptions.PURCHASE,
+
+  [InfractionCommands.ADD_INFRACTION]: CommonCommandOptions.INFRACTION,
+  [InfractionCommands.ADD_INFRACTION_ALT]: CommonCommandOptions.INFRACTION,
+  [InfractionCommands.REMOVE_INFRACTION]:
+    CommonCommandOptions.REMOVE_INFRACTION,
 } as const;
 
 export const DISCORD_COMMANDS = {
@@ -220,82 +288,6 @@ export const DISCORD_COMMANDS = {
   },
 } as const;
 
-export const CommandOptions = {
-  [PointsCommands.GET_POINTS]: CommonCommandOptions.VIEW,
-  [PointsCommands.ADD_POINTS]: CommonCommandOptions.MODIFY_POINTS,
-  [PointsCommands.REMOVE_POINTS]: CommonCommandOptions.MODIFY_POINTS,
-  [PointsCommands.SET_POINTS]: CommonCommandOptions.MODIFY_POINTS,
-
-  [ExperienceCommands.GET_EXPERIENCE]: CommonCommandOptions.VIEW,
-  [ExperienceCommands.TOP_EXPERIENCE]: [],
-  [ExperienceCommands.GIVE_EXPERIENCE]: CommonCommandOptions.MODIFY_EXPERIENCE,
-  [ExperienceCommands.REMOVE_EXPERIENCE]:
-    CommonCommandOptions.MODIFY_EXPERIENCE,
-  [ExperienceCommands.SET_EXPERIENCE]: CommonCommandOptions.MODIFY_EXPERIENCE,
-
-  [NotesCommands.CREATE_NOTE]: CommonCommandOptions.CREATE_NOTE,
-  [NotesCommands.EDIT_NOTE]: [
-    {
-      name: 'id',
-      type: ApplicationCommandOptionType.String,
-      description: 'ID de la nota',
-      required: true,
-    },
-    ...CommonCommandOptions.CREATE_NOTE.map((opt) => ({
-      ...opt,
-      required: false,
-    })),
-  ],
-  [NotesCommands.DELETE_NOTE]: [
-    {
-      name: 'id',
-      type: ApplicationCommandOptionType.String,
-      description: 'ID de la nota',
-      required: true,
-    },
-  ],
-  [NotesCommands.VIEW_NOTES]: CommonCommandOptions.VIEW,
-
-  [CoinsCommands.GET_BALANCE]: CommonCommandOptions.VIEW,
-  [CoinsCommands.TOP_COINS]: [],
-  [CoinsCommands.GIVE_COINS]: CommonCommandOptions.MODIFY_COINS,
-  [CoinsCommands.REMOVE_COINS]: CommonCommandOptions.MODIFY_COINS,
-  [CoinsCommands.SET_COINS]: CommonCommandOptions.MODIFY_COINS,
-  [CoinsCommands.TRANSFER_COINS]: CommonCommandOptions.MODIFY_COINS,
-  [CoinsCommands.PURCHASE]: [
-    {
-      name: 'articulo',
-      type: ApplicationCommandOptionType.String,
-      description: 'Artículo a comprar',
-      required: true,
-    },
-    {
-      name: 'cantidad',
-      type: ApplicationCommandOptionType.Integer,
-      description: 'Cantidad a comprar',
-      required: true,
-      min_value: 1,
-    },
-  ],
-
-  [InfractionCommands.ADD_INFRACTION]: CommonCommandOptions.INFRACTION,
-  [InfractionCommands.ADD_INFRACTION_ALT]: CommonCommandOptions.INFRACTION,
-  [InfractionCommands.REMOVE_INFRACTION]: [
-    {
-      name: 'usuario',
-      type: ApplicationCommandOptionType.User,
-      description: 'Usuario',
-      required: true,
-    },
-    {
-      name: 'id',
-      type: ApplicationCommandOptionType.String,
-      description: 'ID de la sanción a eliminar',
-      required: true,
-    },
-  ],
-} as const;
-
 export const buildCommandsList = (productOptions: any[]) => {
   const commands = [];
 
@@ -308,7 +300,7 @@ export const buildCommandsList = (productOptions: any[]) => {
         description:
           config.descriptions[commandName] ||
           `Comando de ${category.toLowerCase()}`,
-        options: CommandOptions[commandName] || [],
+        options: DiscordCommandOptions[commandName] || [],
       };
       commands.push(command);
     }

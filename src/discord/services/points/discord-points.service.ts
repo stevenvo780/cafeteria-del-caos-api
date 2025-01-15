@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import {
   InteractionResponseType,
   APIChatInputApplicationCommandInteractionData,
+  APIInteraction,
   APIApplicationCommandInteractionDataNumberOption,
   APIApplicationCommandInteractionDataUserOption,
-  APIInteraction,
 } from 'discord.js';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
 import {
@@ -14,24 +14,23 @@ import {
   ValidateResult,
 } from '../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../discord.util';
-import {
-  DISCORD_COMMANDS,
-  CommandCategories,
-  PointsCommands,
-} from '../discord-commands.config';
+import { PointsCommands } from '../discord-commands.config';
 
 @Injectable()
 export class DiscordPointsService {
-  private readonly commands =
-    DISCORD_COMMANDS[CommandCategories.POINTS].commands;
-
   constructor(private readonly userDiscordService: UserDiscordService) {}
 
   async handlePointsCommand(
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     interactionPayload?: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
+    const validation = await this.validatePointsCommand(commandData);
+    if ('isError' in validation) {
+      return validation;
+    }
+
     switch (commandName) {
       case PointsCommands.GET_POINTS:
         return await this.handleUserScore(
@@ -39,31 +38,13 @@ export class DiscordPointsService {
           interactionPayload.member,
         );
       case PointsCommands.ADD_POINTS:
-        return await this.handleUserPoints('añadir', commandData);
+        return await this.userDiscordService.handleAddPoints(validation);
       case PointsCommands.REMOVE_POINTS:
-        return await this.handleUserPoints('quitar', commandData);
+        return await this.userDiscordService.handleRemovePoints(validation);
       case PointsCommands.SET_POINTS:
-        return await this.handleUserPoints('establecer', commandData);
+        return await this.userDiscordService.handleSetPoints(validation);
       default:
         return createErrorResponse('Comando de puntos no reconocido');
-    }
-  }
-
-  private async handleUserPoints(
-    action: 'añadir' | 'quitar' | 'establecer',
-    commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<DiscordInteractionResponse> {
-    const validation = await this.validatePointsCommand(commandData);
-    if ('isError' in validation) {
-      return validation;
-    }
-    switch (action) {
-      case 'añadir':
-        return await this.userDiscordService.handleAddPoints(validation);
-      case 'quitar':
-        return await this.userDiscordService.handleRemovePoints(validation);
-      case 'establecer':
-        return await this.userDiscordService.handleSetPoints(validation);
     }
   }
 
