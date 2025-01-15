@@ -49,7 +49,6 @@ export class ConfigService {
         points: 10,
         description: 'Infracciones graves',
       },
-      // ...puedes añadir más...
     ];
     return this.configRepository.save(defaultConfig);
   }

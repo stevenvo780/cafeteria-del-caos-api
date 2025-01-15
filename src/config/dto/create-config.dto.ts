@@ -1,5 +1,7 @@
-import { IsString } from 'class-validator';
+import { IsString, IsArray, ValidateNested, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { InfractionDto } from './infraction.dto';
 
 export class CreateConfigDto {
   @IsString()
@@ -32,21 +34,11 @@ export class CreateConfigDto {
 
   @ApiProperty({
     description: 'Lista de infracciones',
-    type: Array,
-    items: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        value: { type: 'string' },
-        points: { type: 'number' },
-        description: { type: 'string' },
-      },
-    },
+    type: [InfractionDto],
   })
-  infractions?: {
-    name: string;
-    value: string;
-    points: number;
-    description: string;
-  }[];
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => InfractionDto)
+  infractions?: InfractionDto[];
 }

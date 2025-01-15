@@ -1,6 +1,7 @@
 import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { SharedProp } from '../../common/entities/sharedProp.helper';
+import { InfractionDto } from '../dto/infraction.dto';
 
 @Entity()
 export class Config extends SharedProp {
@@ -70,29 +71,7 @@ export class Config extends SharedProp {
   @Column('json', { default: [] })
   @ApiProperty({
     description: 'Tipos de sanción',
-    type: 'array',
-    items: {
-      type: 'object',
-      properties: {
-        name: { type: 'string' },
-        value: { type: 'string' },
-        points: { type: 'number' },
-        description: { type: 'string' },
-      },
-    },
-    example: [
-      {
-        name: 'Sanción leve',
-        value: 'leve',
-        points: 1,
-        description: 'Sanción por infracción leve',
-      },
-    ],
+    type: () => [InfractionDto],
   })
-  infractions: {
-    name: string;
-    value: string;
-    points: number;
-    description: string;
-  }[];
+  infractions: InfractionDto[];
 }
