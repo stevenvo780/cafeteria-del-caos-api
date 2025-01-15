@@ -12,6 +12,7 @@ import {
   ApiOkResponse,
 } from '@nestjs/swagger';
 import { Config } from './entities/config.entity';
+import { exec } from 'child_process';
 
 @ApiTags('config')
 @Controller('config')
@@ -100,6 +101,12 @@ export class ConfigController {
   async updateConfig(
     @Body() updateConfigDto: UpdateConfigDto,
   ): Promise<Config> {
-    return this.configService.update(updateConfigDto);
+    const updatedConfig = await this.configService.update(updateConfigDto);
+    try {
+      exec('npm run register-commands');
+    } catch (error) {
+      console.error('Error al registrar comandos:', error);
+    }
+    return updatedConfig;
   }
 }

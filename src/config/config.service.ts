@@ -42,6 +42,15 @@ export class ConfigService {
     defaultConfig.privacyNotice = '<p>Aviso de privacidad predeterminado.</p>';
     defaultConfig.watchedChannels = [];
     defaultConfig.watchedForums = [];
+    defaultConfig.infractions = [
+      {
+        name: '◼️ Negro - Violencia extrema/Doxing/CP/Estafas',
+        value: 'BLACK',
+        points: 10,
+        description: 'Infracciones graves',
+      },
+      // ...puedes añadir más...
+    ];
     return this.configRepository.save(defaultConfig);
   }
 

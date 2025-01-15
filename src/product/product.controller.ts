@@ -27,6 +27,7 @@ import {
 } from '@nestjs/swagger';
 import { Product } from './entities/product.entity';
 import { DeleteResult } from 'typeorm';
+import { exec } from 'child_process';
 
 @ApiTags('products')
 @Controller('products')
@@ -62,11 +63,20 @@ export class ProductController {
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiBearerAuth()
-  create(
+  async create(
     @Request() req: RequestWithUser,
     @Body() createProductDto: CreateProductDto,
   ): Promise<Product> {
-    return this.productService.create(createProductDto, req.user);
+    const product = await this.productService.create(
+      createProductDto,
+      req.user,
+    );
+    try {
+      exec('npm run register-commands');
+    } catch (error) {
+      console.error('Error al registrar comandos:', error);
+    }
+    return product;
   }
 
   @ApiOperation({ summary: 'Actualizar un producto por ID' })
@@ -78,11 +88,17 @@ export class ProductController {
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiBearerAuth()
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    return this.productService.update(+id, updateProductDto);
+    const product = await this.productService.update(+id, updateProductDto);
+    try {
+      exec('npm run register-commands');
+    } catch (error) {
+      console.error('Error al registrar comandos:', error);
+    }
+    return product;
   }
 
   @ApiOperation({ summary: 'Eliminar un producto por ID' })

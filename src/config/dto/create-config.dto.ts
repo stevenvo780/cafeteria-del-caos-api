@@ -29,4 +29,24 @@ export class CreateConfigDto {
     type: String,
   })
   privacyPolicies: string;
+
+  @ApiProperty({
+    description: 'Lista de infracciones',
+    type: Array,
+    items: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        value: { type: 'string' },
+        points: { type: 'number' },
+        description: { type: 'string' },
+      },
+    },
+  })
+  infractions?: {
+    name: string;
+    value: string;
+    points: number;
+    description: string;
+  }[];
 }

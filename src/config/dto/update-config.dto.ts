@@ -21,4 +21,24 @@ export class UpdateConfigDto extends PartialType(CreateConfigDto) {
     type: [String],
   })
   watchedForums?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ApiPropertyOptional({
+    description: 'Lista de infracciones',
+    type: [
+      {
+        name: 'string',
+        value: 'string',
+        points: 'number',
+        description: 'string',
+      },
+    ],
+  })
+  infractions?: {
+    name: string;
+    value: string;
+    points: number;
+    description: string;
+  }[];
 }

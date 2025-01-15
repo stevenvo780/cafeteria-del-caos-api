@@ -66,4 +66,33 @@ export class Config extends SharedProp {
     example: ['forum_id1', 'forum_id2'],
   })
   watchedForums: string[];
+
+  @Column('json', { default: [] })
+  @ApiProperty({
+    description: 'Tipos de sanción',
+    type: 'array',
+    items: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        value: { type: 'string' },
+        points: { type: 'number' },
+        description: { type: 'string' },
+      },
+    },
+    example: [
+      {
+        name: 'Sanción leve',
+        value: 'leve',
+        points: 1,
+        description: 'Sanción por infracción leve',
+      },
+    ],
+  })
+  infractions: {
+    name: string;
+    value: string;
+    points: number;
+    description: string;
+  }[];
 }
