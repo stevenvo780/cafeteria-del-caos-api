@@ -6,21 +6,21 @@ import {
   APIApplicationCommandInteractionDataStringOption,
   APIApplicationCommandInteractionDataNumberOption,
 } from 'discord.js';
-import { KardexService } from '../../kardex/kardex.service';
-import { UserDiscordService } from '../../user-discord/user-discord.service';
-import { ProductService } from '../../product/product.service';
+import { KardexService } from '../../../kardex/kardex.service';
+import { UserDiscordService } from '../../../user-discord/user-discord.service';
+import { ProductService } from '../../../product/product.service';
 import {
   CommandResponse,
   DiscordInteractionResponse,
   InteractCoins,
   ValidateResult,
-} from '../discord.types';
-import { createErrorResponse, resolveTargetUser } from '../discord.util';
+} from '../../discord.types';
+import { createErrorResponse, resolveTargetUser } from '../../discord.util';
 import {
   DISCORD_COMMANDS,
   CommandCategories,
-  CoinsCommands,
-} from '../discord-commands.config';
+} from '../../discord-commands.config';
+import { CoinsCommands } from './types';
 
 @Injectable()
 export class DiscordCoinsService {

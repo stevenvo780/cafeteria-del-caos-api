@@ -4,16 +4,16 @@ import {
   APIChatInputApplicationCommandInteractionData,
   APIApplicationCommandInteractionDataStringOption,
 } from 'discord.js';
-import { InfractionType } from '../../user-discord/entities/user-discord.entity';
-import { UserDiscordService } from '../../user-discord/user-discord.service';
-import { createErrorResponse } from '../discord.util';
-import { DiscordInteractionResponse } from '../discord.types';
+import { InfractionType } from '../../../user-discord/entities/user-discord.entity';
+import { UserDiscordService } from '../../../user-discord/user-discord.service';
+import { createErrorResponse } from '../../discord.util';
+import { DiscordInteractionResponse } from '../../discord.types';
 import { KardexService } from 'src/kardex/kardex.service';
 import {
   DISCORD_COMMANDS,
   CommandCategories,
-  InfractionCommands,
-} from '../discord-commands.config';
+} from '../../discord-commands.config';
+import { InfractionCommands } from './types';
 
 @Injectable()
 export class DiscordInfractionService {

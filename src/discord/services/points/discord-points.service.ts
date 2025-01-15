@@ -6,15 +6,15 @@ import {
   APIApplicationCommandInteractionDataNumberOption,
   APIApplicationCommandInteractionDataUserOption,
 } from 'discord.js';
-import { UserDiscordService } from '../../user-discord/user-discord.service';
+import { UserDiscordService } from '../../../user-discord/user-discord.service';
 import {
   CommandResponse,
   DiscordInteractionResponse,
   InteractPoints,
   ValidateResult,
-} from '../discord.types';
-import { createErrorResponse, resolveTargetUser } from '../discord.util';
-import { PointsCommands } from '../discord-commands.config';
+} from '../../discord.types';
+import { createErrorResponse, resolveTargetUser } from '../../discord.util';
+import { PointsCommands } from './types';
 
 @Injectable()
 export class DiscordPointsService {

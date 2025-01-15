@@ -4,15 +4,15 @@ import {
   APIApplicationCommandInteractionDataOption,
   APIApplicationCommandInteractionDataStringOption,
 } from 'discord.js';
-import { LibraryService } from '../../library/library.service';
-import { LibraryVisibility } from '../../library/entities/library.entity';
-import { createErrorResponse } from '../discord.util';
-import { DiscordInteractionResponse } from '../discord.types';
+import { LibraryService } from '../../../library/library.service';
+import { LibraryVisibility } from '../../../library/entities/library.entity';
+import { createErrorResponse } from '../../discord.util';
+import { DiscordInteractionResponse } from '../../discord.types';
 import {
   DISCORD_COMMANDS,
   CommandCategories,
-  NotesCommands,
-} from '../discord-commands.config';
+} from '../../discord-commands.config';
+import { NotesCommands } from './types';
 
 @Injectable()
 export class DiscordNotesService {

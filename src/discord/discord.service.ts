@@ -3,11 +3,11 @@ import {
   APIChatInputApplicationCommandInteractionData,
   APIInteraction,
 } from 'discord.js';
-import { DiscordNotesService } from './services/discord-notes.service';
-import { DiscordPointsService } from './services/discord-points.service';
-import { DiscordCoinsService } from './services/discord-coins.service';
-import { DiscordExperienceService } from './services/discord-experience.service';
-import { DiscordInfractionService } from './services/discord-infraction.service';
+import { DiscordNotesService } from './services/notes/discord-notes.service';
+import { DiscordPointsService } from './services/points/discord-points.service';
+import { DiscordCoinsService } from './services/coins/discord-coins.service';
+import { DiscordExperienceService } from './services/experience/discord-experience.service';
+import { DiscordInfractionService } from './services/infraction/discord-infraction.service';
 import { DiscordInteractionResponse } from './discord.types';
 import {
   getGuildMemberCount,
