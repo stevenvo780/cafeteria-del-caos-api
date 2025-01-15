@@ -10,7 +10,6 @@ import { KardexService } from '../../../kardex/kardex.service';
 import { UserDiscordService } from '../../../user-discord/user-discord.service';
 import { ProductService } from '../../../product/product.service';
 import {
-  CommandResponse,
   DiscordInteractionResponse,
   InteractCoins,
   ValidateResult,
@@ -27,200 +26,156 @@ export class DiscordCoinsService {
   ) {}
 
   async handleCoinsCommand(
-    commandName: string,
+    commandName: CoinsCommands,
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload?: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
-    switch (commandName) {
-      case CoinsCommands.GET_BALANCE:
-        return await this.handleUserBalance(
-          commandData,
-          interactionPayload.member,
-        );
-      case CoinsCommands.TOP_COINS:
-        return await this.handleTopCoins();
-      case CoinsCommands.GIVE_COINS:
-        return await this.handleUserCoins(
-          'dar',
-          commandData,
-          interactionPayload,
-        );
-      case CoinsCommands.REMOVE_COINS:
-        return await this.handleUserCoins(
-          'quitar',
-          commandData,
-          interactionPayload,
-        );
-      case CoinsCommands.SET_COINS:
-        return await this.handleUserCoins(
-          'establecer',
-          commandData,
-          interactionPayload,
-        );
-      case CoinsCommands.TRANSFER_COINS:
-        return await this.handleUserCoins(
-          'transferir',
-          commandData,
-          interactionPayload,
-        );
-      case CoinsCommands.PURCHASE:
-        return await this.handlePurchase(commandData, interactionPayload);
-      default:
-        return createErrorResponse('Comando de monedas no reconocido');
+    try {
+      switch (commandName) {
+        case CoinsCommands.GET_BALANCE:
+          return this.handleBalance(commandData, interactionPayload);
+        case CoinsCommands.TOP_COINS:
+          return this.handleTopCoins();
+        case CoinsCommands.PURCHASE:
+          return this.handlePurchase(commandData, interactionPayload);
+        case CoinsCommands.GIVE_COINS:
+          return this.handleGiveCoins(commandData, interactionPayload);
+        case CoinsCommands.REMOVE_COINS:
+          return this.handleRemoveCoins(commandData, interactionPayload);
+        case CoinsCommands.SET_COINS:
+          return this.handleSetCoins(commandData, interactionPayload);
+        case CoinsCommands.TRANSFER_COINS:
+          return this.handleTransferCoins(commandData, interactionPayload);
+        default:
+          return createErrorResponse('Comando de monedas no reconocido');
+      }
+    } catch (error) {
+      console.error(`Error en comando ${commandName}:`, error);
+      return createErrorResponse('❌ Error al procesar el comando');
     }
   }
 
-  private async handleUserCoins(
-    action: string,
+  private async handleGiveCoins(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
-    const isTransfer = action === 'transferir';
     const validation = await this.validateCoinsCommand(
       commandData,
       interactionPayload,
-      isTransfer,
+      false,
     );
+    if ('isError' in validation) return validation;
 
-    if ('isError' in validation) {
-      return validation;
+    const { target, coins } = validation;
+
+    try {
+      await this.kardexService.addCoins(target.id, coins, 'Discord command');
+      await this.userDiscordService.addExperience(target.id, coins);
+      const balance = await this.kardexService.getUserLastBalance(target.id);
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `💰 LLUVIA DE MONEDAS! <@${target.id}> +${coins}\nSaldo actual: ${balance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`,
+        },
+      };
+    } catch (error) {
+      console.error('Error al dar monedas:', error);
+      return createErrorResponse('💀 Error al dar monedas.');
     }
+  }
+
+  private async handleRemoveCoins(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    const validation = await this.validateCoinsCommand(
+      commandData,
+      interactionPayload,
+      false,
+    );
+    if ('isError' in validation) return validation;
+
+    const { target, coins } = validation;
+
+    try {
+      await this.kardexService.removeCoins(target.id, coins, 'Discord command');
+      const balance = await this.kardexService.getUserLastBalance(target.id);
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `🔥 GET REKT ${target.username} -${coins} monedas.\nSaldo actual: ${balance} monedas.`,
+        },
+      };
+    } catch (error) {
+      console.error('Error al quitar monedas:', error);
+      return createErrorResponse('💀 Error al quitar monedas.');
+    }
+  }
+
+  private async handleSetCoins(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    const validation = await this.validateCoinsCommand(
+      commandData,
+      interactionPayload,
+      false,
+    );
+    if ('isError' in validation) return validation;
+
+    const { target, coins } = validation;
+
+    try {
+      await this.kardexService.setCoins(target.id, coins, 'Discord command');
+      const balance = await this.kardexService.getUserLastBalance(target.id);
+
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `⚡ ESTABLECIDO! ${target.username} ahora tiene ${balance} monedas.`,
+        },
+      };
+    } catch (error) {
+      console.error('Error al establecer monedas:', error);
+      return createErrorResponse('💀 Error al establecer monedas.');
+    }
+  }
+
+  private async handleTransferCoins(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    const validation = await this.validateCoinsCommand(
+      commandData,
+      interactionPayload,
+      true,
+    );
+    if ('isError' in validation) return validation;
 
     const { user: sourceUser, target, coins } = validation;
 
     try {
-      switch (action) {
-        case 'dar': {
-          const targetUser = target;
-          if (!targetUser) {
-            return createErrorResponse('❌ Usuario objetivo no encontrado.');
-          }
+      await this.kardexService.transferCoins(sourceUser.id, target.id, coins);
+      const [sourceBalance, targetBalance] = await Promise.all([
+        this.kardexService.getUserLastBalance(sourceUser.id),
+        this.kardexService.getUserLastBalance(target.id),
+      ]);
 
-          await this.kardexService.addCoins(
-            targetUser.id,
-            coins,
-            'Discord command',
-          );
-          await this.userDiscordService.addExperience(targetUser.id, coins);
-          const newBalance = await this.kardexService.getUserLastBalance(
-            targetUser.id,
-          );
-
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `💰 LLUVIA DE MONEDAS! <@${targetUser.id}> +${coins}\nSaldo actual: ${newBalance} monedas.\n✨ También ganaste ${coins} puntos de experiencia!`,
-            },
-          };
-        }
-        case 'quitar': {
-          await this.kardexService.removeCoins(
-            target.id,
-            coins,
-            'Discord command',
-          );
-          const newBalance = await this.kardexService.getUserLastBalance(
-            target.id,
-          );
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `🔥 GET REKT ${target.username} -${coins} monedas.\nSaldo actual: ${newBalance} monedas.`,
-            },
-          };
-        }
-        case 'establecer': {
-          await this.kardexService.setCoins(
-            target.id,
-            coins,
-            'Discord command',
-          );
-          const newBalance = await this.kardexService.getUserLastBalance(
-            target.id,
-          );
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `⚡ ESTABLECIDO! ${target.username} ahora tiene ${newBalance} monedas.`,
-            },
-          };
-        }
-        case 'transferir': {
-          if (!target) {
-            return createErrorResponse('❌ Falta el usuario de destino.');
-          }
-          await this.kardexService.transferCoins(
-            sourceUser.id,
-            target.id,
-            coins,
-          );
-
-          const fromBalance = await this.kardexService.getUserLastBalance(
-            sourceUser.id,
-          );
-          const toBalance = await this.kardexService.getUserLastBalance(
-            target.id,
-          );
-
-          return {
-            type: InteractionResponseType.ChannelMessageWithSource,
-            data: {
-              content: `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${sourceUser.username} ha enviado ${coins} monedas a ${target.username}\n\n💰 Nuevos balances:\n${sourceUser.username}: ${fromBalance} monedas\n${target.username}: ${toBalance} monedas`,
-            },
-          };
-        }
-        default: {
-          return createErrorResponse('Comando de monedas no reconocido.');
-        }
-      }
+      return {
+        type: InteractionResponseType.ChannelMessageWithSource,
+        data: {
+          content: `✨ ¡TRANSFERENCIA EXITOSA!\n\n💸 ${sourceUser.username} ha enviado ${coins} monedas a ${target.username}\n\n💰 Nuevos balances:\n${sourceUser.username}: ${sourceBalance} monedas\n${target.username}: ${targetBalance} monedas`,
+        },
+      };
     } catch (error) {
-      console.error('Error en operación de monedas:', error);
-      return createErrorResponse('💀 Error en la operación de monedas.');
+      console.error('Error en transferencia de monedas:', error);
+      return createErrorResponse('💀 Error en la transferencia de monedas.');
     }
   }
 
-  async handleUserBalance(
-    commandData: APIChatInputApplicationCommandInteractionData,
-    interactionMember: any,
-  ): Promise<CommandResponse> {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === 'usuario',
-    ) as any;
-
-    const targetUser = await resolveTargetUser(
-      this.userDiscordService,
-      userOption,
-      commandData,
-      interactionMember,
-    );
-
-    if ('isError' in targetUser) {
-      return createErrorResponse('❌ Error: No se encontró al usuario.');
-    }
-
-    const lastBalance = await this.kardexService.getUserLastBalance(
-      targetUser.id,
-    );
-
-    const topCoins = await this.kardexService.findTopByCoins(10);
-    const userRank =
-      topCoins.findIndex((item) => item.userDiscordId === targetUser.id) + 1;
-    const rankText =
-      userRank > 0 && userRank <= 10
-        ? `\n🏆 Ranking: #${userRank} en el top 10`
-        : '';
-
-    const message = userOption
-      ? `💰 ${targetUser.username} tiene ${lastBalance} monedas del caos!${rankText}`
-      : `💰 ¡${targetUser.username}! Tu fortuna asciende a ${lastBalance} monedas del caos!${rankText}`;
-
-    return {
-      type: InteractionResponseType.ChannelMessageWithSource,
-      data: { content: message },
-    };
-  }
-
-  async handleTopCoins(): Promise<DiscordInteractionResponse> {
+  private async handleTopCoins(): Promise<DiscordInteractionResponse> {
     try {
       const topCoins = await this.kardexService.findTopByCoins(10);
       if (!topCoins || topCoins.length === 0) {
@@ -240,13 +195,13 @@ export class DiscordCoinsService {
         }),
       );
 
-      const response = ['🏆 Top 10 usuarios con más monedas:']
-        .concat(leaderboardLines)
-        .join('\n');
-
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: { content: response },
+        data: {
+          content: ['🏆 Top 10 usuarios con más monedas:']
+            .concat(leaderboardLines)
+            .join('\n'),
+        },
       };
     } catch (error) {
       console.error('Error al obtener ranking de monedas:', error);
@@ -254,14 +209,13 @@ export class DiscordCoinsService {
     }
   }
 
-  async handlePurchase(
+  private async handlePurchase(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     const articleOption = commandData.options?.find(
       (opt) => opt.name === 'articulo',
     ) as APIApplicationCommandInteractionDataStringOption;
-
     const quantityOption = commandData.options?.find(
       (opt) => opt.name === 'cantidad',
     ) as APIApplicationCommandInteractionDataNumberOption;
@@ -281,9 +235,7 @@ export class DiscordCoinsService {
 
     try {
       const product = await this.productService.findOne(productId);
-      if (!product) {
-        return createErrorResponse('❌ Producto no encontrado.');
-      }
+      if (!product) return createErrorResponse('❌ Producto no encontrado.');
 
       const userId = interactionPayload.member.user.id;
       const currentBalance = await this.kardexService.getUserLastBalance(
@@ -349,17 +301,50 @@ export class DiscordCoinsService {
       commandData,
       'usuario',
     );
-    if (!target) {
-      return createErrorResponse('Usuario destino no encontrado.');
-    }
+    if (!target) return createErrorResponse('Usuario destino no encontrado.');
     if (isTransfer && sourceUser.id === target.id) {
       return createErrorResponse('No puedes transferirte monedas a ti mismo.');
     }
 
+    return { user: sourceUser, target, coins: coinsOption.value };
+  }
+
+  private async handleBalance(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    const userOption = commandData.options?.find(
+      (opt) => opt.name === 'usuario',
+    );
+    const targetUser = await resolveTargetUser(
+      this.userDiscordService,
+      userOption,
+      commandData,
+      interactionPayload.member,
+    );
+
+    if ('isError' in targetUser) {
+      return createErrorResponse('❌ Usuario no encontrado');
+    }
+
+    const [lastBalance, topCoins] = await Promise.all([
+      this.kardexService.getUserLastBalance(targetUser.id),
+      this.kardexService.findTopByCoins(10),
+    ]);
+
+    const userRank =
+      topCoins.findIndex((item) => item.userDiscordId === targetUser.id) + 1;
+    const rankText =
+      userRank > 0 && userRank <= 10
+        ? `\n🏆 Ranking: #${userRank} en el top 10`
+        : '';
+    const message = userOption
+      ? `💰 ${targetUser.username} tiene ${lastBalance} monedas del caos!${rankText}`
+      : `💰 ¡${targetUser.username}! Tu fortuna asciende a ${lastBalance} monedas del caos!${rankText}`;
+
     return {
-      user: sourceUser,
-      target,
-      coins: coinsOption.value,
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: { content: message },
     };
   }
 }
