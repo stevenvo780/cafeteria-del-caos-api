@@ -70,50 +70,25 @@ export class DiscordPointsService {
   private async validatePointsCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<ValidateResult<InteractPoints>> {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === 'usuario',
-    ) as APIApplicationCommandInteractionDataUserOption;
-
     const pointsOption = commandData.options?.find(
       (opt) => opt.name === 'puntos',
     ) as APIApplicationCommandInteractionDataNumberOption;
-
-    if (!userOption || !pointsOption) {
-      return createErrorResponse(
-        'La estupidez humana se manifiesta... ¿Dónde están los datos fundamentales?',
-      );
+    if (!pointsOption) {
+      return createErrorResponse('Faltan datos para puntos.');
     }
 
-    const userId = userOption.value;
-    const points = pointsOption.value;
-
-    const resolvedUser = commandData.resolved?.users?.[userId] as APIUser;
-    const resolvedMember = commandData.resolved?.members?.[
-      userId
-    ] as APIInteractionDataResolvedGuildMember;
-    if (!resolvedUser || !resolvedMember) {
-      return createErrorResponse(
-        '¡NO ENCUENTRO A ESE USUARIO, PEDAZO DE ALCORNOQUE!',
-      );
+    const user = await this.userDiscordService.resolveInteractionUser(
+      commandData,
+      'usuario',
+    );
+    if (!user) {
+      return createErrorResponse('Usuario no encontrado.');
     }
 
-    try {
-      const user = await this.userDiscordService.findOrCreate({
-        id: userId,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-
-      return {
-        user,
-        points,
-      };
-    } catch (error) {
-      console.error('Error al procesar usuario objetivo:', error);
-      return createErrorResponse(
-        'Error al procesar usuario objetivo: ' + error.message,
-      );
-    }
+    return {
+      user,
+      points: pointsOption.value,
+    };
   }
 
   async handleUserScore(

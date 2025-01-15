@@ -4,7 +4,11 @@ import { Repository, UpdateResult } from 'typeorm';
 import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto';
 import { InteractPoints, CommandResponse } from '../discord/discord.types';
-import { InteractionResponseType } from 'discord.js';
+import {
+  APIApplicationCommandInteractionDataUserOption,
+  APIChatInputApplicationCommandInteractionData,
+  InteractionResponseType,
+} from 'discord.js';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 import { KardexService } from '../kardex/kardex.service';
@@ -392,5 +396,42 @@ export class UserDiscordService {
         '❌ Error al obtener el ranking de experiencia.',
       );
     }
+  }
+
+  async resolveInteractionUser(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    optionName: string,
+    fallbackMember?: any,
+  ): Promise<UserDiscord | null> {
+    const userOption = commandData.options?.find(
+      (opt) => opt.name === optionName,
+    ) as APIApplicationCommandInteractionDataUserOption;
+
+    if (
+      userOption &&
+      'value' in userOption &&
+      commandData.resolved?.users &&
+      commandData.resolved.members
+    ) {
+      const resolvedUser = commandData.resolved.users[userOption.value];
+      const resolvedMember = commandData.resolved.members[userOption.value];
+      if (resolvedUser && resolvedMember) {
+        return await this.findOrCreate({
+          id: userOption.value,
+          username: resolvedUser.username,
+          roles: resolvedMember.roles || [],
+        });
+      }
+    }
+
+    if (fallbackMember?.user) {
+      return await this.findOrCreate({
+        id: fallbackMember.user.id,
+        username: fallbackMember.user.username,
+        roles: fallbackMember.roles || [],
+      });
+    }
+
+    return null;
   }
 }

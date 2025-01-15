@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   InteractionResponseType,
   APIApplicationCommandInteractionDataOption,
+  APIApplicationCommandInteractionDataStringOption,
 } from 'discord.js';
 import { LibraryService } from '../../library/library.service';
 import { LibraryVisibility } from '../../library/entities/library.entity';
@@ -34,8 +35,12 @@ export class DiscordNotesService {
     userId: string,
     username: string,
   ): Promise<DiscordInteractionResponse> {
-    const tituloOption = options.find((opt) => opt.name === 'titulo');
-    const contenidoOption = options.find((opt) => opt.name === 'contenido');
+    const tituloOption = options.find(
+      (opt) => opt.name === 'titulo',
+    ) as APIApplicationCommandInteractionDataStringOption;
+    const contenidoOption = options.find(
+      (opt) => opt.name === 'contenido',
+    ) as APIApplicationCommandInteractionDataStringOption;
 
     const titulo = this.getStringOptionValue(tituloOption);
     const contenido = this.getStringOptionValue(contenidoOption);

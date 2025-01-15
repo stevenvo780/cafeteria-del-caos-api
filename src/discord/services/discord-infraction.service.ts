@@ -36,47 +36,31 @@ export class DiscordInfractionService {
   private async applyInfraction(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<DiscordInteractionResponse> {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === 'usuario',
-    ) as APIApplicationCommandInteractionDataUserOption;
-
     const typeOption = commandData.options?.find(
       (opt) => opt.name === 'tipo',
     ) as APIApplicationCommandInteractionDataStringOption;
-
     const reasonOption = commandData.options?.find(
       (opt) => opt.name === 'razon',
     ) as APIApplicationCommandInteractionDataStringOption;
-
-    if (!userOption || !typeOption || !reasonOption) {
-      return createErrorResponse(
-        'Faltan parámetros requeridos para la sanción.',
-      );
+    if (!typeOption || !reasonOption) {
+      return createErrorResponse('Faltan parámetros para la sanción.');
     }
 
-    const userId = userOption.value;
+    const user = await this.userDiscordService.resolveInteractionUser(
+      commandData,
+      'usuario',
+    );
+    if (!user) {
+      return createErrorResponse('Usuario no encontrado.');
+    }
+
     const infractionType = typeOption.value as InfractionType;
     const reason = reasonOption.value;
-
-    const resolvedUser = commandData.resolved?.users?.[userId];
-    const resolvedMember = commandData.resolved?.members?.[userId];
-
-    if (!resolvedUser || !resolvedMember) {
-      return createErrorResponse(
-        'No se pudo encontrar al usuario especificado.',
-      );
-    }
 
     const points = this.getInfractionPoints(infractionType);
     const emoji = this.getInfractionEmoji(infractionType);
 
     try {
-      const user = await this.userDiscordService.findOrCreate({
-        id: userId,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-
       await this.userDiscordService.addPenaltyPoints(user.id, points);
 
       const currentBalance = await this.kardexService.getUserLastBalance(
@@ -99,7 +83,7 @@ export class DiscordInfractionService {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           content:
-            `${emoji} Sanción registrada - <@${userId}>\n` +
+            `${emoji} Sanción registrada - <@${user.id}>\n` +
             `Tipo: ${infractionType}\n` +
             `Puntos de sanción: +${points}\n` +
             `Monedas perdidas: ${Math.floor(coinsLost)}\n` +

@@ -1,6 +1,6 @@
 import { InteractionResponseType } from 'discord.js';
 import { ErrorResponse } from './discord.types';
-
+import * as nacl from 'tweetnacl';
 
 export const createErrorResponse = (message: string): ErrorResponse => {
   return {

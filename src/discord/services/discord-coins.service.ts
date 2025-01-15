@@ -316,56 +316,35 @@ export class DiscordCoinsService {
     interactionPayload: APIInteraction,
     isTransfer: boolean,
   ): Promise<ValidateResult<InteractCoins>> {
-    const targetOption = commandData.options?.find(
-      (opt) => opt.name === 'usuario',
-    ) as any;
     const coinsOption = commandData.options?.find(
       (opt) => opt.name === 'cantidad',
-    ) as any;
-
-    if (!targetOption || !coinsOption) {
-      return createErrorResponse(
-        '❌ Hace falta especificar un usuario y la cantidad de monedas.',
-      );
+    ) as APIApplicationCommandInteractionDataNumberOption;
+    if (!coinsOption) {
+      return createErrorResponse('Falta la cantidad de monedas.');
     }
 
-    const sourceUserId = interactionPayload.member.user.id;
     const sourceUser = await this.userDiscordService.findOrCreate({
-      id: sourceUserId,
+      id: interactionPayload.member.user.id,
       username: interactionPayload.member.user.username,
       roles: interactionPayload.member.roles || [],
     });
 
-    const targetId = targetOption.value;
-    const resolvedUser = commandData.resolved?.users?.[targetId];
-    const resolvedMember = commandData.resolved?.members?.[targetId];
-
-    if (!resolvedUser || !resolvedMember) {
-      return createErrorResponse('❌ No se encontró al usuario especificado.');
+    const target = await this.userDiscordService.resolveInteractionUser(
+      commandData,
+      'usuario',
+    );
+    if (!target) {
+      return createErrorResponse('Usuario destino no encontrado.');
+    }
+    if (isTransfer && sourceUser.id === target.id) {
+      return createErrorResponse('No puedes transferirte monedas a ti mismo.');
     }
 
-    if (isTransfer && sourceUserId === targetId) {
-      return createErrorResponse(
-        '❌ No puedes transferirte monedas a ti mismo.',
-      );
-    }
-
-    try {
-      const targetUser = await this.userDiscordService.findOrCreate({
-        id: targetId,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-
-      return {
-        user: sourceUser,
-        target: targetUser,
-        coins: coinsOption.value,
-      };
-    } catch (error) {
-      console.error('Error al procesar usuario:', error);
-      return createErrorResponse('❌ Error al procesar el usuario.');
-    }
+    return {
+      user: sourceUser,
+      target,
+      coins: coinsOption.value,
+    };
   }
 
   private async resolveTargetUser(

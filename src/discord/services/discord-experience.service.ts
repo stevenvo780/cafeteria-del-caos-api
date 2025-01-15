@@ -214,50 +214,24 @@ export class DiscordExperienceService {
   private async validateExperienceCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<ValidateResult<InteractPoints>> {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === 'usuario',
-    ) as APIApplicationCommandInteractionDataUserOption;
-
     const amountOption = commandData.options?.find(
       (opt) => opt.name === 'cantidad',
     ) as APIApplicationCommandInteractionDataNumberOption;
-
-    if (!userOption || !amountOption) {
-      return createErrorResponse(
-        '❌ Error: Faltan parámetros necesarios para la operación.',
-      );
+    if (!amountOption) {
+      return createErrorResponse('Faltan datos para experiencia.');
     }
 
-    const userId = userOption.value;
-    const points = amountOption.value;
-
-    const resolvedUser = commandData.resolved?.users?.[userId] as APIUser;
-    const resolvedMember = commandData.resolved?.members?.[
-      userId
-    ] as APIInteractionDataResolvedGuildMember;
-
-    if (!resolvedUser || !resolvedMember) {
-      return createErrorResponse(
-        '❌ Error: No se pudo encontrar al usuario especificado.',
-      );
+    const user = await this.userDiscordService.resolveInteractionUser(
+      commandData,
+      'usuario',
+    );
+    if (!user) {
+      return createErrorResponse('Usuario no encontrado.');
     }
 
-    try {
-      const user = await this.userDiscordService.findOrCreate({
-        id: userId,
-        username: resolvedUser.username,
-        roles: resolvedMember.roles || [],
-      });
-
-      return {
-        user,
-        points,
-      };
-    } catch (error) {
-      console.error('Error al procesar usuario:', error);
-      return createErrorResponse(
-        '❌ Error al procesar el usuario: ' + error.message,
-      );
-    }
+    return {
+      user,
+      points: amountOption.value,
+    };
   }
 }
