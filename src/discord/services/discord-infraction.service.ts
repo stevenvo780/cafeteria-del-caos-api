@@ -18,13 +18,6 @@ export class DiscordInfractionService {
     private readonly kardexService: KardexService,
   ) {}
 
-  private calculateCoinPenalty(points: number, totalCoins: number): number {
-    const suma = Math.floor(points * 10);
-    const resta = Math.floor(100 / suma);
-    const monedas = Math.floor(totalCoins - resta);
-    return Math.max(0, monedas);
-  }
-
   async handleInfractionCommand(
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
@@ -139,5 +132,12 @@ export class DiscordInfractionService {
       [InfractionType.YELLOW]: '☢️',
     };
     return emojiMap[type] || '❓';
+  }
+
+  private calculateCoinPenalty(points: number, totalCoins: number): number {
+    const suma = Math.floor(points * 10);
+    const resta = Math.floor(100 / suma);
+    const monedas = Math.floor(totalCoins - resta);
+    return Math.max(0, monedas);
   }
 }

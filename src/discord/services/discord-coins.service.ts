@@ -26,6 +26,35 @@ export class DiscordCoinsService {
     private readonly productService: ProductService,
   ) {}
 
+  async handleCoinsCommand(
+    commandName: string,
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload?: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    switch (commandName) {
+      case 'saldo':
+        return await this.handleUserBalance(
+          commandData,
+          interactionPayload.member,
+        );
+      case 'top-monedas':
+        return await this.handleTopCoins();
+      case 'comprar':
+        return await this.handlePurchase(commandData, interactionPayload);
+      case 'dar-monedas':
+      case 'quitar-monedas':
+      case 'establecer-monedas':
+      case 'transferir-monedas':
+        return await this.handleUserCoins(
+          commandName,
+          commandData,
+          interactionPayload,
+        );
+      default:
+        return createErrorResponse('Comando de monedas no reconocido');
+    }
+  }
+
   async handleUserCoins(
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
@@ -279,35 +308,6 @@ export class DiscordCoinsService {
     } catch (error) {
       console.error('Error en la compra:', error);
       return createErrorResponse('❌ Error al procesar la compra.');
-    }
-  }
-
-  async handleCoinsCommand(
-    commandName: string,
-    commandData: APIChatInputApplicationCommandInteractionData,
-    interactionPayload?: APIInteraction,
-  ): Promise<DiscordInteractionResponse> {
-    switch (commandName) {
-      case 'saldo':
-        return await this.handleUserBalance(
-          commandData,
-          interactionPayload.member,
-        );
-      case 'top-monedas':
-        return await this.handleTopCoins();
-      case 'comprar':
-        return await this.handlePurchase(commandData, interactionPayload);
-      case 'dar-monedas':
-      case 'quitar-monedas':
-      case 'establecer-monedas':
-      case 'transferir-monedas':
-        return await this.handleUserCoins(
-          commandName,
-          commandData,
-          interactionPayload,
-        );
-      default:
-        return createErrorResponse('Comando de monedas no reconocido');
     }
   }
 
