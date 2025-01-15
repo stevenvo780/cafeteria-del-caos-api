@@ -282,6 +282,35 @@ export class DiscordCoinsService {
     }
   }
 
+  async handleCoinsCommand(
+    commandName: string,
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload?: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    switch (commandName) {
+      case 'saldo':
+        return await this.handleUserBalance(
+          commandData,
+          interactionPayload.member,
+        );
+      case 'top-monedas':
+        return await this.handleTopCoins();
+      case 'comprar':
+        return await this.handlePurchase(commandData, interactionPayload);
+      case 'dar-monedas':
+      case 'quitar-monedas':
+      case 'establecer-monedas':
+      case 'transferir-monedas':
+        return await this.handleUserCoins(
+          commandName,
+          commandData,
+          interactionPayload,
+        );
+      default:
+        return createErrorResponse('Comando de monedas no reconocido');
+    }
+  }
+
   private async validateCoinsCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,

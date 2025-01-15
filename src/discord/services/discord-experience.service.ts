@@ -24,6 +24,32 @@ export class DiscordExperienceService {
   async handleExperienceCommand(
     commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload?: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    switch (commandName) {
+      case 'experiencia':
+        return await this.handleUserExperience(
+          commandData,
+          interactionPayload.member,
+        );
+      case 'top-experiencia':
+        return await this.handleTopExperienceRanking();
+      case 'dar-experiencia':
+      case 'quitar-experiencia':
+      case 'establecer-experiencia':
+        return await this.handleExperienceModification(
+          commandName,
+          commandData,
+          interactionPayload,
+        );
+      default:
+        return createErrorResponse('Comando de experiencia no reconocido');
+    }
+  }
+
+  private async handleExperienceModification(
+    commandName: string,
+    commandData: APIChatInputApplicationCommandInteractionData,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     interaction: APIInteraction,
   ): Promise<DiscordInteractionResponse> {

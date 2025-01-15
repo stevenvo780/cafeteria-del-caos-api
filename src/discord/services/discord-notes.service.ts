@@ -12,7 +12,24 @@ import { DiscordInteractionResponse } from '../discord.types';
 export class DiscordNotesService {
   constructor(private readonly libraryService: LibraryService) {}
 
-  async handleCreateNote(
+  async handleNotesCommand(
+    commandName: string,
+    options: APIApplicationCommandInteractionDataOption[],
+    userId: string,
+    username: string,
+  ): Promise<DiscordInteractionResponse> {
+    switch (commandName) {
+      case 'crear-nota':
+        return await this.createNote(options, userId, username);
+      default:
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: { content: 'Comando de notas no reconocido.' },
+        };
+    }
+  }
+
+  private async createNote(
     options: APIApplicationCommandInteractionDataOption[],
     userId: string,
     username: string,

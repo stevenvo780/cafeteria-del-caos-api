@@ -56,68 +56,75 @@ export class DiscordService {
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
-    switch (commandData.name) {
-      case 'puntaje':
-        return await this.pointsService.handleUserScore(
-          commandData,
-          interactionPayload.member,
-        );
-      case 'saldo':
-        return await this.coinsService.handleUserBalance(
-          commandData,
-          interactionPayload.member,
-        );
-      case 'experiencia':
-        return await this.experienceService.handleUserExperience(
-          commandData,
-          interactionPayload.member,
-        );
-      case 'top-experiencia':
-        return await this.experienceService.handleTopExperienceRanking();
-      case 'dar-experiencia':
-      case 'quitar-experiencia':
-      case 'establecer-experiencia':
-        return await this.experienceService.handleExperienceCommand(
-          commandData.name,
-          commandData,
-          interactionPayload,
-        );
-      case 'crear-nota':
-        return await this.notesService.handleCreateNote(
-          commandData.options || [],
-          interactionPayload.member.user.id,
-          interactionPayload.member.user.username,
-        );
-      case 'top-monedas':
-        return await this.coinsService.handleTopCoins();
-      case 'añadir-puntos':
-      case 'quitar-puntos':
-      case 'establecer-puntos':
-        return await this.pointsService.handleUserPoints(
-          commandData.name,
-          commandData,
-        );
-      case 'dar-monedas':
-      case 'quitar-monedas':
-      case 'establecer-monedas':
-      case 'transferir-monedas':
-        return await this.coinsService.handleUserCoins(
-          commandData.name,
-          commandData,
-          interactionPayload,
-        );
-      case 'comprar':
-        return await this.coinsService.handlePurchase(
-          commandData,
-          interactionPayload,
-        );
-      case 'añadir-sancion':
-        return await this.infractionService.handleAddInfraction(commandData);
-      default:
-        return createErrorResponse(
-          `Comando "${commandData.name}" no reconocido.`,
-        );
+    const commandName = commandData.name;
+
+    // Agrupamos comandos por servicio
+    if (
+      [
+        'puntaje',
+        'añadir-puntos',
+        'quitar-puntos',
+        'establecer-puntos',
+      ].includes(commandName)
+    ) {
+      return this.pointsService.handlePointsCommand(
+        commandName,
+        commandData,
+        interactionPayload,
+      );
     }
+
+    if (
+      [
+        'saldo',
+        'top-monedas',
+        'dar-monedas',
+        'quitar-monedas',
+        'establecer-monedas',
+        'transferir-monedas',
+        'comprar',
+      ].includes(commandName)
+    ) {
+      return this.coinsService.handleCoinsCommand(
+        commandName,
+        commandData,
+        interactionPayload,
+      );
+    }
+
+    if (
+      [
+        'experiencia',
+        'top-experiencia',
+        'dar-experiencia',
+        'quitar-experiencia',
+        'establecer-experiencia',
+      ].includes(commandName)
+    ) {
+      return this.experienceService.handleExperienceCommand(
+        commandName,
+        commandData,
+        interactionPayload,
+      );
+    }
+
+    if (['crear-nota'].includes(commandName)) {
+      return this.notesService.handleNotesCommand(
+        commandName,
+        commandData.options || [],
+        interactionPayload.member.user.id,
+        interactionPayload.member.user.username,
+      );
+    }
+
+    if (['añadir-sancion', 'agregar-sancion'].includes(commandName)) {
+      return this.infractionService.handleInfractionCommand(
+        commandName,
+        commandData,
+      );
+    }
+
+    return createErrorResponse(`Comando "${commandName}" no reconocido.`);
   }
 
   verifyDiscordRequest(

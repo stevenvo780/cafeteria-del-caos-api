@@ -6,6 +6,7 @@ import {
   APIApplicationCommandInteractionDataUserOption,
   APIUser,
   APIInteractionDataResolvedGuildMember,
+  APIInteraction,
 } from 'discord.js';
 import { UserDiscordService } from '../../user-discord/user-discord.service';
 import {
@@ -136,6 +137,26 @@ export class DiscordPointsService {
       };
     } catch (error) {
       return createErrorResponse('Error al obtener el puntaje');
+    }
+  }
+
+  async handlePointsCommand(
+    commandName: string,
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload?: APIInteraction,
+  ): Promise<DiscordInteractionResponse> {
+    switch (commandName) {
+      case 'puntaje':
+        return await this.handleUserScore(
+          commandData,
+          interactionPayload.member,
+        );
+      case 'añadir-puntos':
+      case 'quitar-puntos':
+      case 'establecer-puntos':
+        return await this.handleUserPoints(commandName, commandData);
+      default:
+        return createErrorResponse('Comando de puntos no reconocido');
     }
   }
 }

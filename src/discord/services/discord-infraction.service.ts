@@ -25,7 +25,22 @@ export class DiscordInfractionService {
     return Math.max(0, monedas);
   }
 
-  async handleAddInfraction(
+  async handleInfractionCommand(
+    commandName: string,
+    commandData: APIChatInputApplicationCommandInteractionData,
+  ): Promise<DiscordInteractionResponse> {
+    switch (commandName) {
+      case 'agregar-sancion':
+        return await this.applyInfraction(commandData);
+      default:
+        return {
+          type: InteractionResponseType.ChannelMessageWithSource,
+          data: { content: 'Comando de sanción no reconocido.' },
+        };
+    }
+  }
+
+  private async applyInfraction(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<DiscordInteractionResponse> {
     const userOption = commandData.options?.find(
