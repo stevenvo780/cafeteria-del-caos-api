@@ -20,15 +20,6 @@ const CommonExperienceOptions = {
   MODIFY: [{ ...USER_OPTION, required: true }, EXPERIENCE_OPTION],
 } as const;
 
-export const ExperienceCommandOptions = {
-  [ExperienceCommands.GET_EXPERIENCE]: CommonExperienceOptions.VIEW,
-  [ExperienceCommands.TOP_EXPERIENCE]: [],
-  [ExperienceCommands.GIVE_EXPERIENCE]: CommonExperienceOptions.MODIFY,
-  [ExperienceCommands.REMOVE_EXPERIENCE]: CommonExperienceOptions.MODIFY,
-  [ExperienceCommands.SET_EXPERIENCE]: CommonExperienceOptions.MODIFY,
-} as const;
-
-// Descripciones de los comandos de experiencia
 export const ExperienceCommandData = {
   [ExperienceCommands.GET_EXPERIENCE]: {
     command: ExperienceCommands.GET_EXPERIENCE,
@@ -43,17 +34,17 @@ export const ExperienceCommandData = {
   [ExperienceCommands.GIVE_EXPERIENCE]: {
     command: ExperienceCommands.GIVE_EXPERIENCE,
     description: 'Da experiencia a un usuario',
-    options: CommonExperienceOptions.MODIFY,
+    options: CommonExperienceOptions.MODIFY, // Quitamos el array extra
   },
   [ExperienceCommands.REMOVE_EXPERIENCE]: {
     command: ExperienceCommands.REMOVE_EXPERIENCE,
     description: 'Quita experiencia a un usuario',
-    options: CommonExperienceOptions.MODIFY,
+    options: CommonExperienceOptions.MODIFY, // Quitamos el array extra
   },
   [ExperienceCommands.SET_EXPERIENCE]: {
     command: ExperienceCommands.SET_EXPERIENCE,
     description:
       'Establece una cantidad específica de experiencia a un usuario',
-    options: CommonExperienceOptions.MODIFY,
+    options: CommonExperienceOptions.MODIFY, // Quitamos el array extra
   },
 } as const;

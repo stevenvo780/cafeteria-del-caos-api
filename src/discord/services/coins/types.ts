@@ -31,16 +31,6 @@ const CommonCoinsOptions = {
   PURCHASE: [ARTICLE_OPTION, COINS_OPTION],
 } as const;
 
-export const CoinsCommandOptions = {
-  [CoinsCommands.GET_BALANCE]: CommonCoinsOptions.VIEW,
-  [CoinsCommands.TOP_COINS]: [],
-  [CoinsCommands.GIVE_COINS]: CommonCoinsOptions.MODIFY,
-  [CoinsCommands.REMOVE_COINS]: CommonCoinsOptions.MODIFY,
-  [CoinsCommands.SET_COINS]: CommonCoinsOptions.MODIFY,
-  [CoinsCommands.TRANSFER_COINS]: CommonCoinsOptions.MODIFY,
-  [CoinsCommands.PURCHASE]: CommonCoinsOptions.PURCHASE,
-} as const;
-
 const buildPurchaseOptions = async () => {
   try {
     const apiUrl = `${process.env.URL_BACKEND}/products`;
@@ -77,21 +67,40 @@ const buildPurchaseOptions = async () => {
   }
 };
 
-// Descripciones de los comandos de monedas
 export const CoinsCommandData = {
-  commands: Object.values(CoinsCommands) as string[],
-  descriptions: {
-    [CoinsCommands.GET_BALANCE]: 'Consulta tu balance de monedas del caos',
-    [CoinsCommands.TOP_COINS]: 'Muestra el top 10 de usuarios con más monedas',
-    [CoinsCommands.GIVE_COINS]: 'Da monedas a un usuario',
-    [CoinsCommands.REMOVE_COINS]: 'Quita monedas a un usuario',
-    [CoinsCommands.SET_COINS]:
-      'Establece una cantidad específica de monedas a un usuario',
-    [CoinsCommands.TRANSFER_COINS]: 'Transfiere monedas a otro usuario',
-    [CoinsCommands.PURCHASE]: 'Compra un artículo de la tienda',
+  [CoinsCommands.GET_BALANCE]: {
+    command: CoinsCommands.GET_BALANCE,
+    description: 'Consulta tu balance de monedas del caos',
+    options: CommonCoinsOptions.VIEW,
   },
-  options: {
-    ...CoinsCommandOptions,
-    [CoinsCommands.PURCHASE]: buildPurchaseOptions,
+  [CoinsCommands.TOP_COINS]: {
+    command: CoinsCommands.TOP_COINS,
+    description: 'Muestra el top 10 de usuarios con más monedas',
+    options: [],
+  },
+  [CoinsCommands.GIVE_COINS]: {
+    command: CoinsCommands.GIVE_COINS,
+    description: 'Da monedas a un usuario',
+    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+  },
+  [CoinsCommands.REMOVE_COINS]: {
+    command: CoinsCommands.REMOVE_COINS,
+    description: 'Quita monedas a un usuario',
+    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+  },
+  [CoinsCommands.SET_COINS]: {
+    command: CoinsCommands.SET_COINS,
+    description: 'Establece una cantidad específica de monedas a un usuario',
+    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+  },
+  [CoinsCommands.TRANSFER_COINS]: {
+    command: CoinsCommands.TRANSFER_COINS,
+    description: 'Transfiere monedas a otro usuario',
+    options: CommonCoinsOptions.MODIFY, // Quitamos el array extra
+  },
+  [CoinsCommands.PURCHASE]: {
+    command: CoinsCommands.PURCHASE,
+    description: 'Compra un artículo de la tienda',
+    options: buildPurchaseOptions,
   },
 } as const;

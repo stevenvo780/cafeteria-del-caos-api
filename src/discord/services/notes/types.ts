@@ -23,6 +23,6 @@ export const NotesCommandData = {
   [NotesCommands.CREATE_NOTE]: {
     command: NotesCommands.CREATE_NOTE,
     description: 'Crea una nota pública en la librería',
-    options: [NOTE_OPTIONS.TITLE, NOTE_OPTIONS.CONTENT],
+    options: [NOTE_OPTIONS.TITLE, NOTE_OPTIONS.CONTENT], // Este está bien porque son opciones directas
   },
 } as const;

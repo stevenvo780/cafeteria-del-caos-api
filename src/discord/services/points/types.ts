@@ -25,21 +25,21 @@ export const PointsCommandData = {
   [PointsCommands.GET_POINTS]: {
     command: PointsCommands.GET_POINTS,
     description: 'Consulta los puntos de penalización',
-    options: [CommonPointsOptions.VIEW],
+    options: CommonPointsOptions.VIEW, // Quitamos el array extra
   },
   [PointsCommands.ADD_POINTS]: {
     command: PointsCommands.ADD_POINTS,
     description: 'Añade puntos de penalización a un usuario',
-    options: [CommonPointsOptions.MODIFY],
+    options: CommonPointsOptions.MODIFY, // Quitamos el array extra
   },
   [PointsCommands.REMOVE_POINTS]: {
     command: PointsCommands.REMOVE_POINTS,
     description: 'Quita puntos de penalización a un usuario',
-    options: [CommonPointsOptions.MODIFY],
+    options: CommonPointsOptions.MODIFY, // Quitamos el array extra
   },
   [PointsCommands.SET_POINTS]: {
     command: PointsCommands.SET_POINTS,
     description: 'Establece una cantidad específica de puntos a un usuario',
-    options: [CommonPointsOptions.MODIFY],
+    options: CommonPointsOptions.MODIFY, // Quitamos el array extra
   },
 } as const;

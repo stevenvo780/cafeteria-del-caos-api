@@ -51,23 +51,10 @@ const CommonInfractionOptions = {
   REMOVE: [{ ...USER_OPTION, required: true }, ID_OPTION],
 } as const;
 
-export const InfractionCommandOptions = {
-  [InfractionCommands.ADD_INFRACTION]: CommonInfractionOptions.ADD,
-} as const;
-
-// Descripciones de los comandos de sanciones
 export const InfractionCommandData = {
   [InfractionCommands.ADD_INFRACTION]: {
     command: InfractionCommands.ADD_INFRACTION,
     description: 'Añade una sanción a un usuario',
-    options: [
-      {
-        ...USER_OPTION,
-        description: 'Usuario a sancionar',
-        required: true,
-      },
-      INFRACTION_OPTIONS.TYPE,
-      INFRACTION_OPTIONS.REASON,
-    ],
+    options: CommonInfractionOptions.ADD, // Quitamos el array extra
   },
 } as const;
