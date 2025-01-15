@@ -14,17 +14,10 @@ import {
   ValidateResult,
 } from '../../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../../discord.util';
-import {
-  DISCORD_COMMANDS,
-  CommandCategories,
-} from '../../discord-commands.config';
 import { ExperienceCommands } from './types';
 
 @Injectable()
 export class DiscordExperienceService {
-  private readonly commands =
-    DISCORD_COMMANDS[CommandCategories.EXPERIENCE].commands;
-
   constructor(private readonly userDiscordService: UserDiscordService) {}
 
   async handleExperienceCommand(

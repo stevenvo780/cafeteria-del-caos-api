@@ -30,15 +30,30 @@ export const ExperienceCommandOptions = {
 
 // Descripciones de los comandos de experiencia
 export const ExperienceCommandData = {
-  commands: Object.values(ExperienceCommands) as string[],
-  descriptions: {
-    [ExperienceCommands.GET_EXPERIENCE]: 'Consulta tu experiencia acumulada',
-    [ExperienceCommands.TOP_EXPERIENCE]:
-      'Muestra el top 10 de usuarios con más experiencia',
-    [ExperienceCommands.GIVE_EXPERIENCE]: 'Da experiencia a un usuario',
-    [ExperienceCommands.REMOVE_EXPERIENCE]: 'Quita experiencia a un usuario',
-    [ExperienceCommands.SET_EXPERIENCE]:
-      'Establece una cantidad específica de experiencia a un usuario',
+  [ExperienceCommands.GET_EXPERIENCE]: {
+    command: ExperienceCommands.GET_EXPERIENCE,
+    description: 'Consulta tu experiencia acumulada',
+    options: CommonExperienceOptions.VIEW,
   },
-  options: ExperienceCommandOptions,
+  [ExperienceCommands.TOP_EXPERIENCE]: {
+    command: ExperienceCommands.TOP_EXPERIENCE,
+    description: 'Muestra el top 10 de usuarios con más experiencia',
+    options: [],
+  },
+  [ExperienceCommands.GIVE_EXPERIENCE]: {
+    command: ExperienceCommands.GIVE_EXPERIENCE,
+    description: 'Da experiencia a un usuario',
+    options: CommonExperienceOptions.MODIFY,
+  },
+  [ExperienceCommands.REMOVE_EXPERIENCE]: {
+    command: ExperienceCommands.REMOVE_EXPERIENCE,
+    description: 'Quita experiencia a un usuario',
+    options: CommonExperienceOptions.MODIFY,
+  },
+  [ExperienceCommands.SET_EXPERIENCE]: {
+    command: ExperienceCommands.SET_EXPERIENCE,
+    description:
+      'Establece una cantidad específica de experiencia a un usuario',
+    options: CommonExperienceOptions.MODIFY,
+  },
 } as const;

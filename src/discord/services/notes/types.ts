@@ -19,15 +19,10 @@ const NOTE_OPTIONS = {
   },
 } as const;
 
-export const NotesCommandOptions = {
-  [NotesCommands.CREATE_NOTE]: [NOTE_OPTIONS.TITLE, NOTE_OPTIONS.CONTENT],
-} as const;
-
-// Descripciones de los comandos de notas
 export const NotesCommandData = {
-  commands: Object.values(NotesCommands) as string[],
-  descriptions: {
-    [NotesCommands.CREATE_NOTE]: 'Crea una nota pública en la librería',
+  [NotesCommands.CREATE_NOTE]: {
+    command: NotesCommands.CREATE_NOTE,
+    description: 'Crea una nota pública en la librería',
+    options: [NOTE_OPTIONS.TITLE, NOTE_OPTIONS.CONTENT],
   },
-  options: NotesCommandOptions,
 } as const;

@@ -16,17 +16,10 @@ import {
   ValidateResult,
 } from '../../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../../discord.util';
-import {
-  DISCORD_COMMANDS,
-  CommandCategories,
-} from '../../discord-commands.config';
 import { CoinsCommands } from './types';
 
 @Injectable()
 export class DiscordCoinsService {
-  private readonly commands =
-    DISCORD_COMMANDS[CommandCategories.COINS].commands;
-
   constructor(
     private readonly kardexService: KardexService,
     private readonly userDiscordService: UserDiscordService,

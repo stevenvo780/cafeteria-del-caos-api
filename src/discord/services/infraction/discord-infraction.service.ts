@@ -9,17 +9,10 @@ import { UserDiscordService } from '../../../user-discord/user-discord.service';
 import { createErrorResponse } from '../../discord.util';
 import { DiscordInteractionResponse } from '../../discord.types';
 import { KardexService } from 'src/kardex/kardex.service';
-import {
-  DISCORD_COMMANDS,
-  CommandCategories,
-} from '../../discord-commands.config';
 import { InfractionCommands } from './types';
 
 @Injectable()
 export class DiscordInfractionService {
-  private readonly commands =
-    DISCORD_COMMANDS[CommandCategories.INFRACTION].commands;
-
   constructor(
     private readonly userDiscordService: UserDiscordService,
     private readonly kardexService: KardexService,

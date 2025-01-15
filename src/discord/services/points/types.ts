@@ -15,27 +15,31 @@ const POINTS_OPTION = {
   min_value: 0,
   required: true,
 } as const;
+
 const CommonPointsOptions = {
   VIEW: [USER_OPTION],
   MODIFY: [{ ...USER_OPTION, required: true }, POINTS_OPTION],
 } as const;
 
-export const PointsCommandOptions = {
-  [PointsCommands.GET_POINTS]: CommonPointsOptions.VIEW,
-  [PointsCommands.ADD_POINTS]: CommonPointsOptions.MODIFY,
-  [PointsCommands.REMOVE_POINTS]: CommonPointsOptions.MODIFY,
-  [PointsCommands.SET_POINTS]: CommonPointsOptions.MODIFY,
-} as const;
-
-// Descripciones específicas de los comandos de puntos
 export const PointsCommandData = {
-  commands: Object.values(PointsCommands) as string[],
-  descriptions: {
-    [PointsCommands.GET_POINTS]: 'Consulta los puntos de penalización',
-    [PointsCommands.ADD_POINTS]: 'Añade puntos de penalización a un usuario',
-    [PointsCommands.REMOVE_POINTS]: 'Quita puntos de penalización a un usuario',
-    [PointsCommands.SET_POINTS]:
-      'Establece una cantidad específica de puntos a un usuario',
+  [PointsCommands.GET_POINTS]: {
+    command: PointsCommands.GET_POINTS,
+    description: 'Consulta los puntos de penalización',
+    options: [CommonPointsOptions.VIEW],
   },
-  options: PointsCommandOptions,
+  [PointsCommands.ADD_POINTS]: {
+    command: PointsCommands.ADD_POINTS,
+    description: 'Añade puntos de penalización a un usuario',
+    options: [CommonPointsOptions.MODIFY],
+  },
+  [PointsCommands.REMOVE_POINTS]: {
+    command: PointsCommands.REMOVE_POINTS,
+    description: 'Quita puntos de penalización a un usuario',
+    options: [CommonPointsOptions.MODIFY],
+  },
+  [PointsCommands.SET_POINTS]: {
+    command: PointsCommands.SET_POINTS,
+    description: 'Establece una cantidad específica de puntos a un usuario',
+    options: [CommonPointsOptions.MODIFY],
+  },
 } as const;

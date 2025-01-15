@@ -57,9 +57,17 @@ export const InfractionCommandOptions = {
 
 // Descripciones de los comandos de sanciones
 export const InfractionCommandData = {
-  commands: Object.values(InfractionCommands) as string[],
-  descriptions: {
-    [InfractionCommands.ADD_INFRACTION]: 'Añade una sanción a un usuario',
+  [InfractionCommands.ADD_INFRACTION]: {
+    command: InfractionCommands.ADD_INFRACTION,
+    description: 'Añade una sanción a un usuario',
+    options: [
+      {
+        ...USER_OPTION,
+        description: 'Usuario a sancionar',
+        required: true,
+      },
+      INFRACTION_OPTIONS.TYPE,
+      INFRACTION_OPTIONS.REASON,
+    ],
   },
-  options: InfractionCommandOptions,
 } as const;

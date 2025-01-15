@@ -8,17 +8,10 @@ import { LibraryService } from '../../../library/library.service';
 import { LibraryVisibility } from '../../../library/entities/library.entity';
 import { createErrorResponse } from '../../discord.util';
 import { DiscordInteractionResponse } from '../../discord.types';
-import {
-  DISCORD_COMMANDS,
-  CommandCategories,
-} from '../../discord-commands.config';
 import { NotesCommands } from './types';
 
 @Injectable()
 export class DiscordNotesService {
-  private readonly commands =
-    DISCORD_COMMANDS[CommandCategories.NOTES].commands;
-
   constructor(private readonly libraryService: LibraryService) {}
 
   async handleNotesCommand(

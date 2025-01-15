@@ -24,11 +24,11 @@ export const buildCommandsList = () => {
   const commands = [];
 
   for (const config of Object.values(DISCORD_COMMANDS)) {
-    for (const commandName of config.commands) {
+    for (const commandData of Object.values(config)) {
       commands.push({
-        name: commandName,
-        description: config.descriptions[commandName],
-        options: config.options[commandName] || [],
+        name: commandData.command,
+        description: commandData.description,
+        options: commandData.options || [],
       });
     }
   }
@@ -40,7 +40,7 @@ export const getCommandCategory = (
   commandName: string,
 ): CommandCategories | null => {
   for (const [category, config] of Object.entries(DISCORD_COMMANDS)) {
-    if (config.commands.includes(commandName)) {
+    if (Object.values(config).some((cmd) => cmd.command === commandName)) {
       return category as CommandCategories;
     }
   }
