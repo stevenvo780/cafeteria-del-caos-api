@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType } from 'discord.js';
-import { BaseCommandOptions } from '../../discord-commands.config';
+import { USER_OPTION } from '../../base-command-options';
 
 export enum PointsCommands {
   GET_POINTS = 'ver-puntos',
@@ -15,10 +15,9 @@ const POINTS_OPTION = {
   min_value: 0,
   required: true,
 } as const;
-console.log(BaseCommandOptions);
 const CommonPointsOptions = {
-  VIEW: [BaseCommandOptions.USER],
-  MODIFY: [{ ...BaseCommandOptions.USER, required: true }, POINTS_OPTION],
+  VIEW: [USER_OPTION],
+  MODIFY: [{ ...USER_OPTION, required: true }, POINTS_OPTION],
 } as const;
 
 export const PointsCommandOptions = {

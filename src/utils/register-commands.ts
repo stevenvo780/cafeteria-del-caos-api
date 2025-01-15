@@ -1,7 +1,10 @@
 import { REST, Routes } from 'discord.js';
 import { config } from 'dotenv';
+import * as path from 'path';
 import { buildCommandsList } from '../discord/discord-commands.config';
-config();
+
+// Configurar dotenv con la ruta correcta
+config({ path: path.resolve(__dirname, '../../.env') });
 
 export interface Product {
   id: number;
@@ -12,27 +15,35 @@ export interface Product {
   stock: number | null;
 }
 
-export async function registerDiscordCommands() {
-  const commands = buildCommandsList();
-
-  const token = process.env.DISCORD_BOT_TOKEN;
-  if (!token) {
-    throw new Error('DISCORD_BOT_TOKEN is not defined');
-  }
-
-  const rest = new REST({ version: '10' }).setToken(token);
-  const clientId = process.env.DISCORD_CLIENT_ID;
-  if (!clientId) {
-    throw new Error('DISCORD_CLIENT_ID is not defined');
-  }
-
+async function registerDiscordCommands() {
   try {
-    await rest.put(Routes.applicationCommands(clientId), { body: commands });
-    console.info('Commands registered successfully');
+    const commands = buildCommandsList();
+
+    const token = process.env.DISCORD_BOT_TOKEN;
+    const clientId = process.env.DISCORD_CLIENT_ID;
+
+    if (!token || !clientId) {
+      throw new Error(
+        'Las variables de entorno DISCORD_BOT_TOKEN o DISCORD_CLIENT_ID no están definidas',
+      );
+    }
+
+    const rest = new REST({ version: '10' }).setToken(token);
+
+    console.log('Iniciando registro de comandos...');
+    const result = await rest.put(Routes.applicationCommands(clientId), {
+      body: commands,
+    });
+    console.log('Comandos registrados exitosamente:', result);
   } catch (error) {
-    console.error('Error registering commands:', error);
-    throw error;
+    console.error('Error al registrar comandos:', error);
+    process.exit(1);
   }
 }
 
-registerDiscordCommands();
+// Solo ejecutar si es el archivo principal
+if (require.main === module) {
+  registerDiscordCommands().catch(console.error);
+}
+
+export { registerDiscordCommands };

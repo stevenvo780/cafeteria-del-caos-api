@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType } from 'discord.js';
-import { BaseCommandOptions } from '../../discord-commands.config';
+import { USER_OPTION, QUANTITY_OPTION } from '../../base-command-options';
 
 export enum CoinsCommands {
   GET_BALANCE = 'ver-balance',
@@ -12,7 +12,7 @@ export enum CoinsCommands {
 }
 
 const COINS_OPTION = {
-  ...BaseCommandOptions.QUANTITY,
+  ...QUANTITY_OPTION,
   name: 'cantidad',
   description: 'Cantidad de monedas',
   min_value: 1,
@@ -26,8 +26,8 @@ const ARTICLE_OPTION = {
 } as const;
 
 const CommonCoinsOptions = {
-  VIEW: [BaseCommandOptions.USER],
-  MODIFY: [{ ...BaseCommandOptions.USER, required: true }, COINS_OPTION],
+  VIEW: [USER_OPTION],
+  MODIFY: [{ ...USER_OPTION, required: true }, COINS_OPTION],
   PURCHASE: [ARTICLE_OPTION, COINS_OPTION],
 } as const;
 

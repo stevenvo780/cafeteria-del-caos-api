@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { DiscordService } from './discord.service';
 import { DiscordController } from './discord.controller';
-import { DiscordNotesService } from './services/discord-notes.service';
-import { DiscordPointsService } from './services/discord-points.service';
-import { DiscordCoinsService } from './services/discord-coins.service';
-import { DiscordExperienceService } from './services/discord-experience.service';
-import { DiscordInfractionService } from './services/discord-infraction.service';
+import { DiscordNotesService } from './services/notes/discord-notes.service';
+import { DiscordPointsService } from './services/points/discord-points.service';
+import { DiscordCoinsService } from './services/coins/discord-coins.service';
+import { DiscordExperienceService } from './services/experience/discord-experience.service';
+import { DiscordInfractionService } from './services/infraction/discord-infraction.service';
 import { ConfigModule } from '../config/config.module';
 import { LibraryModule } from '../library/library.module';
 import { UserModule } from '../user/user.module';

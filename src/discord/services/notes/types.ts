@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType } from 'discord.js';
-import { BaseCommandOptions } from '../../discord-commands.config';
+import { ID_OPTION, USER_OPTION } from '../../base-command-options';
 
 export enum NotesCommands {
   CREATE_NOTE = 'crear-nota',
@@ -26,12 +26,12 @@ const NOTE_OPTIONS = {
 export const NotesCommandOptions = {
   [NotesCommands.CREATE_NOTE]: [NOTE_OPTIONS.TITLE, NOTE_OPTIONS.CONTENT],
   [NotesCommands.EDIT_NOTE]: [
-    BaseCommandOptions.ID,
+    ID_OPTION,
     { ...NOTE_OPTIONS.TITLE, required: false },
     { ...NOTE_OPTIONS.CONTENT, required: false },
   ],
-  [NotesCommands.DELETE_NOTE]: [BaseCommandOptions.ID],
-  [NotesCommands.VIEW_NOTES]: [BaseCommandOptions.USER],
+  [NotesCommands.DELETE_NOTE]: [ID_OPTION],
+  [NotesCommands.VIEW_NOTES]: [USER_OPTION],
 } as const;
 
 // Descripciones de los comandos de notas

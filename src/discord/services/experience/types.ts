@@ -1,4 +1,4 @@
-import { BaseCommandOptions } from '../../discord-commands.config';
+import { QUANTITY_OPTION, USER_OPTION } from '../../base-command-options';
 
 export enum ExperienceCommands {
   GET_EXPERIENCE = 'get-experiencia',
@@ -9,15 +9,15 @@ export enum ExperienceCommands {
 }
 
 const EXPERIENCE_OPTION = {
-  ...BaseCommandOptions.QUANTITY,
+  ...QUANTITY_OPTION,
   name: 'cantidad',
   description: 'Cantidad de experiencia',
   min_value: 0,
 } as const;
 
 const CommonExperienceOptions = {
-  VIEW: [BaseCommandOptions.USER],
-  MODIFY: [{ ...BaseCommandOptions.USER, required: true }, EXPERIENCE_OPTION],
+  VIEW: [USER_OPTION],
+  MODIFY: [{ ...USER_OPTION, required: true }, EXPERIENCE_OPTION],
 } as const;
 
 export const ExperienceCommandOptions = {

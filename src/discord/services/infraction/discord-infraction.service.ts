@@ -31,7 +31,6 @@ export class DiscordInfractionService {
   ): Promise<DiscordInteractionResponse> {
     switch (commandName) {
       case InfractionCommands.ADD_INFRACTION:
-      case InfractionCommands.ADD_INFRACTION_ALT:
         return await this.applyInfraction(commandData);
       default:
         return {

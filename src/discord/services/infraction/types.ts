@@ -1,5 +1,5 @@
 import { ApplicationCommandOptionType } from 'discord.js';
-import { BaseCommandOptions } from '../../discord-commands.config';
+import { ID_OPTION, USER_OPTION } from '../../base-command-options';
 
 export enum InfractionCommands {
   ADD_INFRACTION = 'añadir-sancion',
@@ -43,17 +43,14 @@ const INFRACTION_OPTIONS = {
 const CommonInfractionOptions = {
   ADD: [
     {
-      ...BaseCommandOptions.USER,
+      ...USER_OPTION,
       description: 'Usuario a sancionar',
       required: true,
     },
     INFRACTION_OPTIONS.TYPE,
     INFRACTION_OPTIONS.REASON,
   ],
-  REMOVE: [
-    { ...BaseCommandOptions.USER, required: true },
-    BaseCommandOptions.ID,
-  ],
+  REMOVE: [{ ...USER_OPTION, required: true }, ID_OPTION],
 } as const;
 
 export const InfractionCommandOptions = {

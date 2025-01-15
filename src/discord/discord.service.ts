@@ -87,7 +87,6 @@ export class DiscordService {
       );
     }
     if (category === CommandCategories.NOTES) {
-      // ...existing code for notes...
       return this.notesService.handleNotesCommand(
         commandName,
         commandData.options || [],

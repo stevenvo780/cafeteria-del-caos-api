@@ -1,4 +1,3 @@
-import { ApplicationCommandOptionType } from 'discord.js';
 import { PointsCommandData } from './services/points/types';
 import { CoinsCommandData } from './services/coins/types';
 import { ExperienceCommandData } from './services/experience/types';
@@ -13,30 +12,6 @@ export enum CommandCategories {
   INFRACTION = 'infraction',
 }
 
-export const BaseCommandOptions = {
-  USER: {
-    name: 'usuario',
-    type: ApplicationCommandOptionType.User,
-    description: 'Usuario objetivo',
-    required: false,
-  },
-
-  ID: {
-    name: 'id',
-    type: ApplicationCommandOptionType.String,
-    description: 'ID del elemento',
-    required: true,
-  },
-
-  QUANTITY: {
-    name: 'cantidad',
-    type: ApplicationCommandOptionType.Integer,
-    description: 'Cantidad',
-    required: true,
-    min_value: 0,
-  },
-} as const;
-
 export const DISCORD_COMMANDS = {
   [CommandCategories.POINTS]: PointsCommandData,
   [CommandCategories.COINS]: CoinsCommandData,
@@ -48,12 +23,11 @@ export const DISCORD_COMMANDS = {
 export const buildCommandsList = () => {
   const commands = [];
 
-  for (const [category, config] of Object.entries(DISCORD_COMMANDS)) {
+  for (const config of Object.values(DISCORD_COMMANDS)) {
     for (const commandName of config.commands) {
       commands.push({
         name: commandName,
-        description:
-          config.descriptions[commandName] || `Comando de ${category}`,
+        description: config.descriptions[commandName],
         options: config.options[commandName] || [],
       });
     }
