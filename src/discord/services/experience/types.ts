@@ -1,7 +1,7 @@
 import { QUANTITY_OPTION, USER_OPTION } from '../../base-command-options';
 
 export enum ExperienceCommands {
-  GET_EXPERIENCE = 'get-experiencia',
+  GET_EXPERIENCE = 'ver-experiencia',
   TOP_EXPERIENCE = 'top-experiencia',
   GIVE_EXPERIENCE = 'dar-experiencia',
   REMOVE_EXPERIENCE = 'quitar-experiencia',

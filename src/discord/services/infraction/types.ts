@@ -3,8 +3,6 @@ import { ID_OPTION, USER_OPTION } from '../../base-command-options';
 
 export enum InfractionCommands {
   ADD_INFRACTION = 'añadir-sancion',
-  ADD_INFRACTION_ALT = 'añadir-sancion-alt',
-  REMOVE_INFRACTION = 'quitar-sancion',
 }
 
 const INFRACTION_OPTIONS = {
@@ -55,8 +53,6 @@ const CommonInfractionOptions = {
 
 export const InfractionCommandOptions = {
   [InfractionCommands.ADD_INFRACTION]: CommonInfractionOptions.ADD,
-  [InfractionCommands.ADD_INFRACTION_ALT]: CommonInfractionOptions.ADD,
-  [InfractionCommands.REMOVE_INFRACTION]: CommonInfractionOptions.REMOVE,
 } as const;
 
 // Descripciones de los comandos de sanciones
@@ -64,9 +60,6 @@ export const InfractionCommandData = {
   commands: Object.values(InfractionCommands) as string[],
   descriptions: {
     [InfractionCommands.ADD_INFRACTION]: 'Añade una sanción a un usuario',
-    [InfractionCommands.ADD_INFRACTION_ALT]:
-      'Añade una sanción a un usuario (alternativo)',
-    [InfractionCommands.REMOVE_INFRACTION]: 'Elimina una sanción',
   },
   options: InfractionCommandOptions,
 } as const;

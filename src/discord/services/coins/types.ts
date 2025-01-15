@@ -41,29 +41,45 @@ export const CoinsCommandOptions = {
   [CoinsCommands.PURCHASE]: CommonCoinsOptions.PURCHASE,
 } as const;
 
-// Función auxiliar para construir el comando de compra
-const buildPurchaseOptions = (productOptions: any[]) => [
-  {
-    name: 'articulo',
-    type: ApplicationCommandOptionType.String,
-    description: 'Artículo a comprar',
-    required: true,
-    choices: productOptions,
-  },
-  {
-    name: 'cantidad',
-    type: ApplicationCommandOptionType.Integer,
-    description: 'Cantidad a comprar',
-    required: true,
-    min_value: 1,
-  },
-];
+const buildPurchaseOptions = async () => {
+  try {
+    const apiUrl = `${process.env.URL_BACKEND}/products`;
+    const response = await fetch(apiUrl);
+    const data: any = await response.json();
+
+    if (!data.products || !Array.isArray(data.products)) {
+      throw new Error('Invalid products data format');
+    }
+
+    return [
+      {
+        name: 'articulo',
+        type: ApplicationCommandOptionType.String,
+        description: 'Artículo a comprar',
+        required: true,
+        choices: data.products.map((product) => ({
+          name: `${product.title} (${product.currentPrice} monedas)`,
+          value: product.id.toString(),
+        })),
+      },
+      {
+        name: 'cantidad',
+        type: ApplicationCommandOptionType.Integer,
+        description: 'Cantidad a comprar',
+        required: true,
+        min_value: 1,
+        max_value: 10,
+      },
+    ];
+  } catch (error) {
+    console.error('Error fetching purchase options:', error);
+    return CommonCoinsOptions.PURCHASE;
+  }
+};
 
 // Descripciones de los comandos de monedas
 export const CoinsCommandData = {
-  commands: Object.values(CoinsCommands).filter(
-    (cmd) => cmd !== CoinsCommands.PURCHASE,
-  ) as string[],
+  commands: Object.values(CoinsCommands) as string[],
   descriptions: {
     [CoinsCommands.GET_BALANCE]: 'Consulta tu balance de monedas del caos',
     [CoinsCommands.TOP_COINS]: 'Muestra el top 10 de usuarios con más monedas',
@@ -76,5 +92,6 @@ export const CoinsCommandData = {
   },
   options: {
     ...CoinsCommandOptions,
+    [CoinsCommands.PURCHASE]: buildPurchaseOptions,
   },
 } as const;
