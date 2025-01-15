@@ -26,7 +26,7 @@ export class DiscordCoinsService {
   ) {}
 
   async handleCoinsCommand(
-    commandName: CoinsCommands,
+    commandName: string,
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload?: APIInteraction,
   ): Promise<DiscordInteractionResponse> {

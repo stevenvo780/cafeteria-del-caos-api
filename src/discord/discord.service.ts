@@ -59,7 +59,6 @@ export class DiscordService {
     interactionPayload: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     const commandName = commandData.name;
-    // Identificamos la categoría
     const category = getCommandCategory(commandName);
     if (!category) {
       return createErrorResponse(`Comando "${commandName}" no reconocido.`);
