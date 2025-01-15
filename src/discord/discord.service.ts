@@ -13,10 +13,11 @@ import {
   getGuildMemberCount,
   getOnlineMemberCount,
 } from '../utils/discord-utils';
+import { createErrorResponse, verifyDiscordRequest } from './discord.util';
 import {
-  createErrorResponse,
-  verifyDiscordRequest,
-} from './discord.util';
+  CommandCategories,
+  getCommandCategory,
+} from './discord-commands.config';
 
 @Injectable()
 export class DiscordService {
@@ -58,58 +59,35 @@ export class DiscordService {
     interactionPayload: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     const commandName = commandData.name;
+    // Identificamos la categoría
+    const category = getCommandCategory(commandName);
+    if (!category) {
+      return createErrorResponse(`Comando "${commandName}" no reconocido.`);
+    }
 
-    // Agrupamos comandos por servicio
-    if (
-      [
-        'puntaje',
-        'añadir-puntos',
-        'quitar-puntos',
-        'establecer-puntos',
-      ].includes(commandName)
-    ) {
+    if (category === CommandCategories.POINTS) {
       return this.pointsService.handlePointsCommand(
         commandName,
         commandData,
         interactionPayload,
       );
     }
-
-    if (
-      [
-        'saldo',
-        'top-monedas',
-        'dar-monedas',
-        'quitar-monedas',
-        'establecer-monedas',
-        'transferir-monedas',
-        'comprar',
-      ].includes(commandName)
-    ) {
+    if (category === CommandCategories.COINS) {
       return this.coinsService.handleCoinsCommand(
         commandName,
         commandData,
         interactionPayload,
       );
     }
-
-    if (
-      [
-        'experiencia',
-        'top-experiencia',
-        'dar-experiencia',
-        'quitar-experiencia',
-        'establecer-experiencia',
-      ].includes(commandName)
-    ) {
+    if (category === CommandCategories.EXPERIENCE) {
       return this.experienceService.handleExperienceCommand(
         commandName,
         commandData,
         interactionPayload,
       );
     }
-
-    if (['crear-nota'].includes(commandName)) {
+    if (category === CommandCategories.NOTES) {
+      // ...existing code for notes...
       return this.notesService.handleNotesCommand(
         commandName,
         commandData.options || [],
@@ -117,8 +95,7 @@ export class DiscordService {
         interactionPayload.member.user.username,
       );
     }
-
-    if (['añadir-sancion', 'agregar-sancion'].includes(commandName)) {
+    if (category === CommandCategories.INFRACTION) {
       return this.infractionService.handleInfractionCommand(
         commandName,
         commandData,

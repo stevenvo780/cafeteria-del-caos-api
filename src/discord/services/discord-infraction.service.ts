@@ -9,9 +9,17 @@ import { UserDiscordService } from '../../user-discord/user-discord.service';
 import { createErrorResponse } from '../discord.util';
 import { DiscordInteractionResponse } from '../discord.types';
 import { KardexService } from 'src/kardex/kardex.service';
+import {
+  DISCORD_COMMANDS,
+  CommandCategories,
+  InfractionCommands,
+} from '../discord-commands.config';
 
 @Injectable()
 export class DiscordInfractionService {
+  private readonly commands =
+    DISCORD_COMMANDS[CommandCategories.INFRACTION].commands;
+
   constructor(
     private readonly userDiscordService: UserDiscordService,
     private readonly kardexService: KardexService,
@@ -22,7 +30,8 @@ export class DiscordInfractionService {
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<DiscordInteractionResponse> {
     switch (commandName) {
-      case 'agregar-sancion':
+      case InfractionCommands.ADD_INFRACTION:
+      case InfractionCommands.ADD_INFRACTION_ALT:
         return await this.applyInfraction(commandData);
       default:
         return {

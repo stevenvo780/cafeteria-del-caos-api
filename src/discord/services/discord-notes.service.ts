@@ -8,9 +8,17 @@ import { LibraryService } from '../../library/library.service';
 import { LibraryVisibility } from '../../library/entities/library.entity';
 import { createErrorResponse } from '../discord.util';
 import { DiscordInteractionResponse } from '../discord.types';
+import {
+  DISCORD_COMMANDS,
+  CommandCategories,
+  NotesCommands,
+} from '../discord-commands.config';
 
 @Injectable()
 export class DiscordNotesService {
+  private readonly commands =
+    DISCORD_COMMANDS[CommandCategories.NOTES].commands;
+
   constructor(private readonly libraryService: LibraryService) {}
 
   async handleNotesCommand(
@@ -20,7 +28,7 @@ export class DiscordNotesService {
     username: string,
   ): Promise<DiscordInteractionResponse> {
     switch (commandName) {
-      case 'crear-nota':
+      case NotesCommands.CREATE_NOTE:
         return await this.createNote(options, userId, username);
       default:
         return {

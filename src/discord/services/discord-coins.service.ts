@@ -16,9 +16,17 @@ import {
   ValidateResult,
 } from '../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../discord.util';
+import {
+  DISCORD_COMMANDS,
+  CommandCategories,
+  CoinsCommands,
+} from '../discord-commands.config';
 
 @Injectable()
 export class DiscordCoinsService {
+  private readonly commands =
+    DISCORD_COMMANDS[CommandCategories.COINS].commands;
+
   constructor(
     private readonly kardexService: KardexService,
     private readonly userDiscordService: UserDiscordService,
@@ -31,35 +39,50 @@ export class DiscordCoinsService {
     interactionPayload?: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     switch (commandName) {
-      case 'saldo':
+      case CoinsCommands.GET_BALANCE:
         return await this.handleUserBalance(
           commandData,
           interactionPayload.member,
         );
-      case 'top-monedas':
+      case CoinsCommands.TOP_COINS:
         return await this.handleTopCoins();
-      case 'comprar':
-        return await this.handlePurchase(commandData, interactionPayload);
-      case 'dar-monedas':
-      case 'quitar-monedas':
-      case 'establecer-monedas':
-      case 'transferir-monedas':
+      case CoinsCommands.GIVE_COINS:
         return await this.handleUserCoins(
-          commandName,
+          'dar',
           commandData,
           interactionPayload,
         );
+      case CoinsCommands.REMOVE_COINS:
+        return await this.handleUserCoins(
+          'quitar',
+          commandData,
+          interactionPayload,
+        );
+      case CoinsCommands.SET_COINS:
+        return await this.handleUserCoins(
+          'establecer',
+          commandData,
+          interactionPayload,
+        );
+      case CoinsCommands.TRANSFER_COINS:
+        return await this.handleUserCoins(
+          'transferir',
+          commandData,
+          interactionPayload,
+        );
+      case CoinsCommands.PURCHASE:
+        return await this.handlePurchase(commandData, interactionPayload);
       default:
         return createErrorResponse('Comando de monedas no reconocido');
     }
   }
 
-  async handleUserCoins(
-    commandName: string,
+  private async handleUserCoins(
+    action: string,
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
-    const isTransfer = commandName === 'transferir-monedas';
+    const isTransfer = action === 'transferir';
     const validation = await this.validateCoinsCommand(
       commandData,
       interactionPayload,
@@ -73,8 +96,8 @@ export class DiscordCoinsService {
     const { user: sourceUser, target, coins } = validation;
 
     try {
-      switch (commandName) {
-        case 'dar-monedas': {
+      switch (action) {
+        case 'dar': {
           const targetUser = target;
           if (!targetUser) {
             return createErrorResponse('❌ Usuario objetivo no encontrado.');
@@ -97,7 +120,7 @@ export class DiscordCoinsService {
             },
           };
         }
-        case 'quitar-monedas': {
+        case 'quitar': {
           await this.kardexService.removeCoins(
             target.id,
             coins,
@@ -113,7 +136,7 @@ export class DiscordCoinsService {
             },
           };
         }
-        case 'establecer-monedas': {
+        case 'establecer': {
           await this.kardexService.setCoins(
             target.id,
             coins,
@@ -129,7 +152,7 @@ export class DiscordCoinsService {
             },
           };
         }
-        case 'transferir-monedas': {
+        case 'transferir': {
           if (!target) {
             return createErrorResponse('❌ Falta el usuario de destino.');
           }

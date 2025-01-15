@@ -14,9 +14,17 @@ import {
   ValidateResult,
 } from '../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../discord.util';
+import {
+  DISCORD_COMMANDS,
+  CommandCategories,
+  PointsCommands,
+} from '../discord-commands.config';
 
 @Injectable()
 export class DiscordPointsService {
+  private readonly commands =
+    DISCORD_COMMANDS[CommandCategories.POINTS].commands;
+
   constructor(private readonly userDiscordService: UserDiscordService) {}
 
   async handlePointsCommand(
@@ -25,43 +33,37 @@ export class DiscordPointsService {
     interactionPayload?: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     switch (commandName) {
-      case 'puntaje':
+      case PointsCommands.GET_POINTS:
         return await this.handleUserScore(
           commandData,
           interactionPayload.member,
         );
-      case 'añadir-puntos':
-      case 'quitar-puntos':
-      case 'establecer-puntos':
-        return await this.handleUserPoints(commandName, commandData);
+      case PointsCommands.ADD_POINTS:
+        return await this.handleUserPoints('añadir', commandData);
+      case PointsCommands.REMOVE_POINTS:
+        return await this.handleUserPoints('quitar', commandData);
+      case PointsCommands.SET_POINTS:
+        return await this.handleUserPoints('establecer', commandData);
       default:
         return createErrorResponse('Comando de puntos no reconocido');
     }
   }
 
-  async handleUserPoints(
-    commandName: string,
+  private async handleUserPoints(
+    action: 'añadir' | 'quitar' | 'establecer',
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<DiscordInteractionResponse> {
     const validation = await this.validatePointsCommand(commandData);
     if ('isError' in validation) {
       return validation;
     }
-
-    switch (commandName) {
-      case 'añadir-puntos':
+    switch (action) {
+      case 'añadir':
         return await this.userDiscordService.handleAddPoints(validation);
-      case 'quitar-puntos':
+      case 'quitar':
         return await this.userDiscordService.handleRemovePoints(validation);
-      case 'establecer-puntos':
+      case 'establecer':
         return await this.userDiscordService.handleSetPoints(validation);
-      case 'puntaje':
-        return await this.handleUserScore(commandData, validation);
-      default:
-        return {
-          type: InteractionResponseType.ChannelMessageWithSource,
-          data: { content: 'Comando de puntos no reconocido' },
-        };
     }
   }
 

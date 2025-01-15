@@ -14,9 +14,17 @@ import {
   ValidateResult,
 } from '../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../discord.util';
+import {
+  DISCORD_COMMANDS,
+  CommandCategories,
+} from '../discord-commands.config';
+import { ExperienceCommands } from '../discord-commands.config';
 
 @Injectable()
 export class DiscordExperienceService {
+  private readonly commands =
+    DISCORD_COMMANDS[CommandCategories.EXPERIENCE].commands;
+
   constructor(private readonly userDiscordService: UserDiscordService) {}
 
   async handleExperienceCommand(
@@ -25,20 +33,21 @@ export class DiscordExperienceService {
     interactionPayload?: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     switch (commandName) {
-      case 'experiencia':
+      case ExperienceCommands.GET_EXPERIENCE:
         return await this.handleUserExperience(
           commandData,
           interactionPayload.member,
         );
-      case 'top-experiencia':
+      case ExperienceCommands.TOP_EXPERIENCE:
         return await this.handleTopExperienceRanking();
-      case 'dar-experiencia':
-      case 'quitar-experiencia':
-      case 'establecer-experiencia':
+      case ExperienceCommands.GIVE_EXPERIENCE:
+        return await this.handleExperienceModification('dar', commandData);
+      case ExperienceCommands.REMOVE_EXPERIENCE:
+        return await this.handleExperienceModification('quitar', commandData);
+      case ExperienceCommands.SET_EXPERIENCE:
         return await this.handleExperienceModification(
-          commandName,
+          'establecer',
           commandData,
-          interactionPayload,
         );
       default:
         return createErrorResponse('Comando de experiencia no reconocido');
@@ -46,10 +55,8 @@ export class DiscordExperienceService {
   }
 
   private async handleExperienceModification(
-    commandName: string,
+    action: 'dar' | 'quitar' | 'establecer',
     commandData: APIChatInputApplicationCommandInteractionData,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    interaction: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     const validation = await this.validateExperienceCommand(commandData);
     if ('isError' in validation) {
@@ -57,8 +64,8 @@ export class DiscordExperienceService {
     }
 
     try {
-      switch (commandName) {
-        case 'dar-experiencia': {
+      switch (action) {
+        case 'dar': {
           await this.userDiscordService.update(validation.user.id, {
             experience: (validation.user.experience || 0) + validation.points,
           });
@@ -73,7 +80,7 @@ export class DiscordExperienceService {
             },
           };
         }
-        case 'quitar-experiencia': {
+        case 'quitar': {
           const newExperience = Math.max(
             0,
             (validation.user.experience || 0) - validation.points,
@@ -88,7 +95,7 @@ export class DiscordExperienceService {
             },
           };
         }
-        case 'establecer-experiencia': {
+        case 'establecer': {
           const newExperience = Math.max(0, validation.points);
           await this.userDiscordService.update(validation.user.id, {
             experience: newExperience,
