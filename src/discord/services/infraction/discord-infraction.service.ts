@@ -10,12 +10,14 @@ import { createErrorResponse } from '../../discord.util';
 import { DiscordInteractionResponse } from '../../discord.types';
 import { KardexService } from 'src/kardex/kardex.service';
 import { InfractionCommands } from './types';
+import { ConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class DiscordInfractionService {
   constructor(
     private readonly userDiscordService: UserDiscordService,
     private readonly kardexService: KardexService,
+    private readonly configService: ConfigService,
   ) {}
 
   async handleInfractionCommand(
@@ -57,8 +59,17 @@ export class DiscordInfractionService {
     const infractionType = typeOption.value as InfractionType;
     const reason = reasonOption.value;
 
-    const points = this.getInfractionPoints(infractionType);
-    const emoji = this.getInfractionEmoji(infractionType);
+    const config = await this.configService.getConfig();
+    const infractionConfig = config.infractions.find(
+      (inf) => inf.value === infractionType,
+    );
+
+    if (!infractionConfig) {
+      return createErrorResponse('Tipo de sanción no válido.');
+    }
+
+    const points = infractionConfig.points;
+    const emoji = infractionConfig.emoji;
 
     try {
       await this.userDiscordService.addPenaltyPoints(user.id, points);
@@ -96,26 +107,6 @@ export class DiscordInfractionService {
       console.error('Error al aplicar sanción:', error);
       return createErrorResponse('Error al procesar la sanción.');
     }
-  }
-
-  private getInfractionPoints(type: InfractionType): number {
-    const pointsMap = {
-      [InfractionType.BLACK]: 10,
-      [InfractionType.RED]: 5,
-      [InfractionType.ORANGE]: 3,
-      [InfractionType.YELLOW]: 2,
-    };
-    return pointsMap[type] || 0;
-  }
-
-  private getInfractionEmoji(type: InfractionType): string {
-    const emojiMap = {
-      [InfractionType.BLACK]: '◼️',
-      [InfractionType.RED]: '♦️',
-      [InfractionType.ORANGE]: '🔶',
-      [InfractionType.YELLOW]: '☢️',
-    };
-    return emojiMap[type] || '❓';
   }
 
   private calculateCoinPenalty(points: number, totalCoins: number): number {

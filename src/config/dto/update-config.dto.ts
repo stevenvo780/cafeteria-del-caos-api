@@ -32,6 +32,7 @@ export class UpdateConfigDto extends PartialType(CreateConfigDto) {
         value: 'string',
         points: 'number',
         description: 'string',
+        emoji: 'string',
       },
     ],
   })
@@ -40,5 +41,6 @@ export class UpdateConfigDto extends PartialType(CreateConfigDto) {
     value: string;
     points: number;
     description: string;
+    emoji: string;
   }[];
 }

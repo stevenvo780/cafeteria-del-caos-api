@@ -44,10 +44,32 @@ export class ConfigService {
     defaultConfig.watchedForums = [];
     defaultConfig.infractions = [
       {
-        name: '◼️ amarillo - Infracción leve',
+        name: 'Negro - Infracción muy grave',
         value: 'BLACK',
         points: 10,
+        emoji: '◼️',
+        description: 'Infracciones muy graves',
+      },
+      {
+        name: 'Rojo - Infracción grave',
+        value: 'RED',
+        points: 5,
+        emoji: '♦️',
         description: 'Infracciones graves',
+      },
+      {
+        name: 'Naranja - Infracción moderada',
+        value: 'ORANGE',
+        points: 3,
+        emoji: '🔶',
+        description: 'Infracciones moderadas',
+      },
+      {
+        name: 'Amarillo - Infracción leve',
+        value: 'YELLOW',
+        points: 2,
+        emoji: '☢️',
+        description: 'Infracciones leves',
       },
     ];
     return this.configRepository.save(defaultConfig);

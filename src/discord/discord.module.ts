@@ -8,7 +8,6 @@ import { DiscordExperienceService } from './services/experience/discord-experien
 import { DiscordInfractionService } from './services/infraction/discord-infraction.service';
 import { ConfigModule } from '../config/config.module';
 import { LibraryModule } from '../library/library.module';
-import { UserModule } from '../user/user.module';
 import { UserDiscordModule } from '../user-discord/user-discord.module';
 import { KardexModule } from '../kardex/kardex.module';
 import { ProductModule } from '../product/product.module';
@@ -17,7 +16,6 @@ import { ProductModule } from '../product/product.module';
   imports: [
     ConfigModule,
     LibraryModule,
-    UserModule,
     UserDiscordModule,
     KardexModule,
     ProductModule,

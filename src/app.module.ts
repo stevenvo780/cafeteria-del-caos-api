@@ -21,6 +21,7 @@ import { UserDiscordModule } from './user-discord/user-discord.module';
 import { destroyDiscordClient } from './utils/discord-utils';
 import { typeOrmConfig } from './config/typeorm.config';
 import { KardexModule } from './kardex/kardex.module';
+import { DiscordModule } from './discord/discord.module';
 
 @Module({
   imports: [
@@ -33,7 +34,7 @@ import { KardexModule } from './kardex/kardex.module';
     LibraryModule,
     TemplateModule,
     LikeModule,
-    //DiscordModule,
+    DiscordModule,
     UserDiscordModule,
     KardexModule,
   ],

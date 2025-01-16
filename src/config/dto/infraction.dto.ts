@@ -29,6 +29,14 @@ export class InfractionDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
+    description: 'Emoji para representar la infracción',
+    example: '🚫',
+  })
+  emoji: string;
+
+  @IsNotEmpty()
+  @IsString()
+  @ApiProperty({
     description: 'Descripción de la infracción',
     example: 'Infracciones graves',
   })
