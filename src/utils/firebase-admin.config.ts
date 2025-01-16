@@ -1,5 +1,6 @@
 import * as dotenv from 'dotenv';
 import admin from 'firebase-admin';
+import { BotConfig } from './types';
 
 dotenv.config();
 
@@ -16,13 +17,13 @@ if (!admin.apps.length) {
   });
 }
 
-export async function getFirebaseConfig(): Promise<any> {
+export async function getFirebaseConfig(): Promise<BotConfig> {
   const db = admin.database();
   const snapshot = await db.ref('config').once('value');
   return snapshot.val() || null;
 }
 
-export async function updateFirebaseConfig(updates: any): Promise<void> {
+export async function updateFirebaseConfig(updates: BotConfig): Promise<void> {
   const db = admin.database();
   await db.ref('config').update(updates);
 }

@@ -13,6 +13,7 @@ import {
 } from '@nestjs/swagger';
 import { Config } from './entities/config.entity';
 import { exec } from 'child_process';
+import { BotConfig } from 'src/utils/types';
 
 @ApiTags('config')
 @Controller('config')
@@ -129,7 +130,7 @@ export class ConfigController {
     description: 'Configuración de Firebase obtenida correctamente',
     type: Object,
   })
-  async getFirebaseConfig(): Promise<any> {
+  async getFirebaseConfig(): Promise<BotConfig> {
     return this.configService.getFirebaseConfig();
   }
 

@@ -5,6 +5,7 @@ import { Config } from './entities/config.entity';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { getFirebaseConfig, updateFirebaseConfig } from '../utils/firebase-admin.config';
+import { BotConfig } from 'src/utils/types';
 
 @Injectable()
 export class ConfigService {
@@ -130,11 +131,11 @@ export class ConfigService {
     return config.infractions;
   }
 
-  async getFirebaseConfig(): Promise<any> {
+  async getFirebaseConfig(): Promise<BotConfig> {
     return await getFirebaseConfig();
   }
 
-  async updateFirebaseConfigObject(updates: any): Promise<void> {
+  async updateFirebaseConfigObject(updates: BotConfig): Promise<void> {
     await updateFirebaseConfig(updates);
   }
 }
