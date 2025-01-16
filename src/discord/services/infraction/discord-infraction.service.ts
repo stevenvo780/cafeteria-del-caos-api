@@ -6,7 +6,8 @@ import {
   APIApplicationCommandInteractionDataSubcommandOption,
   APIApplicationCommandInteractionDataNumberOption,
   APIApplicationCommandInteractionDataStringOption,
-  ApplicationCommandOptionType
+  ApplicationCommandOptionType,
+  APIApplicationCommandInteractionDataOption
 } from 'discord.js'
 import { UserDiscordService } from '../../../user-discord/user-discord.service'
 import { createErrorResponse } from '../../discord.util'
@@ -52,57 +53,70 @@ export class DiscordInfractionService {
   private async handleAddInfraction(
     commandData: APIChatInputApplicationCommandInteractionData
   ): Promise<DiscordInteractionResponse> {
-    const subcommand = commandData.options?.[0] as APIApplicationCommandInteractionDataSubcommandOption;
-    if (!subcommand?.options) return createErrorResponse('Opciones no encontradas.');
-
-    const user = await this.userDiscordService.resolveInteractionUser(commandData)
-    if (!user) {
-      return createErrorResponse('Usuario no encontrado.')
-    }
-
-    const typeOption = subcommand.options.find(
-      opt => opt.name === INFRACTION_TYPE_OPTION.name
-    ) as APIApplicationCommandInteractionDataStringOption;
-    const reasonOption = subcommand.options.find(
-      opt => opt.name === INFRACTION_REASON_OPTION.name
-    ) as APIApplicationCommandInteractionDataStringOption;
-    const durationOption = subcommand.options.find(
-      opt => opt.name === INFRACTION_DURATION_OPTION.name
-    ) as APIApplicationCommandInteractionDataNumberOption;
-    const roleOption = subcommand.options.find(
-      opt => opt.name === INFRACTION_ROLE_OPTION.name
-    ) as APIApplicationCommandInteractionDataStringOption;
-
-    if (!typeOption || !reasonOption) {
-      return createErrorResponse('Faltan parámetros para la sanción.')
-    }
-
-    const config = await this.configService.getConfig()
-    const infractionConfig = config.infractions.find(
-      inf => inf.value === typeOption.value
-    )
-
-    const maxInfractionPoints = Math.max(...config.infractions.map(inf => inf.points))
-
-    if (!infractionConfig) {
-      return createErrorResponse('Tipo de sanción no válido.')
-    }
-
-    const client = await getDiscordClient()
-    const guild = client.guilds.cache.get(process.env.DISCORD_GUILD_ID!)
-    const member = guild?.members.cache.get(user.id)
-
-    if (member && durationOption?.value) {
-      const durationMs = Number(durationOption.value) * 60000
-      await member.timeout(durationMs, `Muteo: ${reasonOption.value}`)
-    }
-
-    if (member && roleOption?.value) {
-      await member.roles.add(roleOption.value, `Sanción: ${reasonOption.value}`)
-    }
-
     try {
-      await this.userDiscordService.addPenaltyPoints(user.id, infractionConfig.points)
+      const subcommandOption = commandData.options?.[0] as APIApplicationCommandInteractionDataSubcommandOption;
+      if (!subcommandOption || subcommandOption.type !== ApplicationCommandOptionType.Subcommand) {
+        return createErrorResponse('Comando incompleto.');
+      }
+  
+      const options = subcommandOption.options || [];
+  
+      const userOption = options.find(opt => opt.name === USER_OPTION.name);
+      if (!userOption) {
+        return createErrorResponse('Usuario no especificado.');
+      }
+  
+      const user = await this.userDiscordService.findOne(userOption.value as string);
+      if (!user) {
+        return createErrorResponse('Usuario no encontrado.');
+      }
+  
+      const typeOption = options.find(
+        opt => opt.name === INFRACTION_TYPE_OPTION.name
+      ) as APIApplicationCommandInteractionDataStringOption;
+      const reasonOption = options.find(
+        opt => opt.name === INFRACTION_REASON_OPTION.name
+      ) as APIApplicationCommandInteractionDataStringOption;
+  
+      if (!typeOption?.value || !reasonOption?.value) {
+        return createErrorResponse('Tipo de sanción y razón son obligatorios.');
+      }
+  
+      const durationOption = options.find(
+        opt => opt.name === INFRACTION_DURATION_OPTION.name
+      ) as APIApplicationCommandInteractionDataNumberOption | undefined;
+      const roleOption = options.find(
+        opt => opt.name === INFRACTION_ROLE_OPTION.name
+      ) as APIApplicationCommandInteractionDataStringOption | undefined;
+  
+      const config = await this.configService.getConfig();
+      const infractionConfig = config.infractions.find(
+        inf => inf.value === typeOption.value
+      );
+  
+      if (!infractionConfig) {
+        return createErrorResponse('Tipo de sanción no válido.');
+      }
+  
+      const maxInfractionPoints = Math.max(...config.infractions.map(inf => inf.points));
+  
+      const client = await getDiscordClient();
+      const guild = client.guilds.cache.get(process.env.DISCORD_GUILD_ID!);
+      const member = guild?.members.cache.get(user.id);
+  
+      if (!member) {
+        return createErrorResponse('No se pudo encontrar al usuario en el servidor.');
+      }
+  
+      if (durationOption?.value) {
+        const durationMs = Number(durationOption.value) * 60000;
+        await member.timeout(durationMs, `Muteo: ${reasonOption.value}`);
+      }
+  
+      if (roleOption?.value) {
+        await member.roles.add(roleOption.value, `Sanción: ${reasonOption.value}`);
+      }
+  
       const currentBalance = await this.kardexService.getUserLastBalance(user.id)
       const newBalance = this.calculateCoinPenalty(infractionConfig.points, currentBalance)
       const coinsLost = currentBalance - newBalance
