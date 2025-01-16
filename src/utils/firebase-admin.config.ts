@@ -12,7 +12,19 @@ if (!admin.apps.length) {
         ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
         : undefined,
     }),
+    databaseURL: process.env.FIREBASE_DATABASE_URL
   });
+}
+
+export async function getFirebaseConfig(): Promise<any> {
+  const db = admin.database();
+  const snapshot = await db.ref('config').once('value');
+  return snapshot.val() || null;
+}
+
+export async function updateFirebaseConfig(updates: any): Promise<void> {
+  const db = admin.database();
+  await db.ref('config').update(updates);
 }
 
 export default admin;

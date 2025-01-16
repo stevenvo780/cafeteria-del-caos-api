@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Config } from './entities/config.entity';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
+import { getFirebaseConfig, updateFirebaseConfig } from '../utils/firebase-admin.config';
 
 @Injectable()
 export class ConfigService {
@@ -127,5 +128,13 @@ export class ConfigService {
   async getInfractions(): Promise<any[]> {
     const config = await this.getConfig();
     return config.infractions;
+  }
+
+  async getFirebaseConfig(): Promise<any> {
+    return await getFirebaseConfig();
+  }
+
+  async updateFirebaseConfigObject(updates: any): Promise<void> {
+    await updateFirebaseConfig(updates);
   }
 }

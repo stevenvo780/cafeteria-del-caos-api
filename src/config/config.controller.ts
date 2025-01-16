@@ -119,4 +119,30 @@ export class ConfigController {
   async getInfractions(): Promise<Infraction[]> {
     return this.configService.getInfractions();
   }
+
+  @Get('firebase')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Obtener la configuración de Firebase' })
+  @ApiOkResponse({
+    description: 'Configuración de Firebase obtenida correctamente',
+    type: Object,
+  })
+  async getFirebaseConfig(): Promise<any> {
+    return this.configService.getFirebaseConfig();
+  }
+
+  @Patch('firebase')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Actualizar la configuración de Firebase' })
+  @ApiOkResponse({
+    description: 'Configuración de Firebase actualizada correctamente',
+    type: Object,
+  })
+  async updateFirebaseConfig(@Body() updates: any): Promise<void> {
+    await this.configService.updateFirebaseConfigObject(updates);
+  }
 }

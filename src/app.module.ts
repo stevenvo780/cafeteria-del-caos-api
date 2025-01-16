@@ -19,7 +19,7 @@ import { TemplateModule } from './template/template.module';
 import { LikeModule } from './like/like.module';
 import { UserDiscordModule } from './user-discord/user-discord.module';
 import { destroyDiscordClient } from './utils/discord-utils';
-import { typeOrmConfig } from './config/typeorm.config';
+import { typeOrmConfig } from './utils/typeorm.config';
 import { KardexModule } from './kardex/kardex.module';
 import { DiscordModule } from './discord/discord.module';
 
