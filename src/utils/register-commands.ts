@@ -17,7 +17,7 @@ export interface Product {
 
 async function registerDiscordCommands() {
   try {
-    const commands = await buildCommandsList(); // Notar el await aquí
+    const commands = await buildCommandsList();
 
     const token = process.env.DISCORD_BOT_TOKEN;
     const clientId = process.env.DISCORD_CLIENT_ID;
@@ -31,10 +31,10 @@ async function registerDiscordCommands() {
     const rest = new REST({ version: '10' }).setToken(token);
 
     console.log('Iniciando registro de comandos...');
-    const result = await rest.put(Routes.applicationCommands(clientId), {
+    await rest.put(Routes.applicationCommands(clientId), {
       body: commands,
     });
-    console.log('Comandos registrados exitosamente:', result);
+    console.log('Comandos registrados exitosamente');
   } catch (error) {
     console.error('Error al registrar comandos:', error);
     process.exit(1);
