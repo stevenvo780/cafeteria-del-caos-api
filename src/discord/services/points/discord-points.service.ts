@@ -18,7 +18,7 @@ import { USER_OPTION } from '../base-command-options';
 
 @Injectable()
 export class DiscordPointsService {
-  constructor(private readonly userDiscordService: UserDiscordService) {}
+  constructor(private readonly userDiscordService: UserDiscordService) { }
 
   async handlePointsCommand(
     commandName: string,
@@ -153,7 +153,6 @@ export class DiscordPointsService {
 
     const user = await this.userDiscordService.resolveInteractionUser(
       commandData,
-      USER_OPTION.name,
     );
     if (!user) {
       return createErrorResponse('Usuario no encontrado.');

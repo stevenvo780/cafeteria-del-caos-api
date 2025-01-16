@@ -19,7 +19,7 @@ import { USER_OPTION } from '../base-command-options';
 
 @Injectable()
 export class DiscordExperienceService {
-  constructor(private readonly userDiscordService: UserDiscordService) {}
+  constructor(private readonly userDiscordService: UserDiscordService) { }
 
   async handleExperienceCommand(
     commandName: string,
@@ -141,12 +141,10 @@ export class DiscordExperienceService {
           : '';
 
       const message = userOption
-        ? `✨ ${targetUser.username} tiene ${
-            targetUser.experience || 0
-          } puntos de experiencia!${rankText}`
-        : `✨ Tienes ${
-            targetUser.experience || 0
-          } puntos de experiencia!${rankText}`;
+        ? `✨ ${targetUser.username} tiene ${targetUser.experience || 0
+        } puntos de experiencia!${rankText}`
+        : `✨ Tienes ${targetUser.experience || 0
+        } puntos de experiencia!${rankText}`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
@@ -205,7 +203,6 @@ export class DiscordExperienceService {
 
     const user = await this.userDiscordService.resolveInteractionUser(
       commandData,
-      USER_OPTION.name,
     );
     if (!user) {
       return createErrorResponse('Usuario no encontrado.');

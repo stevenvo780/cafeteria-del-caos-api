@@ -13,6 +13,7 @@ import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 import { KardexService } from '../kardex/kardex.service';
 import { createErrorResponse } from '../discord/discord.util';
+import { USER_OPTION } from 'src/discord/services/base-command-options';
 
 @Injectable()
 export class UserDiscordService {
@@ -400,11 +401,9 @@ export class UserDiscordService {
 
   async resolveInteractionUser(
     commandData: APIChatInputApplicationCommandInteractionData,
-    optionName: string,
-    fallbackMember?: any,
   ): Promise<UserDiscord | null> {
     const userOption = commandData.options?.find(
-      (opt) => opt.name === optionName,
+      (opt) => opt.name === USER_OPTION.name,
     ) as APIApplicationCommandInteractionDataUserOption;
 
     if (
@@ -422,14 +421,6 @@ export class UserDiscordService {
           roles: resolvedMember.roles || [],
         });
       }
-    }
-
-    if (fallbackMember?.user) {
-      return await this.findOrCreate({
-        id: fallbackMember.user.id,
-        username: fallbackMember.user.username,
-        roles: fallbackMember.roles || [],
-      });
     }
 
     return null;

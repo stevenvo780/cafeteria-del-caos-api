@@ -55,7 +55,7 @@ export class DiscordInfractionService {
     const subcommand = commandData.options?.[0] as APIApplicationCommandInteractionDataSubcommandOption
     if (!subcommand) return createErrorResponse('Subcomando no encontrado.')
 
-    const user = await this.userDiscordService.resolveInteractionUser(commandData, USER_OPTION.name)
+    const user = await this.userDiscordService.resolveInteractionUser(commandData)
     if (!user) {
       return createErrorResponse('Usuario no encontrado.')
     }

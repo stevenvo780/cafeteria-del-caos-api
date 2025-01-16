@@ -79,21 +79,21 @@ export const INFRACTION_REASON_OPTION = {
   type: ApplicationCommandOptionType.String,
   description: 'Razón de la sanción',
   required: true
-} as const
+}
 
 export const INFRACTION_ROLE_OPTION = {
   name: 'rol',
   type: ApplicationCommandOptionType.String,
   description: 'Rol a asignar',
-  required: false
-} as const
+  required: true
+}
 
 export const INFRACTION_DURATION_OPTION = {
   name: 'duracion',
   type: ApplicationCommandOptionType.Integer,
   description: 'Tiempo (en minutos)',
-  required: false
-} as const
+  required: true
+}
 
 export const InfractionCommandData = {
   [InfractionCommands.ADD_INFRACTION]: {
@@ -101,4 +101,4 @@ export const InfractionCommandData = {
     description: 'Aplica una sanción a un usuario',
     options: buildPurchaseOptions
   }
-} as const
+}
