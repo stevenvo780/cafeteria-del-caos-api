@@ -123,4 +123,9 @@ export class ConfigService {
     const config = await this.getConfig();
     return config.watchedForums;
   }
+
+  async getInfractions(): Promise<any[]> {
+    const config = await this.getConfig();
+    return config.infractions;
+  }
 }

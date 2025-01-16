@@ -1,6 +1,6 @@
 import { Controller, Get, Patch, Body, UseGuards } from '@nestjs/common';
 import { ConfigService } from './config.service';
-import { UpdateConfigDto } from './dto/update-config.dto';
+import { Infraction, UpdateConfigDto } from './dto/update-config.dto';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -108,5 +108,15 @@ export class ConfigController {
       console.error('Error al registrar comandos:', error);
     }
     return updatedConfig;
+  }
+
+  @Get('infractions')
+  @ApiOperation({ summary: 'Obtener las infracciones' })
+  @ApiOkResponse({
+    description: 'Lista de infracciones',
+    isArray: true,
+  })
+  async getInfractions(): Promise<Infraction[]> {
+    return this.configService.getInfractions();
   }
 }

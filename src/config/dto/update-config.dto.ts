@@ -3,6 +3,14 @@ import { CreateConfigDto } from './create-config.dto';
 import { IsOptional, IsArray, IsString } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
+export interface Infraction {
+  name: string;
+  value: string;
+  points: number;
+  emoji: string;
+  description: string;
+}
+
 export class UpdateConfigDto extends PartialType(CreateConfigDto) {
   @IsOptional()
   @IsArray()
@@ -24,23 +32,5 @@ export class UpdateConfigDto extends PartialType(CreateConfigDto) {
 
   @IsOptional()
   @IsArray()
-  @ApiPropertyOptional({
-    description: 'Lista de infracciones',
-    type: [
-      {
-        name: 'string',
-        value: 'string',
-        points: 'number',
-        description: 'string',
-        emoji: 'string',
-      },
-    ],
-  })
-  infractions?: {
-    name: string;
-    value: string;
-    points: number;
-    description: string;
-    emoji: string;
-  }[];
+  infractions?: Infraction[];
 }
