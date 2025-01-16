@@ -14,6 +14,7 @@ import {
 import { Config } from './entities/config.entity';
 import { exec } from 'child_process';
 import { BotConfig } from 'src/utils/types';
+import { XpRoleDto } from './dto/xp-role.dto';
 
 @ApiTags('config')
 @Controller('config')
@@ -145,5 +146,25 @@ export class ConfigController {
   })
   async updateFirebaseConfig(@Body() updates: any): Promise<void> {
     await this.configService.updateFirebaseConfigObject(updates);
+  }
+
+  @Get('xp-roles')
+  @ApiOperation({ summary: 'Obtener los roles de XP' })
+  @ApiOkResponse({
+    description: 'Roles de XP obtenidos correctamente',
+    type: [XpRoleDto],
+  })
+  async getXpRoles(): Promise<XpRoleDto[]> {
+    return this.configService.getXpRoles();
+  }
+
+  @Patch('xp-roles')
+  @ApiOperation({ summary: 'Actualizar los roles de XP' })
+  @ApiOkResponse({
+    description: 'Roles de XP actualizados correctamente',
+    type: Config,
+  })
+  async updateXpRoles(@Body() xpRolesDto: XpRoleDto[]): Promise<Config> {
+    return this.configService.updateXpRoles(xpRolesDto);
   }
 }
