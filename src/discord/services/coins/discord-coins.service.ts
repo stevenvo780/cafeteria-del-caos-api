@@ -15,7 +15,7 @@ import {
   ValidateResult,
 } from '../../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../../discord.util';
-import { CoinsCommands } from './types';
+import { CoinsCommands, ARTICLE_OPTION, COINS_OPTION } from './types';
 
 @Injectable()
 export class DiscordCoinsService {
@@ -214,10 +214,10 @@ export class DiscordCoinsService {
     interactionPayload: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     const articleOption = commandData.options?.find(
-      (opt) => opt.name === 'articulo',
+      (opt) => opt.name === ARTICLE_OPTION.name,
     ) as APIApplicationCommandInteractionDataStringOption;
     const quantityOption = commandData.options?.find(
-      (opt) => opt.name === 'cantidad',
+      (opt) => opt.name === COINS_OPTION.name,
     ) as APIApplicationCommandInteractionDataNumberOption;
 
     if (!articleOption?.value || !quantityOption?.value) {
@@ -279,36 +279,6 @@ export class DiscordCoinsService {
     }
   }
 
-  private async validateCoinsCommand(
-    commandData: APIChatInputApplicationCommandInteractionData,
-    interactionPayload: APIInteraction,
-    isTransfer: boolean,
-  ): Promise<ValidateResult<InteractCoins>> {
-    const coinsOption = commandData.options?.find(
-      (opt) => opt.name === 'cantidad',
-    ) as APIApplicationCommandInteractionDataNumberOption;
-    if (!coinsOption) {
-      return createErrorResponse('Falta la cantidad de monedas.');
-    }
-
-    const sourceUser = await this.userDiscordService.findOrCreate({
-      id: interactionPayload.member.user.id,
-      username: interactionPayload.member.user.username,
-      roles: interactionPayload.member.roles || [],
-    });
-
-    const target = await this.userDiscordService.resolveInteractionUser(
-      commandData,
-      'usuario',
-    );
-    if (!target) return createErrorResponse('Usuario destino no encontrado.');
-    if (isTransfer && sourceUser.id === target.id) {
-      return createErrorResponse('No puedes transferirte monedas a ti mismo.');
-    }
-
-    return { user: sourceUser, target, coins: coinsOption.value };
-  }
-
   private async handleBalance(
     commandData: APIChatInputApplicationCommandInteractionData,
     interactionPayload: APIInteraction,
@@ -346,5 +316,35 @@ export class DiscordCoinsService {
       type: InteractionResponseType.ChannelMessageWithSource,
       data: { content: message },
     };
+  }
+
+  private async validateCoinsCommand(
+    commandData: APIChatInputApplicationCommandInteractionData,
+    interactionPayload: APIInteraction,
+    isTransfer: boolean,
+  ): Promise<ValidateResult<InteractCoins>> {
+    const coinsOption = commandData.options?.find(
+      (opt) => opt.name === COINS_OPTION.name,
+    ) as APIApplicationCommandInteractionDataNumberOption;
+    if (!coinsOption) {
+      return createErrorResponse('Falta la cantidad de monedas.');
+    }
+
+    const sourceUser = await this.userDiscordService.findOrCreate({
+      id: interactionPayload.member.user.id,
+      username: interactionPayload.member.user.username,
+      roles: interactionPayload.member.roles || [],
+    });
+
+    const target = await this.userDiscordService.resolveInteractionUser(
+      commandData,
+      'usuario',
+    );
+    if (!target) return createErrorResponse('Usuario destino no encontrado.');
+    if (isTransfer && sourceUser.id === target.id) {
+      return createErrorResponse('No puedes transferirte monedas a ti mismo.');
+    }
+
+    return { user: sourceUser, target, coins: coinsOption.value };
   }
 }

@@ -31,6 +31,11 @@ export class CreateUserDiscordDto {
   @IsOptional()
   experience?: number;
 
+  @ApiProperty({ description: 'Puntos de penalización acumulados', example: 0 })
+  @IsNumber()
+  @IsOptional()
+  points?: number;
+
   @ApiProperty({ description: 'Roles del usuario en Discord', type: [Object] })
   @IsArray()
   @IsOptional()

@@ -11,14 +11,14 @@ export enum CoinsCommands {
   PURCHASE = 'comprar',
 }
 
-const COINS_OPTION = {
+export const COINS_OPTION = {
   ...QUANTITY_OPTION,
   name: 'cantidad',
   description: 'Cantidad de monedas',
   min_value: 1,
 } as const;
 
-const ARTICLE_OPTION = {
+export const ARTICLE_OPTION = {
   name: 'articulo',
   type: ApplicationCommandOptionType.String,
   description: 'Artículo a comprar',

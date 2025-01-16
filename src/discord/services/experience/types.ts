@@ -8,7 +8,7 @@ export enum ExperienceCommands {
   SET_EXPERIENCE = 'establecer-experiencia',
 }
 
-const EXPERIENCE_OPTION = {
+export const EXPERIENCE_OPTION = {
   ...QUANTITY_OPTION,
   name: 'cantidad',
   description: 'Cantidad de experiencia',

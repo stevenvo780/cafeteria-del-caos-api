@@ -8,7 +8,7 @@ export enum PointsCommands {
   SET_POINTS = 'establecer-puntos',
 }
 
-const POINTS_OPTION = {
+export const POINTS_OPTION = {
   name: 'puntos',
   type: ApplicationCommandOptionType.Integer,
   description: 'Cantidad de puntos',
