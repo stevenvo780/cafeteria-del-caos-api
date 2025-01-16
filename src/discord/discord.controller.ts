@@ -132,6 +132,7 @@ export class DiscordController {
     if (amount >= 0) {
       await this.kardexService.addCoins(user.id, amount, 'Report from Bot');
       await this.userDiscordService.addExperience(user.id, amount);
+      await this.userDiscordService.assignXpRoleIfNeeded(user.id);
     } else {
       await this.kardexService.removeCoins(
         user.id,

@@ -318,7 +318,7 @@ export class UserDiscordService {
         default:
           throw new Error('Operación no válida');
       }
-
+      await this.assignXpRoleIfNeeded(discordUser.id);
       const updatedUser = await this.findOne(discordUser.id);
       const currentLevel = Math.floor(updatedUser.experience / 100);
       const nextLevel = (currentLevel + 1) * 100;
@@ -442,22 +442,17 @@ export class UserDiscordService {
       const guild = client.guilds.cache.get(process.env.DISCORD_GUILD_ID);
       if (!guild) throw new Error('No se pudo obtener el servidor de Discord');
 
-      // 2. Obtener miembro del servidor
       const member = await guild.members.fetch(userId);
       if (!member) throw new Error('No se pudo obtener el miembro del servidor');
 
-      // 3. Obtener configuración de roles por XP
       const xpRoles = await this.configService.getXpRoles();
       if (!xpRoles?.length) return;
 
-      // 4. Ordenar roles por XP requerida (descendente)
       const sortedRoles = xpRoles.sort((a, b) => b.requiredXp - a.requiredXp);
 
-      // 5. Encontrar el rol que corresponde al nivel actual
       const currentRole = sortedRoles.find(role => user.experience >= role.requiredXp);
       if (!currentRole) return;
 
-      // 6. Remover roles anteriores de XP
       const previousXpRoles = member.roles.cache.filter(role => 
         xpRoles.some(xpRole => xpRole.roleId === role.id && xpRole.roleId !== currentRole.roleId)
       );
@@ -466,15 +461,15 @@ export class UserDiscordService {
         previousXpRoles.map(role => member.roles.remove(role))
       );
 
-      // 7. Asignar nuevo rol si no lo tiene
       if (!member.roles.cache.has(currentRole.roleId)) {
         await member.roles.add(currentRole.roleId);
         
-        // 8. Enviar mensaje al canal de sistema si existe
-        const systemChannel = guild.systemChannel;
-        if (systemChannel) {
-          await systemChannel.send(
-            `🎉 ¡Felicidades <@${userId}>! Has alcanzado el rol ${currentRole.name}`
+        const config = await this.configService.getFirebaseConfig();
+        const rewardChannelId = config.channels.rewardChannelId;
+        const rewardChannel = guild.channels.cache.get(rewardChannelId);
+        if (rewardChannel && rewardChannel.isTextBased()) {
+          await rewardChannel.send(
+            `🎉 ¡Felicidades <@${userId}>! Has subido de nivel y ahora tienes el rol <@&${currentRole.roleId}>.`
           );
         }
       }
