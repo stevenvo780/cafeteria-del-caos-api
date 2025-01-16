@@ -36,7 +36,6 @@ const buildPurchaseOptions = async () => {
     const apiUrl = `${process.env.URL_BACKEND}/products`;
     const response = await fetch(apiUrl);
     const data: any = await response.json();
-
     if (!data.products || !Array.isArray(data.products)) {
       throw new Error('Invalid products data format');
     }
