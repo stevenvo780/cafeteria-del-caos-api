@@ -456,14 +456,15 @@ export class UserDiscordService {
       const previousXpRoles = member.roles.cache.filter(role => 
         xpRoles.some(xpRole => xpRole.roleId === role.id && xpRole.roleId !== currentRole.roleId)
       );
-      
-      await Promise.all(
-        previousXpRoles.map(role => member.roles.remove(role))
-      );
 
-      if (!member.roles.cache.has(currentRole.roleId)) {
+      const hasPreviousRole = member.roles.cache.has(currentRole.roleId);
+      if (!hasPreviousRole) {
+        await Promise.all(
+          previousXpRoles.map(role => member.roles.remove(role))
+        );
+
         await member.roles.add(currentRole.roleId);
-        
+
         const config = await this.configService.getFirebaseConfig();
         const rewardChannelId = config.channels.rewardChannelId;
         const rewardChannel = guild.channels.cache.get(rewardChannelId);
