@@ -71,6 +71,7 @@ export class DiscordCoinsService {
     try {
       await this.kardexService.addCoins(target.id, coins, 'Discord command');
       await this.userDiscordService.addExperience(target.id, coins);
+      await this.userDiscordService.assignXpRoleIfNeeded(target.id);
       const balance = await this.kardexService.getUserLastBalance(target.id);
 
       return {

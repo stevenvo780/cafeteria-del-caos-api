@@ -8,12 +8,16 @@ import {
   APIChatInputApplicationCommandInteractionData,
   InteractionResponseType,
   ApplicationCommandOptionType,
+  Client,
+  GuildMember,
 } from 'discord.js';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 import { KardexService } from '../kardex/kardex.service';
 import { createErrorResponse } from '../discord/discord.util';
 import { USER_OPTION } from 'src/discord/services/base-command-options';
+import { ConfigService } from '../config/config.service'; // Importar desde ruta local
+import { getDiscordClient } from '../utils/discord-utils';
 
 @Injectable()
 export class UserDiscordService {
@@ -21,6 +25,7 @@ export class UserDiscordService {
     @InjectRepository(UserDiscord)
     private readonly userDiscordRepository: Repository<UserDiscord>,
     private kardexService: KardexService,
+    private readonly configService: ConfigService,
   ) {}
 
   private async attachBalanceToUsers(
@@ -428,5 +433,55 @@ export class UserDiscordService {
     }
 
     return null;
+  }
+
+  async assignXpRoleIfNeeded(userId: string): Promise<void> {
+    try {
+      const user = await this.findOne(userId);
+      const client = await getDiscordClient();
+      const guild = client.guilds.cache.get(process.env.DISCORD_GUILD_ID);
+      if (!guild) throw new Error('No se pudo obtener el servidor de Discord');
+
+      // 2. Obtener miembro del servidor
+      const member = await guild.members.fetch(userId);
+      if (!member) throw new Error('No se pudo obtener el miembro del servidor');
+
+      // 3. Obtener configuración de roles por XP
+      const xpRoles = await this.configService.getXpRoles();
+      if (!xpRoles?.length) return;
+
+      // 4. Ordenar roles por XP requerida (descendente)
+      const sortedRoles = xpRoles.sort((a, b) => b.requiredXp - a.requiredXp);
+
+      // 5. Encontrar el rol que corresponde al nivel actual
+      const currentRole = sortedRoles.find(role => user.experience >= role.requiredXp);
+      if (!currentRole) return;
+
+      // 6. Remover roles anteriores de XP
+      const previousXpRoles = member.roles.cache.filter(role => 
+        xpRoles.some(xpRole => xpRole.roleId === role.id && xpRole.roleId !== currentRole.roleId)
+      );
+      
+      await Promise.all(
+        previousXpRoles.map(role => member.roles.remove(role))
+      );
+
+      // 7. Asignar nuevo rol si no lo tiene
+      if (!member.roles.cache.has(currentRole.roleId)) {
+        await member.roles.add(currentRole.roleId);
+        
+        // 8. Enviar mensaje al canal de sistema si existe
+        const systemChannel = guild.systemChannel;
+        if (systemChannel) {
+          await systemChannel.send(
+            `🎉 ¡Felicidades <@${userId}>! Has alcanzado el rol ${currentRole.name}`
+          );
+        }
+      }
+
+    } catch (error) {
+      console.error('Error al asignar rol por XP:', error);
+      throw new Error('No se pudo asignar el rol por XP');
+    }
   }
 }
