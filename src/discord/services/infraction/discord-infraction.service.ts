@@ -52,24 +52,24 @@ export class DiscordInfractionService {
   private async handleAddInfraction(
     commandData: APIChatInputApplicationCommandInteractionData
   ): Promise<DiscordInteractionResponse> {
-    const subcommand = commandData.options?.[0] as APIApplicationCommandInteractionDataSubcommandOption
-    if (!subcommand) return createErrorResponse('Subcomando no encontrado.')
+    const options = commandData.options;
+    if (!options) return createErrorResponse('Opciones no encontradas.');
 
     const user = await this.userDiscordService.resolveInteractionUser(commandData)
     if (!user) {
       return createErrorResponse('Usuario no encontrado.')
     }
 
-    const typeOption = subcommand.options?.find(
+    const typeOption = options.find(
       opt => opt.name === INFRACTION_TYPE_OPTION.name
     ) as APIApplicationCommandInteractionDataStringOption
-    const reasonOption = subcommand.options?.find(
+    const reasonOption = options.find(
       opt => opt.name === INFRACTION_REASON_OPTION.name
     ) as APIApplicationCommandInteractionDataStringOption
-    const durationOption = subcommand.options?.find(
+    const durationOption = options.find(
       opt => opt.name === INFRACTION_DURATION_OPTION.name
     ) as APIApplicationCommandInteractionDataNumberOption
-    const roleOption = subcommand.options?.find(
+    const roleOption = options.find(
       opt => opt.name === INFRACTION_ROLE_OPTION.name
     ) as APIApplicationCommandInteractionDataStringOption
 
@@ -92,20 +92,13 @@ export class DiscordInfractionService {
     const guild = client.guilds.cache.get(process.env.DISCORD_GUILD_ID!)
     const member = guild?.members.cache.get(user.id)
 
-    switch (subcommand.name) {
-      case SanctionType.MUTE:
-        if (member && durationOption?.value) {
-          const durationMs = Number(durationOption.value) * 60000
-          await member.timeout(durationMs, `Muteo: ${reasonOption.value}`)
-        }
-        break
-      case SanctionType.ROLE:
-        if (member && roleOption?.value) {
-          await member.roles.add(roleOption.value, `Sanción: ${reasonOption.value}`)
-        }
-        break
-      default:
-        break
+    if (member && durationOption?.value) {
+      const durationMs = Number(durationOption.value) * 60000
+      await member.timeout(durationMs, `Muteo: ${reasonOption.value}`)
+    }
+
+    if (member && roleOption?.value) {
+      await member.roles.add(roleOption.value, `Sanción: ${reasonOption.value}`)
     }
 
     try {
@@ -124,6 +117,14 @@ export class DiscordInfractionService {
 
       const userUpdated = await this.userDiscordService.findOne(user.id)
 
+      let additionalInfo = '';
+      if (durationOption?.value) {
+        additionalInfo += `\nMute aplicado: ${durationOption.value} minutos`;
+      }
+      if (roleOption?.value) {
+        additionalInfo += `\nRol asignado: <@&${roleOption.value}>`;
+      }
+
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
@@ -132,7 +133,7 @@ export class DiscordInfractionService {
             `Tipo: ${infractionConfig.name}\n` +
             `Puntos de sanción: +${infractionConfig.points}\n` +
             `Monedas perdidas: ${Math.floor(coinsLost)}\n` +
-            `Razón: ${reasonOption.value}\n` +
+            `Razón: ${reasonOption.value}${additionalInfo}\n` +
             `Total puntos: ${userUpdated.points}/${maxInfractionPoints}\n` +
             `Balance actual: ${Math.floor(newBalance)} monedas`
             + (userUpdated.points >= maxInfractionPoints ? "\n🎉 ¡Has alcanzado el límite máximo de sanciones! Has sido domado." : "")

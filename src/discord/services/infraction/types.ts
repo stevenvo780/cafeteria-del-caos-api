@@ -57,37 +57,18 @@ const buildPurchaseOptions = async () => {
     }));
 
     return [
+      { ...USER_OPTION, required: true },
+      INFRACTION_TYPE_OPTION,
+      INFRACTION_REASON_OPTION,
       {
-        name: SanctionType.NONE,
-        type: ApplicationCommandOptionType.Subcommand,
-        description: 'No se aplica ninguna acción adicional',
-        options: [
-          { ...USER_OPTION, required: true },
-          INFRACTION_TYPE_OPTION,
-          INFRACTION_REASON_OPTION,
-        ]
+        ...INFRACTION_DURATION_OPTION,
+        required: false,
+        description: 'Tiempo de mute (en minutos). Opcional'
       },
       {
-        name: SanctionType.MUTE,
-        type: ApplicationCommandOptionType.Subcommand,
-        description: 'Silenciar al usuario',
-        options: [
-          { ...USER_OPTION, required: true },
-          INFRACTION_TYPE_OPTION,
-          INFRACTION_REASON_OPTION,
-          INFRACTION_DURATION_OPTION
-        ]
-      },
-      {
-        name: SanctionType.ROLE,
-        type: ApplicationCommandOptionType.Subcommand,
-        description: 'Asignar un rol al usuario',
-        options: [
-          { ...USER_OPTION, required: true },
-          INFRACTION_TYPE_OPTION,
-          INFRACTION_REASON_OPTION,
-          INFRACTION_ROLE_OPTION
-        ]
+        ...INFRACTION_ROLE_OPTION,
+        required: false,
+        description: 'Rol a asignar. Opcional'
       }
     ];
   } catch (error) {
