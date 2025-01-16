@@ -1,6 +1,7 @@
 import { ApplicationCommandOptionType } from 'discord.js'
 import { USER_OPTION } from '../base-command-options'
 import { Infraction } from 'src/config/dto/update-config.dto';
+import { getDiscordClient } from '../../../utils/discord-utils'; // Importar el cliente de Discord
 
 export enum InfractionCommands {
   ADD_INFRACTION = 'añadir-sancion'
@@ -18,6 +19,27 @@ export const INFRACTION_TYPE_OPTION = {
   description: 'Tipo de sanción',
   required: true,
   choices: [],
+}
+
+export const INFRACTION_REASON_OPTION = {
+  name: 'razon',
+  type: ApplicationCommandOptionType.String,
+  description: 'Razón de la sanción',
+  required: true
+}
+
+export const INFRACTION_ROLE_OPTION = {
+  name: 'rol',
+  type: ApplicationCommandOptionType.Role,
+  description: 'Rol a asignar',
+  required: true
+}
+
+export const INFRACTION_DURATION_OPTION = {
+  name: 'duracion',
+  type: ApplicationCommandOptionType.Integer,
+  description: 'Tiempo (en minutos)',
+  required: true
 }
 
 const buildPurchaseOptions = async () => {
@@ -73,27 +95,6 @@ const buildPurchaseOptions = async () => {
     throw new Error('Error fetching purchase options');
   }
 };
-
-export const INFRACTION_REASON_OPTION = {
-  name: 'razon',
-  type: ApplicationCommandOptionType.String,
-  description: 'Razón de la sanción',
-  required: true
-}
-
-export const INFRACTION_ROLE_OPTION = {
-  name: 'rol',
-  type: ApplicationCommandOptionType.String,
-  description: 'Rol a asignar',
-  required: true
-}
-
-export const INFRACTION_DURATION_OPTION = {
-  name: 'duracion',
-  type: ApplicationCommandOptionType.Integer,
-  description: 'Tiempo (en minutos)',
-  required: true
-}
 
 export const InfractionCommandData = {
   [InfractionCommands.ADD_INFRACTION]: {
