@@ -56,26 +56,21 @@ const buildPurchaseOptions = async () => {
       value: infraction.value.toString(),
     }));
 
-    return [{
-      name: 'aplicar',
-      type: ApplicationCommandOptionType.Subcommand,
-      description: 'Aplica una sanción a un usuario',
-      options: [
-        { ...USER_OPTION, required: true },
-        INFRACTION_TYPE_OPTION,
-        INFRACTION_REASON_OPTION,
-        {
-          ...INFRACTION_DURATION_OPTION,
-          required: false,
-          description: 'Tiempo de mute (en minutos). Opcional'
-        },
-        {
-          ...INFRACTION_ROLE_OPTION,
-          required: false,
-          description: 'Rol a asignar. Opcional'
-        }
-      ]
-    }];
+    return [
+      { ...USER_OPTION, required: true },
+      INFRACTION_TYPE_OPTION,
+      INFRACTION_REASON_OPTION,
+      {
+        ...INFRACTION_DURATION_OPTION,
+        required: false,
+        description: 'Tiempo de mute (en minutos). Opcional'
+      },
+      {
+        ...INFRACTION_ROLE_OPTION,
+        required: false,
+        description: 'Rol a asignar. Opcional'
+      }
+    ];
   } catch (error) {
     console.error('Error fetching purchase options:', error);
     throw new Error('Error fetching purchase options');

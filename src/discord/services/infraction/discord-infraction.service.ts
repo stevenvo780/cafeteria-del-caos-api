@@ -54,23 +54,15 @@ export class DiscordInfractionService {
     commandData: APIChatInputApplicationCommandInteractionData
   ): Promise<DiscordInteractionResponse> {
     try {
-      const subcommandOption = commandData.options?.[0] as APIApplicationCommandInteractionDataSubcommandOption;
-      if (!subcommandOption || subcommandOption.type !== ApplicationCommandOptionType.Subcommand) {
-        return createErrorResponse('Comando incompleto.');
+      const options = commandData.options;
+      if (!options) {
+        return createErrorResponse('No se encontraron los parámetros necesarios.');
       }
   
-      const options = subcommandOption.options || [];
-  
-      const userOption = options.find(opt => opt.name === USER_OPTION.name);
-      if (!userOption) {
-        return createErrorResponse('Usuario no especificado.');
-      }
-  
-      const user = await this.userDiscordService.findOne(userOption.value as string);
-      if (!user) {
-        return createErrorResponse('Usuario no encontrado.');
-      }
-  
+      const user = await this.userDiscordService.resolveInteractionUser(
+        commandData,
+      );
+
       const typeOption = options.find(
         opt => opt.name === INFRACTION_TYPE_OPTION.name
       ) as APIApplicationCommandInteractionDataStringOption;
