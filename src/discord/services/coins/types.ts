@@ -16,14 +16,15 @@ export const COINS_OPTION = {
   name: 'cantidad',
   description: 'Cantidad de monedas',
   min_value: 1,
-} as const;
+};
 
 export const ARTICLE_OPTION = {
   name: 'articulo',
   type: ApplicationCommandOptionType.String,
   description: 'Artículo a comprar',
   required: true,
-} as const;
+  choices: [],
+};
 
 const CommonCoinsOptions = {
   VIEW: [USER_OPTION],
@@ -40,25 +41,14 @@ const buildPurchaseOptions = async () => {
       throw new Error('Invalid products data format');
     }
 
+    ARTICLE_OPTION.choices = data.products.map((product) => ({
+      name: `${product.title} (${product.currentPrice} monedas)`,
+      value: product.id.toString(),
+    }));
+
     return [
-      {
-        name: 'articulo',
-        type: ApplicationCommandOptionType.String,
-        description: 'Artículo a comprar',
-        required: true,
-        choices: data.products.map((product) => ({
-          name: `${product.title} (${product.currentPrice} monedas)`,
-          value: product.id.toString(),
-        })),
-      },
-      {
-        name: 'cantidad',
-        type: ApplicationCommandOptionType.Integer,
-        description: 'Cantidad a comprar',
-        required: true,
-        min_value: 1,
-        max_value: 10,
-      },
+      ARTICLE_OPTION,
+      COINS_OPTION,
     ];
   } catch (error) {
     console.error('Error fetching purchase options:', error);
