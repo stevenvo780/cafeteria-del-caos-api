@@ -41,7 +41,8 @@ const buildPurchaseOptions = async () => {
         description: 'No se aplica ninguna acción adicional',
         options: [
           { ...USER_OPTION, required: true },
-          INFRACTION_REASON_OPTION
+          INFRACTION_TYPE_OPTION,
+          INFRACTION_REASON_OPTION,
         ]
       },
       {
