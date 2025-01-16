@@ -23,7 +23,8 @@ async function initializeClient(): Promise<Client> {
   return client;
 }
 
-async function getDiscordClient(): Promise<Client> {
+// Cambiar de función privada a exportada
+export async function getDiscordClient(): Promise<Client> {
   if (!discordClient) {
     discordClient = await initializeClient();
   }
