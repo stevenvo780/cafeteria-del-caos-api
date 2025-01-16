@@ -8,6 +8,7 @@ import {
   APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteractionData,
   InteractionResponseType,
+  ApplicationCommandOptionType,
 } from 'discord.js';
 import { CreateUserDiscordDto } from './dto/create-user-discord.dto';
 import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
@@ -402,13 +403,17 @@ export class UserDiscordService {
   async resolveInteractionUser(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<UserDiscord | null> {
-    const userOption = commandData.options?.find(
-      (opt) => opt.name === USER_OPTION.name,
-    ) as APIApplicationCommandInteractionDataUserOption;
+    const subcommand = commandData.options?.[0]?.type === 1
+      ? commandData.options[0]
+      : undefined;
+
+    let userOption =
+      subcommand?.options?.find((opt) => opt.name === USER_OPTION.name) ||
+      commandData.options?.find((opt) => opt.name === USER_OPTION.name);
 
     if (
-      userOption &&
-      'value' in userOption &&
+      userOption?.type === ApplicationCommandOptionType.User &&
+      userOption.value &&
       commandData.resolved?.users &&
       commandData.resolved.members
     ) {
