@@ -2,6 +2,7 @@ import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { SharedProp } from '../../common/entities/sharedProp.helper';
 import { InfractionDto } from '../dto/infraction.dto';
+import { XpRoleDto } from '../dto/xp-role.dto';
 
 @Entity()
 export class Config extends SharedProp {
@@ -74,4 +75,11 @@ export class Config extends SharedProp {
     type: () => [InfractionDto],
   })
   infractions: InfractionDto[];
+
+  @Column('json', { default: [] })
+  @ApiProperty({
+    description: 'Configuración de roles por XP',
+    type: () => [XpRoleDto],
+  })
+  xpRoles: XpRoleDto[];
 }

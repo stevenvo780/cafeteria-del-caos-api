@@ -6,6 +6,7 @@ import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
 import { getFirebaseConfig, updateFirebaseConfig } from '../utils/firebase-admin.config';
 import { BotConfig } from 'src/utils/types';
+import { XpRoleDto } from './dto/xp-role.dto';
 
 @Injectable()
 export class ConfigService {
@@ -74,6 +75,18 @@ export class ConfigService {
         description: 'Infracciones leves',
       },
     ];
+    defaultConfig.xpRoles = [
+      {
+        roleId: '',
+        name: 'Nivel 1',
+        requiredXp: 100,
+      },
+      {
+        roleId: '',
+        name: 'Nivel 2',
+        requiredXp: 500,
+      },
+    ];
     return this.configRepository.save(defaultConfig);
   }
 
@@ -137,5 +150,16 @@ export class ConfigService {
 
   async updateFirebaseConfigObject(updates: BotConfig): Promise<void> {
     await updateFirebaseConfig(updates);
+  }
+
+  async getXpRoles(): Promise<XpRoleDto[]> {
+    const config = await this.getConfig();
+    return config.xpRoles;
+  }
+
+  async updateXpRoles(xpRoles: XpRoleDto[]): Promise<Config> {
+    const config = await this.getConfig();
+    config.xpRoles = xpRoles;
+    return this.configRepository.save(config);
   }
 }
