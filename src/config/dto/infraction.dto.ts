@@ -6,15 +6,15 @@ export class InfractionDto {
   @IsString()
   @ApiProperty({
     description: 'Nombre de la infracción',
-    example: 'Infracción Ejemplo',
+    example: 'Sanción grave',
   })
   name: string;
 
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    description: 'Valor único de la infracción',
-    example: 'EXAMPLE',
+    description: 'Valor identificador de la infracción',
+    example: 'BLACK',
   })
   value: string;
 
@@ -29,8 +29,8 @@ export class InfractionDto {
   @IsNotEmpty()
   @IsString()
   @ApiProperty({
-    description: 'Emoji para representar la infracción',
-    example: '🚫',
+    description: 'Emoji que representa la infracción',
+    example: '◼️',
   })
   emoji: string;
 
@@ -38,7 +38,7 @@ export class InfractionDto {
   @IsString()
   @ApiProperty({
     description: 'Descripción de la infracción',
-    example: 'Infracciones graves',
+    example: 'Infracciones muy graves',
   })
   description: string;
 }

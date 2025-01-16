@@ -9,13 +9,6 @@ export enum UserRole {
   USER = 'user',
 }
 
-export enum InfractionType {
-  BLACK = 'BLACK',
-  RED = 'RED',
-  ORANGE = 'ORANGE',
-  YELLOW = 'YELLOW',
-}
-
 export interface DiscordRole {
   id: string;
   name: string;

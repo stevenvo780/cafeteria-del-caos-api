@@ -4,7 +4,6 @@ import {
   APIChatInputApplicationCommandInteractionData,
   APIApplicationCommandInteractionDataStringOption,
 } from 'discord.js';
-import { InfractionType } from '../../../user-discord/entities/user-discord.entity';
 import { UserDiscordService } from '../../../user-discord/user-discord.service';
 import { createErrorResponse } from '../../discord.util';
 import { DiscordInteractionResponse } from '../../discord.types';
@@ -56,35 +55,30 @@ export class DiscordInfractionService {
       return createErrorResponse('Usuario no encontrado.');
     }
 
-    const infractionType = typeOption.value as InfractionType;
+    const infractionValue = typeOption.value;
     const reason = reasonOption.value;
 
     const config = await this.configService.getConfig();
     const infractionConfig = config.infractions.find(
-      (inf) => inf.value === infractionType,
+      (inf) => inf.value === infractionValue,
     );
 
     if (!infractionConfig) {
       return createErrorResponse('Tipo de sanción no válido.');
     }
 
-    const points = infractionConfig.points;
-    const emoji = infractionConfig.emoji;
-
     try {
-      await this.userDiscordService.addPenaltyPoints(user.id, points);
+      await this.userDiscordService.addPenaltyPoints(user.id, infractionConfig.points);
 
-      const currentBalance = await this.kardexService.getUserLastBalance(
-        user.id,
-      );
-      const newBalance = this.calculateCoinPenalty(points, currentBalance);
+      const currentBalance = await this.kardexService.getUserLastBalance(user.id);
+      const newBalance = this.calculateCoinPenalty(infractionConfig.points, currentBalance);
       const coinsLost = currentBalance - newBalance;
 
       if (coinsLost > 0) {
         await this.kardexService.setCoins(
           user.id,
           newBalance,
-          `${infractionType} - ${reason}`,
+          `${infractionConfig.name} - ${reason}`,
         );
       }
 
@@ -94,9 +88,9 @@ export class DiscordInfractionService {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
           content:
-            `${emoji} Sanción registrada - <@${user.id}>\n` +
-            `Tipo: ${infractionType}\n` +
-            `Puntos de sanción: +${points}\n` +
+            `${infractionConfig.emoji} Sanción registrada - <@${user.id}>\n` +
+            `Tipo: ${infractionConfig.name}\n` +
+            `Puntos de sanción: +${infractionConfig.points}\n` +
             `Monedas perdidas: ${Math.floor(coinsLost)}\n` +
             `Razón: ${reason}\n` +
             `Total puntos: ${userUpdated.points}/10\n` +
