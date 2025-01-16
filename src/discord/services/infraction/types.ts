@@ -1,7 +1,6 @@
 import { ApplicationCommandOptionType } from 'discord.js'
 import { USER_OPTION } from '../base-command-options'
 import { Infraction } from 'src/config/dto/update-config.dto';
-import { getDiscordClient } from '../../../utils/discord-utils'; // Importar el cliente de Discord
 
 export enum InfractionCommands {
   ADD_INFRACTION = 'añadir-sancion'

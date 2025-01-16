@@ -54,19 +54,18 @@ export class DiscordInfractionService {
     commandData: APIChatInputApplicationCommandInteractionData
   ): Promise<DiscordInteractionResponse> {
     try {
-      const options = commandData.options;
-      if (!options) {
-        return createErrorResponse('No se encontraron los parámetros necesarios.');
-      }
-  
       const user = await this.userDiscordService.resolveInteractionUser(
         commandData,
       );
 
-      const typeOption = options.find(
+      if (!user) {
+        return createErrorResponse('No se pudo encontrar al usuario.');
+      }
+
+      const typeOption = commandData.options?.find(
         opt => opt.name === INFRACTION_TYPE_OPTION.name
       ) as APIApplicationCommandInteractionDataStringOption;
-      const reasonOption = options.find(
+      const reasonOption = commandData.options?.find(
         opt => opt.name === INFRACTION_REASON_OPTION.name
       ) as APIApplicationCommandInteractionDataStringOption;
   
@@ -74,10 +73,10 @@ export class DiscordInfractionService {
         return createErrorResponse('Tipo de sanción y razón son obligatorios.');
       }
   
-      const durationOption = options.find(
+      const durationOption = commandData.options?.find(
         opt => opt.name === INFRACTION_DURATION_OPTION.name
       ) as APIApplicationCommandInteractionDataNumberOption | undefined;
-      const roleOption = options.find(
+      const roleOption = commandData.options?.find(
         opt => opt.name === INFRACTION_ROLE_OPTION.name
       ) as APIApplicationCommandInteractionDataStringOption | undefined;
   
