@@ -81,6 +81,9 @@ export class DiscordInfractionService {
     const infractionConfig = config.infractions.find(
       inf => inf.value === typeOption.value
     )
+
+    const maxInfractionPoints = Math.max(...config.infractions.map(inf => inf.points))
+
     if (!infractionConfig) {
       return createErrorResponse('Tipo de sanción no válido.')
     }
@@ -130,8 +133,9 @@ export class DiscordInfractionService {
             `Puntos de sanción: +${infractionConfig.points}\n` +
             `Monedas perdidas: ${Math.floor(coinsLost)}\n` +
             `Razón: ${reasonOption.value}\n` +
-            `Total puntos: ${userUpdated.points}/10\n` +
+            `Total puntos: ${userUpdated.points}/${maxInfractionPoints}\n` +
             `Balance actual: ${Math.floor(newBalance)} monedas`
+            + (userUpdated.points >= maxInfractionPoints ? "\n🎉 ¡Has alcanzado el límite máximo de sanciones! Has sido domado." : "")
         }
       }
     } catch (error) {

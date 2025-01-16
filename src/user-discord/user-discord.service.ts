@@ -5,7 +5,6 @@ import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto';
 import { InteractPoints, CommandResponse } from '../discord/discord.types';
 import {
-  APIApplicationCommandInteractionDataUserOption,
   APIChatInputApplicationCommandInteractionData,
   InteractionResponseType,
   ApplicationCommandOptionType,
