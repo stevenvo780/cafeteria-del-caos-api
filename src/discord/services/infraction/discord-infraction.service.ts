@@ -52,26 +52,26 @@ export class DiscordInfractionService {
   private async handleAddInfraction(
     commandData: APIChatInputApplicationCommandInteractionData
   ): Promise<DiscordInteractionResponse> {
-    const options = commandData.options;
-    if (!options) return createErrorResponse('Opciones no encontradas.');
+    const subcommand = commandData.options?.[0] as APIApplicationCommandInteractionDataSubcommandOption;
+    if (!subcommand?.options) return createErrorResponse('Opciones no encontradas.');
 
     const user = await this.userDiscordService.resolveInteractionUser(commandData)
     if (!user) {
       return createErrorResponse('Usuario no encontrado.')
     }
 
-    const typeOption = options.find(
+    const typeOption = subcommand.options.find(
       opt => opt.name === INFRACTION_TYPE_OPTION.name
-    ) as APIApplicationCommandInteractionDataStringOption
-    const reasonOption = options.find(
+    ) as APIApplicationCommandInteractionDataStringOption;
+    const reasonOption = subcommand.options.find(
       opt => opt.name === INFRACTION_REASON_OPTION.name
-    ) as APIApplicationCommandInteractionDataStringOption
-    const durationOption = options.find(
+    ) as APIApplicationCommandInteractionDataStringOption;
+    const durationOption = subcommand.options.find(
       opt => opt.name === INFRACTION_DURATION_OPTION.name
-    ) as APIApplicationCommandInteractionDataNumberOption
-    const roleOption = options.find(
+    ) as APIApplicationCommandInteractionDataNumberOption;
+    const roleOption = subcommand.options.find(
       opt => opt.name === INFRACTION_ROLE_OPTION.name
-    ) as APIApplicationCommandInteractionDataStringOption
+    ) as APIApplicationCommandInteractionDataStringOption;
 
     if (!typeOption || !reasonOption) {
       return createErrorResponse('Faltan parámetros para la sanción.')
