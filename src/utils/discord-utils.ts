@@ -6,7 +6,6 @@ import {
 import axios from 'axios';
 import TurndownService from 'turndown';
 import { CreateEventsDto } from 'src/events/dto/create-events.dto';
-import { UserDiscord } from 'src/user-discord/entities/user-discord.entity';
 
 const turndownService = new TurndownService();
 let discordClient: Client | null = null;

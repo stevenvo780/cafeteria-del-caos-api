@@ -6,12 +6,9 @@ import { Config } from './entities/config.entity';
 import { UserModule } from '../user/user.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Config]),
-    forwardRef(() => UserModule)
-  ],
+  imports: [TypeOrmModule.forFeature([Config]), forwardRef(() => UserModule)],
   controllers: [ConfigController],
   providers: [ConfigService],
   exports: [ConfigService],
 })
-export class ConfigModule { }
+export class ConfigModule {}

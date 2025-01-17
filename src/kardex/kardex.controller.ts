@@ -3,16 +3,12 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
-  Delete,
   UseGuards,
   Query,
   ParseIntPipe,
 } from '@nestjs/common';
 import { KardexService } from './kardex.service';
-import { CreateKardexDto } from './dto/create-kardex.dto';
-import { UpdateKardexDto } from './dto/update-kardex.dto';
 import { FirebaseAuthGuard } from '../auth/firebase-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -81,10 +77,11 @@ export class KardexController {
     );
   }
 
-  
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Search Kardex entries with filters and pagination' })
+  @ApiOperation({
+    summary: 'Search Kardex entries with filters and pagination',
+  })
   @Get('search/page')
   async search(@Query() filters: FilterKardexDto) {
     return this.kardexService.findWithFilters(filters);

@@ -15,10 +15,7 @@ import { DiscordService } from './discord.service';
 import { UserDiscordService } from '../user-discord/user-discord.service';
 import { KardexService } from '../kardex/kardex.service';
 import { DiscordInteractionResponse } from './discord.types';
-import {
-  createErrorResponse,
-  verifyDiscordRequest,
-} from './discord.util';
+import { createErrorResponse, verifyDiscordRequest } from './discord.util';
 
 @ApiTags('discord')
 @Controller('discord')

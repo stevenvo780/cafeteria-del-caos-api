@@ -1,9 +1,12 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Kardex, KardexOperation } from './entities/kardex.entity';
 import { CreateKardexDto } from './dto/create-kardex.dto';
-import { UpdateKardexDto } from './dto/update-kardex.dto';
 import { UserDiscord } from '../user-discord/entities/user-discord.entity';
 import { FilterKardexDto } from './dto/filter-kardex.dto';
 
@@ -14,7 +17,7 @@ export class KardexService {
     private readonly kardexRepository: Repository<Kardex>,
     @InjectRepository(UserDiscord)
     private readonly userDiscordRepository: Repository<UserDiscord>,
-  ) { }
+  ) {}
 
   async create(dto: CreateKardexDto): Promise<Kardex> {
     if (dto.amount <= 0) {
@@ -23,21 +26,26 @@ export class KardexService {
 
     const user = await this.userDiscordRepository.findOne({
       where: {
-        id: dto.userDiscordId
-      }
+        id: dto.userDiscordId,
+      },
     });
     if (!user) {
-      throw new NotFoundException(`Usuario con ID ${dto.userDiscordId} no encontrado`);
+      throw new NotFoundException(
+        `Usuario con ID ${dto.userDiscordId} no encontrado`,
+      );
     }
 
-    const queryRunner = this.kardexRepository.manager.connection.createQueryRunner();
+    const queryRunner =
+      this.kardexRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       const lastBalance = await this.getUserLastBalance(dto.userDiscordId);
       if (dto.operation === KardexOperation.OUT && lastBalance < dto.amount) {
-        throw new BadRequestException('Saldo insuficiente para realizar la operación');
+        throw new BadRequestException(
+          'Saldo insuficiente para realizar la operación',
+        );
       }
 
       const newBalance =
@@ -52,7 +60,6 @@ export class KardexService {
       const result = await queryRunner.manager.save(entry);
       await queryRunner.commitTransaction();
       return result;
-
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -79,7 +86,9 @@ export class KardexService {
         reference,
       });
     } catch (error) {
-      throw new BadRequestException(`Error al añadir monedas: ${error.message}`);
+      throw new BadRequestException(
+        `Error al añadir monedas: ${error.message}`,
+      );
     }
   }
 
@@ -201,14 +210,16 @@ export class KardexService {
     if (search) {
       queryBuilder.andWhere(
         '(CAST(userDiscord.id AS TEXT) LIKE :search OR LOWER(userDiscord.username) LIKE LOWER(:search) OR LOWER(kardex.reference) LIKE LOWER(:search))',
-        { search: `%${search}%` }
+        { search: `%${search}%` },
       );
     }
 
     if (startDate) {
       const start = new Date(startDate);
       if (!isNaN(start.getTime())) {
-        queryBuilder.andWhere('kardex.createdAt >= :startDate', { startDate: start });
+        queryBuilder.andWhere('kardex.createdAt >= :startDate', {
+          startDate: start,
+        });
       }
     }
 

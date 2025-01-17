@@ -1,9 +1,9 @@
-import { ApplicationCommandOptionType } from 'discord.js'
-import { USER_OPTION } from '../base-command-options'
+import { ApplicationCommandOptionType } from 'discord.js';
+import { USER_OPTION } from '../base-command-options';
 import { Infraction } from 'src/config/dto/update-config.dto';
 
 export enum InfractionCommands {
-  ADD_INFRACTION = 'añadir-sancion'
+  ADD_INFRACTION = 'añadir-sancion',
 }
 
 export const INFRACTION_TYPE_OPTION = {
@@ -12,34 +12,34 @@ export const INFRACTION_TYPE_OPTION = {
   description: 'Tipo de sanción',
   required: true,
   choices: [],
-}
+};
 
 export const INFRACTION_REASON_OPTION = {
   name: 'razon',
   type: ApplicationCommandOptionType.String,
   description: 'Razón de la sanción',
-  required: true
-}
+  required: true,
+};
 
 export const INFRACTION_ROLE_OPTION = {
   name: 'rol',
   type: ApplicationCommandOptionType.Role,
   description: 'Rol a asignar',
-  required: true
-}
+  required: true,
+};
 
 export const INFRACTION_DURATION_OPTION = {
   name: 'duracion',
   type: ApplicationCommandOptionType.Integer,
   description: 'Tiempo (en minutos)',
-  required: true
-}
+  required: true,
+};
 
 const buildPurchaseOptions = async () => {
   try {
     const apiUrl = `${process.env.URL_BACKEND}/config/infractions`;
     const response = await fetch(apiUrl);
-    const data = await response.json() as Infraction[];
+    const data = (await response.json()) as Infraction[];
     if (!data || !Array.isArray(data)) {
       throw new Error('Invalid products data format');
     }
@@ -56,13 +56,13 @@ const buildPurchaseOptions = async () => {
       {
         ...INFRACTION_DURATION_OPTION,
         required: false,
-        description: 'Tiempo de mute (en minutos). Opcional'
+        description: 'Tiempo de mute (en minutos). Opcional',
       },
       {
         ...INFRACTION_ROLE_OPTION,
         required: false,
-        description: 'Rol a asignar. Opcional'
-      }
+        description: 'Rol a asignar. Opcional',
+      },
     ];
   } catch (error) {
     console.error('Error fetching purchase options:', error);
@@ -74,6 +74,6 @@ export const InfractionCommandData = {
   [InfractionCommands.ADD_INFRACTION]: {
     command: InfractionCommands.ADD_INFRACTION,
     description: 'Aplica una sanción a un usuario',
-    options: buildPurchaseOptions
-  }
-}
+    options: buildPurchaseOptions,
+  },
+};

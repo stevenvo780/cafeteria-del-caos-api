@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { Config } from './entities/config.entity';
 import { CreateConfigDto } from './dto/create-config.dto';
 import { UpdateConfigDto } from './dto/update-config.dto';
-import { getFirebaseConfig, updateFirebaseConfig } from '../utils/firebase-admin.config';
+import {
+  getFirebaseConfig,
+  updateFirebaseConfig,
+} from '../utils/firebase-admin.config';
 import { BotConfig } from 'src/utils/types';
 import { XpRoleDto } from './dto/xp-role.dto';
 import { UpdateNormativeDto } from './dto/update-normative.dto';
@@ -164,13 +167,15 @@ export class ConfigService {
     return this.configRepository.save(config);
   }
 
-  async updateNormative(updateNormativeDto: UpdateNormativeDto): Promise<Config> {
+  async updateNormative(
+    updateNormativeDto: UpdateNormativeDto,
+  ): Promise<Config> {
     const config = await this.getConfig();
-    
+
     if (updateNormativeDto.generalNormative !== undefined) {
       config.generalNormative = updateNormativeDto.generalNormative;
     }
-    
+
     if (updateNormativeDto.staffNormative !== undefined) {
       config.staffNormative = updateNormativeDto.staffNormative;
     }

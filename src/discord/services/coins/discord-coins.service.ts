@@ -23,7 +23,7 @@ export class DiscordCoinsService {
     private readonly kardexService: KardexService,
     private readonly userDiscordService: UserDiscordService,
     private readonly productService: ProductService,
-  ) { }
+  ) {}
 
   async handleCoinsCommand(
     commandName: string,
@@ -189,8 +189,9 @@ export class DiscordCoinsService {
           );
           const medal =
             index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '💰';
-          return `${medal} #${index + 1} ${user.username} - ${item.total
-            } monedas`;
+          return `${medal} #${index + 1} ${user.username} - ${
+            item.total
+          } monedas`;
         }),
       );
 

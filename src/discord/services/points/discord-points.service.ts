@@ -7,7 +7,6 @@ import {
 } from 'discord.js';
 import { UserDiscordService } from '../../../user-discord/user-discord.service';
 import {
-  CommandResponse,
   DiscordInteractionResponse,
   InteractPoints,
   ValidateResult,
@@ -103,8 +102,13 @@ export class DiscordPointsService {
     if ('isError' in validation) return validation;
 
     try {
-      const newPoints = Math.max(0, (validation.user.points || 0) - validation.points);
-      await this.userDiscordService.update(validation.user.id, { points: newPoints });
+      const newPoints = Math.max(
+        0,
+        (validation.user.points || 0) - validation.points,
+      );
+      await this.userDiscordService.update(validation.user.id, {
+        points: newPoints,
+      });
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,

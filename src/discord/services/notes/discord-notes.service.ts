@@ -75,7 +75,10 @@ export class DiscordNotesService {
         visibility: LibraryVisibility.GENERAL,
       };
 
-      const note = await this.libraryService.create(noteData as CreateLibraryDto, null);
+      const note = await this.libraryService.create(
+        noteData as CreateLibraryDto,
+        null,
+      );
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,

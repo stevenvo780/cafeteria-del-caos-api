@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString, IsIn, Min, IsInt, IsEnum } from 'class-validator';
+import { IsOptional, IsString, Min, IsInt, IsEnum } from 'class-validator';
 
 export enum SortOrder {
   ASC = 'ASC',
@@ -13,7 +13,6 @@ export enum SortBy {
   BALANCE = 'balance',
   ID = 'id',
 }
-
 
 export class FilterKardexDto {
   @ApiPropertyOptional({ description: 'Límite de resultados', default: 10 })
@@ -53,7 +52,9 @@ export class FilterKardexDto {
   @IsEnum(SortBy)
   sortBy?: SortBy;
 
-  @ApiPropertyOptional({ description: 'Ordenar de forma ascendente o descendente' })
+  @ApiPropertyOptional({
+    description: 'Ordenar de forma ascendente o descendente',
+  })
   @IsOptional()
   @IsEnum(SortOrder)
   sortOrder?: SortOrder = SortOrder.DESC;

@@ -61,7 +61,6 @@ export class LikeController {
   findLikesByTarget(
     @Param('targetType') targetType: LikeTarget,
     @Param('targetId') targetId: string,
-    @Request() req: RequestWithUser,
   ): Promise<Like[]> {
     return this.likeService.findLikesByTarget(targetType, +targetId);
   }

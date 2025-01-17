@@ -32,7 +32,10 @@ export class DiscordExperienceService {
 
       switch (commandName) {
         case ExperienceCommands.GET_EXPERIENCE:
-          return await this.handleUserExperience(commandData, interactionPayload.member);
+          return await this.handleUserExperience(
+            commandData,
+            interactionPayload.member,
+          );
         case ExperienceCommands.TOP_EXPERIENCE:
           return await this.handleTopExperienceRanking();
         case ExperienceCommands.GIVE_EXPERIENCE:
@@ -50,10 +53,15 @@ export class DiscordExperienceService {
     }
   }
 
-  private async handleGiveExperience(validation: InteractExperience): Promise<DiscordInteractionResponse> {
+  private async handleGiveExperience(
+    validation: InteractExperience,
+  ): Promise<DiscordInteractionResponse> {
     try {
       const { user, experience: amount } = validation;
-      const updatedUser = await this.userDiscordService.addExperience(user.id, amount);
+      const updatedUser = await this.userDiscordService.addExperience(
+        user.id,
+        amount,
+      );
       const message = `✨ ${user.username} gana ${amount} puntos de experiencia!\nExperiencia total: ${updatedUser.experience}`;
 
       return {
@@ -66,10 +74,15 @@ export class DiscordExperienceService {
     }
   }
 
-  private async handleRemoveExperience(validation: InteractExperience): Promise<DiscordInteractionResponse> {
+  private async handleRemoveExperience(
+    validation: InteractExperience,
+  ): Promise<DiscordInteractionResponse> {
     try {
       const { user, experience: amount } = validation;
-      const updatedUser = await this.userDiscordService.addExperience(user.id, -amount);
+      const updatedUser = await this.userDiscordService.addExperience(
+        user.id,
+        -amount,
+      );
       const message = `📉 ${user.username} pierde ${amount} puntos de experiencia.\nExperiencia total: ${updatedUser.experience}`;
 
       return {
@@ -82,10 +95,15 @@ export class DiscordExperienceService {
     }
   }
 
-  private async handleSetExperience(validation: InteractExperience): Promise<DiscordInteractionResponse> {
+  private async handleSetExperience(
+    validation: InteractExperience,
+  ): Promise<DiscordInteractionResponse> {
     try {
       const { user, experience: amount } = validation;
-      const updatedUser = await this.userDiscordService.updateExperience(user.id, amount);
+      const updatedUser = await this.userDiscordService.updateExperience(
+        user.id,
+        amount,
+      );
       const message = `⚡ La experiencia de ${user.username} ahora es ${amount}\nExperiencia total: ${updatedUser.experience}`;
 
       return {
@@ -126,10 +144,12 @@ export class DiscordExperienceService {
           : '';
 
       const message = userOption
-        ? `✨ ${targetUser.username} tiene ${targetUser.experience || 0
-        } puntos de experiencia!${rankText}`
-        : `✨ Tienes ${targetUser.experience || 0
-        } puntos de experiencia!${rankText}`;
+        ? `✨ ${targetUser.username} tiene ${
+            targetUser.experience || 0
+          } puntos de experiencia!${rankText}`
+        : `✨ Tienes ${
+            targetUser.experience || 0
+          } puntos de experiencia!${rankText}`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,

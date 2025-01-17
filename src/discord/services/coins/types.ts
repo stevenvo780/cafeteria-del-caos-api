@@ -46,10 +46,7 @@ const buildPurchaseOptions = async () => {
       value: product.id.toString(),
     }));
 
-    return [
-      ARTICLE_OPTION,
-      COINS_OPTION,
-    ];
+    return [ARTICLE_OPTION, COINS_OPTION];
   } catch (error) {
     console.error('Error fetching purchase options:', error);
     return CommonCoinsOptions.PURCHASE;

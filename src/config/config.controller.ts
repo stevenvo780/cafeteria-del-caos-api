@@ -113,7 +113,6 @@ export class ConfigController {
     return updatedConfig;
   }
 
-
   @Get('infractions')
   @ApiOperation({ summary: 'Obtener las infracciones' })
   @ApiOkResponse({
