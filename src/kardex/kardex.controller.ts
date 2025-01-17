@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   UseGuards,
+  Query,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { KardexService } from './kardex.service';
 import { CreateKardexDto } from './dto/create-kardex.dto';
@@ -16,6 +18,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../user-discord/entities/user-discord.entity';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { FilterKardexDto } from './dto/filter-kardex.dto';
 
 @ApiTags('kardex')
 @ApiBearerAuth()
@@ -24,51 +27,58 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 export class KardexController {
   constructor(private readonly kardexService: KardexService) {}
 
-  @Post()
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Create a new Kardex entry' })
+  @Post()
   create(@Body() dto: CreateKardexDto) {
     return this.kardexService.create(dto);
   }
 
-  @Get()
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Find all Kardex entries' })
+  @Get()
   findAll() {
     return this.kardexService.findAll();
   }
 
-  @Get('balance/:userDiscordId')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Get last balance for a user' })
+  @Get('balance/:userDiscordId')
   getBalance(@Param('userDiscordId') userDiscordId: string) {
     return this.kardexService.getUserLastBalance(userDiscordId);
   }
 
-  @Get(':id')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Find one Kardex entry by ID' })
-  findOne(@Param('id') id: string) {
-    return this.kardexService.findOne(+id);
+  @Get(':id')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.kardexService.findOne(id);
   }
 
-  @Patch(':id')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Update an existing Kardex entry' })
-  update(@Param('id') id: string, @Body() dto: UpdateKardexDto) {
-    return this.kardexService.update(+id, dto);
+  @Patch(':id')
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateKardexDto) {
+    return this.kardexService.update(id, dto);
   }
 
-  @Delete(':id')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN)
   @ApiOperation({ summary: 'Remove a Kardex entry' })
-  remove(@Param('id') id: string) {
-    return this.kardexService.remove(+id);
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.kardexService.remove(id);
   }
 
-  @Post('cash-in/:userDiscordId')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Add coins to reach desired balance' })
+  @Post('cash-in/:userDiscordId')
   async cashIn(
     @Param('userDiscordId') userDiscordId: string,
     @Body() body: { targetBalance: number; reference?: string },
@@ -80,9 +90,10 @@ export class KardexController {
     );
   }
 
-  @Post('cash-out/:userDiscordId')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Remove coins to reach desired balance' })
+  @Post('cash-out/:userDiscordId')
   async cashOut(
     @Param('userDiscordId') userDiscordId: string,
     @Body() body: { targetBalance: number; reference?: string },
@@ -92,5 +103,14 @@ export class KardexController {
       body.targetBalance,
       body.reference || 'Admin cash-out',
     );
+  }
+
+  
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Search Kardex entries with filters and pagination' })
+  @Get('search/page')
+  async search(@Query() filters: FilterKardexDto) {
+    return this.kardexService.findWithFilters(filters);
   }
 }

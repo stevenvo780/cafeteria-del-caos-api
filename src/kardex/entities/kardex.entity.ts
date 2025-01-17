@@ -24,10 +24,6 @@ export class Kardex {
   @JoinColumn({ name: 'userDiscordId' })
   userDiscord: UserDiscord;
 
-  @Column()
-  @ApiProperty()
-  userDiscordId: string;
-
   @Column({ type: 'enum', enum: KardexOperation })
   @ApiProperty({ enum: KardexOperation })
   operation: KardexOperation;

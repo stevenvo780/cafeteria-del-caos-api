@@ -1,10 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Kardex, KardexOperation } from './entities/kardex.entity';
 import { CreateKardexDto } from './dto/create-kardex.dto';
 import { UpdateKardexDto } from './dto/update-kardex.dto';
 import { UserDiscord } from '../user-discord/entities/user-discord.entity';
+import { FilterKardexDto } from './dto/filter-kardex.dto';
 
 @Injectable()
 export class KardexService {
@@ -13,7 +14,7 @@ export class KardexService {
     private readonly kardexRepository: Repository<Kardex>,
     @InjectRepository(UserDiscord)
     private readonly userDiscordRepository: Repository<UserDiscord>,
-  ) {}
+  ) { }
 
   async create(dto: CreateKardexDto): Promise<Kardex> {
     await this.validateUser(dto.userDiscordId);
@@ -40,7 +41,7 @@ export class KardexService {
 
   async getUserLastBalance(userDiscordId: string): Promise<number> {
     const entry = await this.kardexRepository.findOne({
-      where: { userDiscordId },
+      where: { userDiscord: { id: userDiscordId } },
       order: { createdAt: 'DESC' },
     });
     return entry?.balance || 0;
@@ -168,5 +169,54 @@ export class KardexService {
       amount: Math.abs(difference),
       reference,
     });
+  }
+
+  async findWithFilters(filters: FilterKardexDto) {
+    const queryBuilder = this.kardexRepository.createQueryBuilder('kardex');
+
+    const {
+      limit = 10,
+      offset = 0,
+      search,
+      startDate,
+      endDate,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+    } = filters;
+
+    if (search) {
+      queryBuilder.andWhere('LOWER(userDiscord.id) LIKE LOWER(:search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    if (search) {
+      queryBuilder.andWhere('LOWER(userDiscord.username) LIKE LOWER(:search)', {
+        search: `%${search}%`,
+      });
+    }
+
+    if (startDate) {
+      const start = new Date(filters.startDate);
+      if (!isNaN(start.getTime())) {
+        queryBuilder.andWhere('kardex.createdAt >= :startDate', { startDate: start });
+      }
+    }
+
+    if (endDate) {
+      const end = new Date(filters.endDate);
+      if (!isNaN(end.getTime())) {
+        queryBuilder.andWhere('kardex.createdAt <= :endDate', { endDate: end });
+      }
+    }
+
+    const [items, total] = await queryBuilder
+      .orderBy(`kardex.${sortBy}`, sortOrder)
+      .leftJoinAndSelect('kardex.userDiscord', 'user_discord')
+      .skip(offset)
+      .take(limit)
+      .getManyAndCount();
+
+    return { items, total };
   }
 }

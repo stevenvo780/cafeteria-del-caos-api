@@ -111,8 +111,8 @@ export class DiscordInfractionService {
   
       await this.userDiscordService.addPenaltyPoints(user.id, infractionConfig.points)
       const currentBalance = await this.kardexService.getUserLastBalance(user.id)
-      const quitCoins = this.calculateCoinPenalty(infractionConfig.points, currentBalance)
-      const newBalance = currentBalance - quitCoins
+      const quitCoins = infractionConfig.points * 10;
+      const newBalance = currentBalance - quitCoins;
 
       if (newBalance > 0) {
         await this.kardexService.removeCoins(
@@ -156,11 +156,5 @@ export class DiscordInfractionService {
       console.error('Error al aplicar sanción:', error)
       return createErrorResponse('Error al procesar la sanción.')
     }
-  }
-
-  private calculateCoinPenalty(points: number, totalCoins: number): number {
-    const Q = totalCoins / ( 100 / points * 10)
-    const resta = totalCoins - Q
-    return Math.floor(resta)
   }
 }
