@@ -12,7 +12,7 @@ import { UpdateUserDiscordDto } from './dto/update-user-discord.dto';
 import { KardexService } from '../kardex/kardex.service';
 import { USER_OPTION } from 'src/discord/services/base-command-options';
 import { ConfigService } from '../config/config.service';
-import { assignXpRoleIfNeeded, getDiscordClient } from '../utils/discord-utils';
+import { getDiscordClient } from '../utils/discord-utils';
 
 @Injectable()
 export class UserDiscordService {
@@ -111,7 +111,7 @@ export class UserDiscordService {
       ...updateUserDiscordDto,
     };
     if (updateUserDiscordDto.experience) {
-      await assignXpRoleIfNeeded(updatedUser);
+      await this.assignXpRoleIfNeeded(updatedUser);
     }
     return this.userDiscordRepository.save(updatedUser);
   }
@@ -185,7 +185,7 @@ export class UserDiscordService {
     const updatedExperience = Math.max(0, (user.experience || 0) + amount);
     user.experience = updatedExperience;
     const updatedUser = await this.userDiscordRepository.save(user);
-    await assignXpRoleIfNeeded(updatedUser);
+    await this.assignXpRoleIfNeeded(updatedUser);
     return updatedUser;
   }
 
@@ -196,7 +196,7 @@ export class UserDiscordService {
     const user = await this.findOne(id);
     user.experience = Math.max(0, experience);
     const updatedUser = await this.userDiscordRepository.save(user);
-    await assignXpRoleIfNeeded(updatedUser);
+    await this.assignXpRoleIfNeeded(updatedUser);
     return updatedUser;
   }
 
@@ -254,5 +254,68 @@ export class UserDiscordService {
     }
 
     return null;
+  }
+
+  async assignXpRoleIfNeeded(user: UserDiscord): Promise<void> {
+    try {
+      const client = await getDiscordClient();
+      const guild = client.guilds.cache.get(process.env.DISCORD_GUILD_ID);
+      if (!guild) throw new Error('No se pudo obtener el servidor de Discord');
+  
+      const member = await guild.members.fetch(user.id);
+      if (!member) throw new Error('No se pudo obtener el miembro del servidor');
+  
+      const xpRoles = await this.configService.getXpRoles();
+      if (!xpRoles?.length) return;
+  
+      const sortedRoles = xpRoles.sort((a, b) => b.requiredXp - a.requiredXp);
+  
+      const currentRole = sortedRoles.find(role => user.experience >= role.requiredXp);
+      if (!currentRole) return;
+  
+      const discordRole = await guild.roles.fetch(currentRole.roleId);
+      if (!discordRole) {
+        console.error(`El rol ${currentRole.roleId} no existe en el servidor`);
+        return;
+      }
+  
+      const previousXpRoles = member.roles.cache.filter(role =>
+        xpRoles.some(xpRole => {
+          const roleExists = guild.roles.cache.has(xpRole.roleId);
+          if (!roleExists) {
+            console.error(`El rol ${xpRole.roleId} no existe en el servidor`);
+            return false;
+          }
+          return xpRole.roleId === role.id && xpRole.roleId !== currentRole.roleId;
+        })
+      );
+  
+      const hasPreviousRole = member.roles.cache.has(currentRole.roleId);
+      if (!hasPreviousRole) {
+        try {
+          await Promise.all(
+            previousXpRoles.map(role => member.roles.remove(role))
+          );
+  
+          await member.roles.add(currentRole.roleId);
+  
+          const config = await this.configService.getFirebaseConfig();
+          const rewardChannelId = config.channels.rewardChannelId;
+          const rewardChannel = guild.channels.cache.get(rewardChannelId);
+          if (rewardChannel && rewardChannel.isTextBased()) {
+            await rewardChannel.send(
+              `🎉 ¡Felicidades <@${user.id}>! Has subido de nivel y ahora tienes el rol <@&${currentRole.roleId}>.`
+            );
+          }
+        } catch (roleError) {
+          console.error('Error al modificar roles:', roleError);
+          throw new Error('No se pudieron modificar los roles del usuario');
+        }
+      }
+  
+    } catch (error) {
+      console.error('Error al asignar rol por XP:', error);
+      throw new Error('No se pudo asignar el rol por XP');
+    }
   }
 }

@@ -325,9 +325,6 @@ export class DiscordCoinsService {
     const coinsOption = commandData.options?.find(
       (opt) => opt.name === COINS_OPTION.name,
     ) as APIApplicationCommandInteractionDataNumberOption;
-    if (!coinsOption) {
-      return createErrorResponse('Falta la cantidad de monedas.');
-    }
 
     const sourceUser = await this.userDiscordService.findOrCreate({
       id: interactionPayload.member.user.id,
