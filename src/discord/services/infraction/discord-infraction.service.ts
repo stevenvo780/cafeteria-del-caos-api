@@ -109,6 +109,7 @@ export class DiscordInfractionService {
         await member.roles.add(roleOption.value, `Sanción: ${reasonOption.value}`);
       }
   
+      await this.userDiscordService.addPenaltyPoints(user.id, infractionConfig.points)
       const currentBalance = await this.kardexService.getUserLastBalance(user.id)
       const newBalance = this.calculateCoinPenalty(infractionConfig.points, currentBalance)
       const coinsLost = currentBalance - newBalance
