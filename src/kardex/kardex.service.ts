@@ -17,18 +17,43 @@ export class KardexService {
   ) { }
 
   async create(dto: CreateKardexDto): Promise<Kardex> {
-    await this.validateUser(dto.userDiscordId);
-    const lastBalance = await this.getUserLastBalance(dto.userDiscordId);
-    const newBalance =
-      dto.operation === KardexOperation.IN
-        ? lastBalance + dto.amount
-        : lastBalance - dto.amount;
+    if (dto.amount <= 0) {
+      throw new BadRequestException('La cantidad debe ser mayor a 0');
+    }
 
-    const entry = this.kardexRepository.create({
-      ...dto,
-      balance: newBalance,
-    });
-    return this.kardexRepository.save(entry);
+    await this.validateUser(dto.userDiscordId);
+    
+    const queryRunner = this.kardexRepository.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const lastBalance = await this.getUserLastBalance(dto.userDiscordId);
+      
+      if (dto.operation === KardexOperation.OUT && lastBalance < dto.amount) {
+        throw new BadRequestException('Saldo insuficiente para realizar la operación');
+      }
+
+      const newBalance =
+        dto.operation === KardexOperation.IN
+          ? lastBalance + dto.amount
+          : lastBalance - dto.amount;
+
+      const entry = this.kardexRepository.create({
+        ...dto,
+        balance: newBalance,
+      });
+
+      const result = await queryRunner.manager.save(entry);
+      await queryRunner.commitTransaction();
+      return result;
+
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 
   async getUserLastBalance(userDiscordId: string): Promise<number> {
@@ -40,12 +65,16 @@ export class KardexService {
   }
 
   async addCoins(userDiscordId: string, amount: number, reference?: string) {
-    return this.create({
-      userDiscordId,
-      operation: KardexOperation.IN,
-      amount,
-      reference,
-    });
+    try {
+      return await this.create({
+        userDiscordId,
+        operation: KardexOperation.IN,
+        amount,
+        reference,
+      });
+    } catch (error) {
+      throw new BadRequestException(`Error al añadir monedas: ${error.message}`);
+    }
   }
 
   async removeCoins(userDiscordId: string, amount: number, reference?: string) {
