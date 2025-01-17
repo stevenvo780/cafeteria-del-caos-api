@@ -148,7 +148,7 @@ export class DiscordInfractionService {
             `Monedas perdidas: ${Math.floor(quitCoins)}\n` +
             `Razón: ${reasonOption.value}${additionalInfo}\n` +
             `Total puntos: ${userUpdated.points}/${maxInfractionPoints}\n` +
-            `Balance actual: ${Math.floor(newBalance)} monedas`
+            `Balance actual: ${Math.floor(newBalance > 0 ? newBalance : 0)} monedas`
             + (userUpdated.points >= maxInfractionPoints ? "\n🎉 ¡Has alcanzado el límite máximo de sanciones! Has sido domado." : "")
         }
       }

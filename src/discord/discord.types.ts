@@ -28,6 +28,11 @@ export interface InteractPoints {
   points: number;
 }
 
+export interface InteractExperience {
+  user: UserDiscord;
+  experience: number;
+}
+
 export interface InteractCoins {
   user: UserDiscord;
   target?: UserDiscord | null;

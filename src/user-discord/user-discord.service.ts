@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { UserDiscord } from './entities/user-discord.entity';
 import { FindUsersDto, SortOrder } from './dto/find-users.dto';
-import { InteractPoints, CommandResponse } from '../discord/discord.types';
+import { InteractPoints, CommandResponse, InteractExperience } from '../discord/discord.types';
 import {
   APIChatInputApplicationCommandInteractionData,
   InteractionResponseType,
@@ -262,17 +262,12 @@ export class UserDiscordService {
   async updateExperience(
     id: string,
     experience: number,
-  ): Promise<UpdateResult> {
+  ): Promise<UserDiscord> {
     const user = await this.findOne(id);
-    if (!user) {
-      throw new NotFoundException(
-        `Usuario de Discord con ID ${id} no encontrado`,
-      );
-    }
-    const update = this.userDiscordRepository.update(id, { experience });
+    user.experience = experience;
+    const updateUser = await this.userDiscordRepository.save(user);
     await this.assignXpRoleIfNeeded(user.id);
-
-    return update;
+    return updateUser;
   }
 
   async findTopRanking(
@@ -293,11 +288,11 @@ export class UserDiscordService {
   }
 
   async handleExperienceOperation(
-    data: InteractPoints,
+    data: InteractExperience,
     operation: 'add' | 'remove' | 'set',
   ): Promise<CommandResponse> {
     try {
-      const { user: discordUser, points: amount } = data;
+      const { user: discordUser, experience: amount } = data;
 
       if (operation === 'remove' && discordUser.experience < amount) {
         return createErrorResponse(
@@ -316,7 +311,7 @@ export class UserDiscordService {
           message = `📉 ${discordUser.username} perdió ${amount} XP.`;
           break;
         case 'set':
-          await this.updateExperience(discordUser.id, amount);
+          const experience = await this.updateExperience(discordUser.id, amount);
           message = `⚡ ${discordUser.username} tiene ${amount} XP ahora.`;
           break;
         default:

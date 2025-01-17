@@ -10,7 +10,7 @@ import { UserDiscordService } from '../../../user-discord/user-discord.service';
 import {
   CommandResponse,
   DiscordInteractionResponse,
-  InteractPoints,
+  InteractExperience,
   ValidateResult,
 } from '../../discord.types';
 import { createErrorResponse, resolveTargetUser } from '../../discord.util';
@@ -54,13 +54,13 @@ export class DiscordExperienceService {
     if ('isError' in validation) return validation;
 
     try {
-      const newExperience = (validation.user.experience || 0) + validation.points;
+      const newExperience = (validation.user.experience || 0) + validation.experience;
       await this.userDiscordService.updateExperience(validation.user.id, newExperience);
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `✨ ${validation.user.username} ha ganado ${validation.points} puntos de experiencia!\nExperiencia total: ${newExperience}`,
+          content: `✨ ${validation.user.username} ha ganado ${validation.experience} puntos de experiencia!\nExperiencia total: ${newExperience}`,
         },
       };
     } catch (error) {
@@ -76,13 +76,13 @@ export class DiscordExperienceService {
     if ('isError' in validation) return validation;
 
     try {
-      const newExperience = Math.max(0, (validation.user.experience || 0) - validation.points);
+      const newExperience = Math.max(0, (validation.user.experience || 0) - validation.experience);
       await this.userDiscordService.updateExperience(validation.user.id, newExperience);
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
-          content: `📉 ${validation.user.username} ha perdido ${validation.points} puntos de experiencia.\nExperiencia restante: ${newExperience}`,
+          content: `📉 ${validation.user.username} ha perdido ${validation.experience} puntos de experiencia.\nExperiencia restante: ${newExperience}`,
         },
       };
     } catch (error) {
@@ -98,7 +98,7 @@ export class DiscordExperienceService {
     if ('isError' in validation) return validation;
 
     try {
-      const newExperience = Math.max(0, validation.points);
+      const newExperience = Math.max(0, validation.experience);
       await this.userDiscordService.updateExperience(validation.user.id, newExperience);
 
       return {
@@ -193,7 +193,7 @@ export class DiscordExperienceService {
 
   private async validateExperienceCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<ValidateResult<InteractPoints>> {
+  ): Promise<ValidateResult<InteractExperience>> {
     const amountOption = commandData.options?.find(
       (opt) => opt.name === EXPERIENCE_OPTION.name,
     ) as APIApplicationCommandInteractionDataNumberOption;
@@ -210,7 +210,7 @@ export class DiscordExperienceService {
 
     return {
       user,
-      points: amountOption.value,
+      experience: amountOption.value,
     };
   }
 }
