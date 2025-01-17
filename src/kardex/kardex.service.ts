@@ -174,7 +174,7 @@ export class KardexService {
 
     if (search) {
       queryBuilder.andWhere(
-        '(CAST(userDiscord.id AS TEXT) LIKE :search OR LOWER(userDiscord.username) LIKE LOWER(:search))',
+        '(CAST(userDiscord.id AS TEXT) LIKE :search OR LOWER(userDiscord.username) LIKE LOWER(:search) OR LOWER(kardex.reference) LIKE LOWER(:search))',
         { search: `%${search}%` }
       );
     }

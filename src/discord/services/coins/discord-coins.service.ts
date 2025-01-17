@@ -261,7 +261,7 @@ export class DiscordCoinsService {
       await this.kardexService.removeCoins(
         userId,
         totalPrice,
-        `Compra: ${quantity}x ${product.title}`,
+        `Compra: ${quantity}x ${product.title} (${productId})`,
       );
 
       const newBalance = await this.kardexService.getUserLastBalance(userId);
