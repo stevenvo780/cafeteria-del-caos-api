@@ -136,7 +136,7 @@ export class DiscordController {
       await this.kardexService.removeCoins(
         user.id,
         Math.abs(amount),
-        'Report from Bot',
+        'Report from Bot awards',
       );
     }
 

@@ -29,14 +29,6 @@ export class KardexController {
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Create a new Kardex entry' })
-  @Post()
-  create(@Body() dto: CreateKardexDto) {
-    return this.kardexService.create(dto);
-  }
-
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
   @ApiOperation({ summary: 'Find all Kardex entries' })
   @Get()
   findAll() {
@@ -57,22 +49,6 @@ export class KardexController {
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.kardexService.findOne(id);
-  }
-
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
-  @ApiOperation({ summary: 'Update an existing Kardex entry' })
-  @Patch(':id')
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateKardexDto) {
-    return this.kardexService.update(id, dto);
-  }
-
-  @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.SUPER_ADMIN)
-  @ApiOperation({ summary: 'Remove a Kardex entry' })
-  @Delete(':id')
-  remove(@Param('id', ParseIntPipe) id: number) {
-    return this.kardexService.remove(id);
   }
 
   @UseGuards(FirebaseAuthGuard, RolesGuard)
