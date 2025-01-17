@@ -21,7 +21,7 @@ export class UserDiscordService {
     private readonly userDiscordRepository: Repository<UserDiscord>,
     private kardexService: KardexService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   private async attachBalanceToUsers(
     users: UserDiscord[],
@@ -228,31 +228,36 @@ export class UserDiscordService {
   async resolveInteractionUser(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<UserDiscord | null> {
-    const subcommand =
-      commandData.options?.[0]?.type === 1 ? commandData.options[0] : undefined;
+    try {
+      const subcommand =
+        commandData.options?.[0]?.type === 1 ? commandData.options[0] : undefined;
 
-    const userOption =
-      subcommand?.options?.find((opt) => opt.name === USER_OPTION.name) ||
-      commandData.options?.find((opt) => opt.name === USER_OPTION.name);
+      const userOption =
+        subcommand?.options?.find((opt) => opt.name === USER_OPTION.name) ||
+        commandData.options?.find((opt) => opt.name === USER_OPTION.name);
 
-    if (
-      userOption?.type === ApplicationCommandOptionType.User &&
-      userOption.value &&
-      commandData.resolved?.users &&
-      commandData.resolved.members
-    ) {
-      const resolvedUser = commandData.resolved.users[userOption.value];
-      const resolvedMember = commandData.resolved.members[userOption.value];
-      if (resolvedUser && resolvedMember) {
-        return await this.findOrCreate({
-          id: userOption.value,
-          username: resolvedUser.username,
-          roles: resolvedMember.roles || [],
-        });
+      if (
+        userOption?.type === ApplicationCommandOptionType.User &&
+        userOption.value &&
+        commandData.resolved?.users &&
+        commandData.resolved.members
+      ) {
+        const resolvedUser = commandData.resolved.users[userOption.value];
+        const resolvedMember = commandData.resolved.members[userOption.value];
+        if (resolvedUser && resolvedMember) {
+          return await this.findOrCreate({
+            id: userOption.value,
+            username: resolvedUser.username,
+            roles: resolvedMember.roles || [],
+          });
+        }
       }
-    }
 
-    return null;
+      return null;
+    } catch (error) {
+      console.error('Error al resolver usuario de interacción:', error);
+      throw new Error('No se pudo resolver el usuario de la interacción');
+    }
   }
 
   async assignXpRoleIfNeeded(user: UserDiscord): Promise<void> {

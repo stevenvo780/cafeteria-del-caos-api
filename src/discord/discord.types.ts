@@ -30,7 +30,7 @@ export interface InteractPoints {
 
 export interface InteractExperience {
   user: UserDiscord;
-  experience: number;
+  experience?: number;
 }
 
 export interface InteractCoins {

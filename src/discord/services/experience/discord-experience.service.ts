@@ -199,23 +199,17 @@ export class DiscordExperienceService {
   private async validateExperienceCommand(
     commandData: APIChatInputApplicationCommandInteractionData,
   ): Promise<ValidateResult<InteractExperience>> {
-    const amountOption = commandData.options?.find(
-      (opt) => opt.name === EXPERIENCE_OPTION.name,
-    ) as APIApplicationCommandInteractionDataNumberOption;
-    if (!amountOption) {
-      return createErrorResponse('Faltan datos para experiencia.');
-    }
-
     const user = await this.userDiscordService.resolveInteractionUser(
       commandData,
     );
-    if (!user) {
-      return createErrorResponse('Usuario no encontrado.');
-    }
+
+    const amountOption = commandData.options?.find(
+      (opt) => opt.name === EXPERIENCE_OPTION.name,
+    ) as APIApplicationCommandInteractionDataNumberOption;
 
     return {
       user,
-      experience: amountOption.value,
+      experience: amountOption.value || null,
     };
   }
 }
