@@ -152,8 +152,8 @@ export class DiscordInfractionService {
   }
 
   private calculateCoinPenalty(points: number, totalCoins: number): number {
-    const suma = Math.floor(points * 10)
-    const resta = Math.floor(100 / suma)
-    return Math.max(0, totalCoins - resta)
+    const Q = totalCoins / ( 100 /points * 10)
+    const resta = totalCoins - Q
+    return Math.floor(resta)
   }
 }

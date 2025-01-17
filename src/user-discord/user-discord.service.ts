@@ -322,7 +322,6 @@ export class UserDiscordService {
         default:
           throw new Error('Operación no válida');
       }
-      await this.assignXpRoleIfNeeded(discordUser.id);
       const updatedUser = await this.findOne(discordUser.id);
       const currentLevel = Math.floor(updatedUser.experience / 100);
       const nextLevel = (currentLevel + 1) * 100;

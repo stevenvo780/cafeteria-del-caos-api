@@ -7,6 +7,7 @@ import { UpdateConfigDto } from './dto/update-config.dto';
 import { getFirebaseConfig, updateFirebaseConfig } from '../utils/firebase-admin.config';
 import { BotConfig } from 'src/utils/types';
 import { XpRoleDto } from './dto/xp-role.dto';
+import { UpdateNormativeDto } from './dto/update-normative.dto';
 
 @Injectable()
 export class ConfigService {
@@ -160,6 +161,20 @@ export class ConfigService {
   async updateXpRoles(xpRoles: XpRoleDto[]): Promise<Config> {
     const config = await this.getConfig();
     config.xpRoles = xpRoles;
+    return this.configRepository.save(config);
+  }
+
+  async updateNormative(updateNormativeDto: UpdateNormativeDto): Promise<Config> {
+    const config = await this.getConfig();
+    
+    if (updateNormativeDto.generalNormative !== undefined) {
+      config.generalNormative = updateNormativeDto.generalNormative;
+    }
+    
+    if (updateNormativeDto.staffNormative !== undefined) {
+      config.staffNormative = updateNormativeDto.staffNormative;
+    }
+
     return this.configRepository.save(config);
   }
 }

@@ -15,6 +15,7 @@ import { Config } from './entities/config.entity';
 import { exec } from 'child_process';
 import { BotConfig } from 'src/utils/types';
 import { XpRoleDto } from './dto/xp-role.dto';
+import { UpdateNormativeDto } from './dto/update-normative.dto';
 
 @ApiTags('config')
 @Controller('config')
@@ -112,6 +113,7 @@ export class ConfigController {
     return updatedConfig;
   }
 
+
   @Get('infractions')
   @ApiOperation({ summary: 'Obtener las infracciones' })
   @ApiOkResponse({
@@ -166,5 +168,20 @@ export class ConfigController {
   })
   async updateXpRoles(@Body() xpRolesDto: XpRoleDto[]): Promise<Config> {
     return this.configService.updateXpRoles(xpRolesDto);
+  }
+
+  @Patch('normative')
+  @UseGuards(FirebaseAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Actualizar las normativas' })
+  @ApiOkResponse({
+    description: 'Normativas actualizadas correctamente',
+    type: Config,
+  })
+  async updateNormative(
+    @Body() updateNormativeDto: UpdateNormativeDto,
+  ): Promise<Config> {
+    return this.configService.updateNormative(updateNormativeDto);
   }
 }

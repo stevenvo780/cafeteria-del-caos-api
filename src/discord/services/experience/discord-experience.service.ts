@@ -55,7 +55,7 @@ export class DiscordExperienceService {
 
     try {
       const newExperience = (validation.user.experience || 0) + validation.points;
-      await this.userDiscordService.update(validation.user.id, { experience: newExperience });
+      await this.userDiscordService.updateExperience(validation.user.id, newExperience);
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
@@ -77,7 +77,7 @@ export class DiscordExperienceService {
 
     try {
       const newExperience = Math.max(0, (validation.user.experience || 0) - validation.points);
-      await this.userDiscordService.update(validation.user.id, { experience: newExperience });
+      await this.userDiscordService.updateExperience(validation.user.id, newExperience);
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
@@ -99,7 +99,7 @@ export class DiscordExperienceService {
 
     try {
       const newExperience = Math.max(0, validation.points);
-      await this.userDiscordService.update(validation.user.id, { experience: newExperience });
+      await this.userDiscordService.updateExperience(validation.user.id, newExperience);
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
