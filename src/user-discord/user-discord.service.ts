@@ -110,6 +110,9 @@ export class UserDiscordService {
       ...user,
       ...updateUserDiscordDto,
     };
+    if (updateUserDiscordDto.coins) {
+      await this.kardexService.setCoins(id, updateUserDiscordDto.coins);
+    }
     if (updateUserDiscordDto.experience) {
       await this.assignXpRoleIfNeeded(updatedUser);
     }

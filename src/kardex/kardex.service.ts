@@ -21,15 +21,21 @@ export class KardexService {
       throw new BadRequestException('La cantidad debe ser mayor a 0');
     }
 
-    await this.validateUser(dto.userDiscordId);
-    
+    const user = await this.userDiscordRepository.findOne({
+      where: {
+        id: dto.userDiscordId
+      }
+    });
+    if (!user) {
+      throw new NotFoundException(`Usuario con ID ${dto.userDiscordId} no encontrado`);
+    }
+
     const queryRunner = this.kardexRepository.manager.connection.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
 
     try {
       const lastBalance = await this.getUserLastBalance(dto.userDiscordId);
-      
       if (dto.operation === KardexOperation.OUT && lastBalance < dto.amount) {
         throw new BadRequestException('Saldo insuficiente para realizar la operación');
       }
@@ -38,12 +44,11 @@ export class KardexService {
         dto.operation === KardexOperation.IN
           ? lastBalance + dto.amount
           : lastBalance - dto.amount;
-
       const entry = this.kardexRepository.create({
         ...dto,
         balance: newBalance,
+        userDiscord: user,
       });
-
       const result = await queryRunner.manager.save(entry);
       await queryRunner.commitTransaction();
       return result;
@@ -61,6 +66,7 @@ export class KardexService {
       where: { userDiscord: { id: userDiscordId } },
       order: { createdAt: 'DESC' },
     });
+    console.log('entry', entry);
     return entry?.balance || 0;
   }
 
@@ -126,15 +132,6 @@ export class KardexService {
     const kardex = await this.kardexRepository.findOne({ where: { id } });
     if (!kardex) throw new NotFoundException(`Kardex ID ${id} not found`);
     return kardex;
-  }
-
-  private async validateUser(userDiscordId: string): Promise<void> {
-    const user = await this.userDiscordRepository.findOne({
-      where: { id: userDiscordId },
-    });
-    if (!user) {
-      throw new NotFoundException(`UserDiscord ID ${userDiscordId} not found`);
-    }
   }
 
   async findTopByCoins(
