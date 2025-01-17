@@ -111,13 +111,34 @@ export class DiscordInfractionService {
   
       await this.userDiscordService.addPenaltyPoints(user.id, infractionConfig.points)
       const currentBalance = await this.kardexService.getUserLastBalance(user.id)
-      const quitCoins = infractionConfig.points * 10;
-      const newBalance = currentBalance - quitCoins;
+      
+      const basePercentage = 0.05;
+      const percentagePerPoint = 0.02;
+      const totalPercentage = basePercentage + (percentagePerPoint * infractionConfig.points);
+      
+      const quitCoins = Math.floor(currentBalance * totalPercentage);
+      
+      const minPenaltyPercentage = 0.01;
+      const maxPenaltyPercentage = 0.60;
+      
+      const absoluteMinimum = 10;
+      const minPenalty = Math.max(
+        absoluteMinimum,
+        Math.floor(currentBalance * minPenaltyPercentage)
+      );
+      const maxPenalty = Math.floor(currentBalance * maxPenaltyPercentage);
+      
+      const finalQuitCoins = Math.max(
+        minPenalty,
+        Math.min(quitCoins, maxPenalty, currentBalance)
+      );
+
+      const newBalance = currentBalance - finalQuitCoins;
 
       if (newBalance > 0) {
         await this.kardexService.removeCoins(
           user.id,
-          quitCoins,
+          finalQuitCoins,
           `${infractionConfig.name} - ${reasonOption.value}`
         )
       } else {
@@ -145,7 +166,7 @@ export class DiscordInfractionService {
             `${infractionConfig.emoji} Sanción registrada - <@${user.id}>\n` +
             `Tipo: ${infractionConfig.name}\n` +
             `Puntos de sanción: +${infractionConfig.points}\n` +
-            `Monedas perdidas: ${Math.floor(quitCoins)}\n` +
+            `Monedas perdidas: ${Math.floor(finalQuitCoins)}\n` +
             `Razón: ${reasonOption.value}${additionalInfo}\n` +
             `Total puntos: ${userUpdated.points}/${maxInfractionPoints}\n` +
             `Balance actual: ${Math.floor(newBalance > 0 ? newBalance : 0)} monedas`
