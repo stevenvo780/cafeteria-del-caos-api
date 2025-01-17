@@ -26,7 +26,7 @@ export class UserDiscordService {
     private readonly userDiscordRepository: Repository<UserDiscord>,
     private kardexService: KardexService,
     private readonly configService: ConfigService,
-  ) {}
+  ) { }
 
   private async attachBalanceToUsers(
     users: UserDiscord[],
@@ -255,6 +255,7 @@ export class UserDiscordService {
     const user = await this.findOne(userId);
     const updatedExperience = (user.experience || 0) + amount;
     await this.update(userId, { experience: updatedExperience });
+    await this.assignXpRoleIfNeeded(user.id);
     return this.findOne(userId);
   }
 
@@ -268,7 +269,10 @@ export class UserDiscordService {
         `Usuario de Discord con ID ${id} no encontrado`,
       );
     }
-    return this.userDiscordRepository.update(id, { experience });
+    const update = this.userDiscordRepository.update(id, { experience });
+    await this.assignXpRoleIfNeeded(user.id);
+
+    return update;
   }
 
   async findTopRanking(
@@ -384,9 +388,8 @@ export class UserDiscordService {
         .map((user, index) => {
           const medal =
             index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '✨';
-          return `${medal} ${index + 1}. ${user.username}: ${
-            user.experience
-          } XP`;
+          return `${medal} ${index + 1}. ${user.username}: ${user.experience
+            } XP`;
         })
         .join('\n');
 
@@ -453,7 +456,7 @@ export class UserDiscordService {
       const currentRole = sortedRoles.find(role => user.experience >= role.requiredXp);
       if (!currentRole) return;
 
-      const previousXpRoles = member.roles.cache.filter(role => 
+      const previousXpRoles = member.roles.cache.filter(role =>
         xpRoles.some(xpRole => xpRole.roleId === role.id && xpRole.roleId !== currentRole.roleId)
       );
 

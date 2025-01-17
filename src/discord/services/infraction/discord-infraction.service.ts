@@ -83,7 +83,7 @@ export class DiscordInfractionService {
       const infractionConfig = config.infractions.find(
         inf => inf.value === typeOption.value
       );
-  
+
       if (!infractionConfig) {
         return createErrorResponse('Tipo de sanción no válido.');
       }
