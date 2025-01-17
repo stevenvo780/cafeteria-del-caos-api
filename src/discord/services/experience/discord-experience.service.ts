@@ -209,7 +209,7 @@ export class DiscordExperienceService {
 
     return {
       user,
-      experience: amountOption.value || null,
+      experience: amountOption?.value || null,
     };
   }
 }

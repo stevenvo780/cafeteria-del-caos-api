@@ -73,7 +73,6 @@ export class KardexService {
       where: { userDiscord: { id: userDiscordId } },
       order: { createdAt: 'DESC' },
     });
-    console.log('entry', entry);
     return entry?.balance || 0;
   }
 
