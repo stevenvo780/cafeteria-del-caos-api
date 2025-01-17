@@ -456,25 +456,43 @@ export class UserDiscordService {
       const currentRole = sortedRoles.find(role => user.experience >= role.requiredXp);
       if (!currentRole) return;
 
+      const discordRole = await guild.roles.fetch(currentRole.roleId);
+      if (!discordRole) {
+        console.error(`El rol ${currentRole.roleId} no existe en el servidor`);
+        return;
+      }
+
       const previousXpRoles = member.roles.cache.filter(role =>
-        xpRoles.some(xpRole => xpRole.roleId === role.id && xpRole.roleId !== currentRole.roleId)
+        xpRoles.some(xpRole => {
+          const roleExists = guild.roles.cache.has(xpRole.roleId);
+          if (!roleExists) {
+            console.error(`El rol ${xpRole.roleId} no existe en el servidor`);
+            return false;
+          }
+          return xpRole.roleId === role.id && xpRole.roleId !== currentRole.roleId;
+        })
       );
 
       const hasPreviousRole = member.roles.cache.has(currentRole.roleId);
       if (!hasPreviousRole) {
-        await Promise.all(
-          previousXpRoles.map(role => member.roles.remove(role))
-        );
-
-        await member.roles.add(currentRole.roleId);
-
-        const config = await this.configService.getFirebaseConfig();
-        const rewardChannelId = config.channels.rewardChannelId;
-        const rewardChannel = guild.channels.cache.get(rewardChannelId);
-        if (rewardChannel && rewardChannel.isTextBased()) {
-          await rewardChannel.send(
-            `🎉 ¡Felicidades <@${userId}>! Has subido de nivel y ahora tienes el rol <@&${currentRole.roleId}>.`
+        try {
+          await Promise.all(
+            previousXpRoles.map(role => member.roles.remove(role))
           );
+
+          await member.roles.add(currentRole.roleId);
+
+          const config = await this.configService.getFirebaseConfig();
+          const rewardChannelId = config.channels.rewardChannelId;
+          const rewardChannel = guild.channels.cache.get(rewardChannelId);
+          if (rewardChannel && rewardChannel.isTextBased()) {
+            await rewardChannel.send(
+              `🎉 ¡Felicidades <@${userId}>! Has subido de nivel y ahora tienes el rol <@&${currentRole.roleId}>.`
+            );
+          }
+        } catch (roleError) {
+          console.error('Error al modificar roles:', roleError);
+          throw new Error('No se pudieron modificar los roles del usuario');
         }
       }
 
