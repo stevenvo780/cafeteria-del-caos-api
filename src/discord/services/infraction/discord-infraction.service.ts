@@ -20,7 +20,6 @@ import {
   INFRACTION_REASON_OPTION,
   INFRACTION_ROLE_OPTION,
   INFRACTION_DURATION_OPTION,
-  SanctionType
 } from './types'
 import { USER_OPTION } from '../base-command-options'
 import { getDiscordClient } from '../../../utils/discord-utils'
@@ -93,7 +92,9 @@ export class DiscordInfractionService {
   
       const client = await getDiscordClient();
       const guild = client.guilds.cache.get(process.env.DISCORD_GUILD_ID!);
-      const member = guild?.members.cache.get(user.id);
+      const member = guild
+        ? await guild.members.fetch(user.id).catch(() => null)
+        : null;
   
       if (!member) {
         return createErrorResponse('No se pudo encontrar al usuario en el servidor.');

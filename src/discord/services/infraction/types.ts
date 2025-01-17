@@ -6,12 +6,6 @@ export enum InfractionCommands {
   ADD_INFRACTION = 'añadir-sancion'
 }
 
-export enum SanctionType {
-  NONE = 'nada',
-  MUTE = 'mute',
-  ROLE = 'rol'
-}
-
 export const INFRACTION_TYPE_OPTION = {
   name: 'tipo',
   type: ApplicationCommandOptionType.String,
