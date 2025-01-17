@@ -19,7 +19,7 @@ import { USER_OPTION } from '../base-command-options';
 
 @Injectable()
 export class DiscordExperienceService {
-  constructor(private readonly userDiscordService: UserDiscordService) { }
+  constructor(private readonly userDiscordService: UserDiscordService) {}
 
   async handleExperienceCommand(
     commandName: string,
@@ -27,17 +27,20 @@ export class DiscordExperienceService {
     interactionPayload?: APIInteraction,
   ): Promise<DiscordInteractionResponse> {
     try {
+      const validation = await this.validateExperienceCommand(commandData);
+      if ('isError' in validation) return validation;
+
       switch (commandName) {
         case ExperienceCommands.GET_EXPERIENCE:
           return await this.handleUserExperience(commandData, interactionPayload.member);
         case ExperienceCommands.TOP_EXPERIENCE:
           return await this.handleTopExperienceRanking();
         case ExperienceCommands.GIVE_EXPERIENCE:
-          return await this.handleGiveExperience(commandData);
+          return await this.handleGiveExperience(validation);
         case ExperienceCommands.REMOVE_EXPERIENCE:
-          return await this.handleRemoveExperience(commandData);
+          return await this.handleRemoveExperience(validation);
         case ExperienceCommands.SET_EXPERIENCE:
-          return await this.handleSetExperience(commandData);
+          return await this.handleSetExperience(validation);
         default:
           return createErrorResponse('Comando de experiencia no reconocido');
       }
@@ -47,69 +50,51 @@ export class DiscordExperienceService {
     }
   }
 
-  private async handleGiveExperience(
-    commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<DiscordInteractionResponse> {
-    const validation = await this.validateExperienceCommand(commandData);
-    if ('isError' in validation) return validation;
-
+  private async handleGiveExperience(validation: InteractExperience): Promise<DiscordInteractionResponse> {
     try {
-      const newExperience = (validation.user.experience || 0) + validation.experience;
-      await this.userDiscordService.updateExperience(validation.user.id, newExperience);
+      const { user, experience: amount } = validation;
+      const updatedUser = await this.userDiscordService.addExperience(user.id, amount);
+      const message = `✨ ${user.username} gana ${amount} puntos de experiencia!\nExperiencia total: ${updatedUser.experience}`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `✨ ${validation.user.username} ha ganado ${validation.experience} puntos de experiencia!\nExperiencia total: ${newExperience}`,
-        },
+        data: { content: message },
       };
     } catch (error) {
-      console.error('Error al dar experiencia:', error);
-      return createErrorResponse('❌ Error al dar experiencia.');
+      console.error('Error en operación de experiencia:', error);
+      return createErrorResponse('❌ Error al procesar la experiencia.');
     }
   }
 
-  private async handleRemoveExperience(
-    commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<DiscordInteractionResponse> {
-    const validation = await this.validateExperienceCommand(commandData);
-    if ('isError' in validation) return validation;
-
+  private async handleRemoveExperience(validation: InteractExperience): Promise<DiscordInteractionResponse> {
     try {
-      const newExperience = Math.max(0, (validation.user.experience || 0) - validation.experience);
-      await this.userDiscordService.updateExperience(validation.user.id, newExperience);
+      const { user, experience: amount } = validation;
+      const updatedUser = await this.userDiscordService.addExperience(user.id, -amount);
+      const message = `📉 ${user.username} pierde ${amount} puntos de experiencia.\nExperiencia total: ${updatedUser.experience}`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `📉 ${validation.user.username} ha perdido ${validation.experience} puntos de experiencia.\nExperiencia restante: ${newExperience}`,
-        },
+        data: { content: message },
       };
     } catch (error) {
-      console.error('Error al quitar experiencia:', error);
-      return createErrorResponse('❌ Error al quitar experiencia.');
+      console.error('Error en operación de experiencia:', error);
+      return createErrorResponse('❌ Error al procesar la experiencia.');
     }
   }
 
-  private async handleSetExperience(
-    commandData: APIChatInputApplicationCommandInteractionData,
-  ): Promise<DiscordInteractionResponse> {
-    const validation = await this.validateExperienceCommand(commandData);
-    if ('isError' in validation) return validation;
-
+  private async handleSetExperience(validation: InteractExperience): Promise<DiscordInteractionResponse> {
     try {
-      const newExperience = Math.max(0, validation.experience);
-      await this.userDiscordService.updateExperience(validation.user.id, newExperience);
+      const { user, experience: amount } = validation;
+      const updatedUser = await this.userDiscordService.updateExperience(user.id, amount);
+      const message = `⚡ La experiencia de ${user.username} ahora es ${amount}\nExperiencia total: ${updatedUser.experience}`;
 
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
-        data: {
-          content: `⚡ La experiencia de ${validation.user.username} ha sido establecida a ${newExperience} puntos`,
-        },
+        data: { content: message },
       };
     } catch (error) {
-      console.error('Error al establecer experiencia:', error);
-      return createErrorResponse('❌ Error al establecer experiencia.');
+      console.error('Error en operación de experiencia:', error);
+      return createErrorResponse('❌ Error al procesar la experiencia.');
     }
   }
 
