@@ -21,7 +21,7 @@ export class UserDiscordService {
     private readonly userDiscordRepository: Repository<UserDiscord>,
     private kardexService: KardexService,
     private readonly configService: ConfigService,
-  ) { }
+  ) {}
 
   private async attachBalanceToUsers(
     users: UserDiscord[],
@@ -230,7 +230,9 @@ export class UserDiscordService {
   ): Promise<UserDiscord | null> {
     try {
       const subcommand =
-        commandData.options?.[0]?.type === 1 ? commandData.options[0] : undefined;
+        commandData.options?.[0]?.type === 1
+          ? commandData.options[0]
+          : undefined;
 
       const userOption =
         subcommand?.options?.find((opt) => opt.name === USER_OPTION.name) ||
@@ -313,7 +315,7 @@ export class UserDiscordService {
           const rewardChannel = guild.channels.cache.get(rewardChannelId);
           if (rewardChannel && rewardChannel.isTextBased()) {
             await rewardChannel.send(
-              `🎉 ¡Felicidades <@${user.id}>! Has subido de nivel y ahora tienes el rol <@&${currentRole.roleId}>.`,
+              `🎉 ¡Felicidades <@${user.id}>! Has subido de nivel y ahora tienes el rol ${discordRole.name}.`,
             );
           }
         } catch (roleError) {
