@@ -40,7 +40,7 @@ export class Library extends SharedProp {
   })
   description: string;
 
-  @Column()
+  @Column({ default: () => 'CURRENT_TIMESTAMP' })
   @ApiProperty({
     description: 'Reference date associated with the library',
     type: 'string',
@@ -85,4 +85,12 @@ export class Library extends SharedProp {
     type: [Library],
   })
   children: Library[];
+
+  @Column({ nullable: true })
+  @ApiProperty({
+    description: 'URL de la imagen asociada a la librería',
+    example: 'https://storage.googleapis.com/my-bucket/image.jpg',
+    required: false,
+  })
+  imageUrl?: string;
 }

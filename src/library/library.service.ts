@@ -22,6 +22,7 @@ export class LibraryService {
       ...createLibraryDto,
       author: user,
       visibility: createLibraryDto.visibility || LibraryVisibility.USERS,
+      referenceDate: createLibraryDto.referenceDate || new Date(),
     });
 
     if (createLibraryDto.parentNoteId) {
@@ -32,7 +33,7 @@ export class LibraryService {
         newLibraryItem.parent = parentNote;
       }
     }
-
+    console.log(newLibraryItem);
     return this.libraryRepository.save(newLibraryItem);
   }
 
@@ -173,6 +174,8 @@ export class LibraryService {
       libraryItem.visibility = updateLibraryDto.visibility;
     if (updateLibraryDto.referenceDate !== undefined)
       libraryItem.referenceDate = updateLibraryDto.referenceDate;
+    if (updateLibraryDto.imageUrl !== undefined)
+      libraryItem.imageUrl = updateLibraryDto.imageUrl;
 
     return await this.libraryRepository.save(libraryItem);
   }
@@ -265,7 +268,7 @@ export class LibraryService {
       description: `Carpeta automática para: ${title}`,
       referenceDate: new Date(),
       parent: parent
-        ? await this.findOrCreateByTitle(parent.title, null)
+        ? await this.findOrCreateByTitle(parent.title, visibility)
         : null,
       visibility,
     });

@@ -1,4 +1,4 @@
-import { IsString, IsOptional } from 'class-validator';
+import { IsString, IsOptional, IsDate } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { LibraryVisibility } from '../entities/library.entity';
 
@@ -25,13 +25,21 @@ export class CreateLibraryDto {
   })
   parentNoteId?: number;
 
-  @IsOptional()
   @ApiProperty({
     description: 'The date of the library reference',
     type: Date,
+    default: new Date(),
+  })
+  referenceDate: Date = new Date();
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: 'URL de la imagen para la librería',
+    type: String,
     required: false,
   })
-  referenceDate?: Date;
+  imageUrl?: string;
 
   @IsOptional()
   @ApiProperty({ enum: LibraryVisibility, required: false })

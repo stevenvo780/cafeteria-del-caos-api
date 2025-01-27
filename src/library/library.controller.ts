@@ -9,6 +9,8 @@ import {
   UseGuards,
   Request,
   Query,
+  UnauthorizedException,
+  Headers,
 } from '@nestjs/common';
 import { LibraryService } from './library.service';
 import { CreateLibraryDto } from './dto/create-library.dto';
@@ -27,8 +29,9 @@ import {
   ApiCreatedResponse,
   ApiOkResponse,
 } from '@nestjs/swagger';
-import { Library } from './entities/library.entity';
+import { Library, LibraryVisibility } from './entities/library.entity';
 import { DeleteResult } from 'typeorm';
+import { CreateWithFolderDto } from './dto/create-with-folder.dto';
 
 @ApiTags('library')
 @Controller('library')
@@ -76,6 +79,41 @@ export class LibraryController {
     @Request() req: RequestWithUser,
     @Body() createLibraryDto: CreateLibraryDto,
   ): Promise<Library> {
+    return this.libraryService.create(createLibraryDto, req.user);
+  }
+
+  @Post('with-folder')
+  @ApiOperation({
+    summary:
+      "Create a new note inside a folder (creates folder if it doesn't exist)",
+  })
+  @ApiCreatedResponse({
+    description: 'The note has been successfully created inside the folder.',
+    type: Library,
+  })
+  async createWithFolder(
+    @Request() req: RequestWithUser,
+    @Body() createWithFolderDto: CreateWithFolderDto,
+    @Headers('x-bot-api-key') botKey: string,
+  ): Promise<Library> {
+    if (botKey !== process.env.BOT_SYNC_KEY) {
+      throw new UnauthorizedException('Llave inválida');
+    }
+    const folder = await this.libraryService.findOrCreateByTitle(
+      createWithFolderDto.folderTitle,
+      createWithFolderDto.visibility || LibraryVisibility.USERS,
+      null,
+    );
+
+    const createLibraryDto = {
+      title: createWithFolderDto.title,
+      description: createWithFolderDto.description,
+      parentNoteId: folder.id,
+      visibility: createWithFolderDto.visibility,
+      imageUrl: createWithFolderDto.imageUrl,
+      referenceDate: new Date(),
+    };
+
     return this.libraryService.create(createLibraryDto, req.user);
   }
 

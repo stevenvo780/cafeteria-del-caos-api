@@ -46,4 +46,13 @@ export class UpdateLibraryDto {
     required: false,
   })
   visibility?: LibraryVisibility;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    description: 'URL de la imagen para la librería',
+    type: String,
+    required: false,
+  })
+  imageUrl?: string;
 }
