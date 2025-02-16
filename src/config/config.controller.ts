@@ -171,7 +171,7 @@ export class ConfigController {
 
   @Patch('normative')
   @UseGuards(FirebaseAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Actualizar las normativas' })
   @ApiOkResponse({
