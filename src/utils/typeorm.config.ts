@@ -9,5 +9,5 @@ export const typeOrmConfig: TypeOrmModuleOptions = {
   database: process.env.DB_NAME || 'cafeteria_del_caos',
   autoLoadEntities: true,
   synchronize: process.env.DB_SYNCHRONIZE === 'true',
-  ssl: process.env.NODE_ENV === 'PROD' ? { rejectUnauthorized: true } : false,
+  ssl: process.env.NODE_ENV === 'PROD' ? { rejectUnauthorized: false } : false,
 };
