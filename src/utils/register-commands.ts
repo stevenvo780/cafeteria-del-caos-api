@@ -3,7 +3,6 @@ import { config } from 'dotenv';
 import * as path from 'path';
 import { buildCommandsList } from '../discord/discord-commands.config';
 
-// Configurar dotenv con la ruta correcta
 config({ path: path.resolve(__dirname, '../../.env') });
 
 export interface Product {
@@ -41,7 +40,6 @@ async function registerDiscordCommands() {
   }
 }
 
-// Solo ejecutar si es el archivo principal
 if (require.main === module) {
   registerDiscordCommands().catch(console.error);
 }
